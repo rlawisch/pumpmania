@@ -14,6 +14,15 @@ void ScreenSelectProfile::Init()
 	{
 		// no selection initially
 		m_iSelectedProfiles[p]=-1;
+
+    // StepP1 Revival - bSilver -------------------------------------------------------------------
+		m_bPlayerIsSelecting[p] = false;
+
+		if (GAMESTATE->IsHumanPlayer(p))
+		{
+			m_bPlayerIsSelecting[p] = true;
+		}
+    // --------------------------------------------------------------------------------------------
 	}
 	m_TrackingRepeatingInput = GameButton_Invalid;
 	ScreenWithMenuElements::Init();
@@ -21,8 +30,20 @@ void ScreenSelectProfile::Init()
 
 bool ScreenSelectProfile::Input( const InputEventPlus &input )
 {
+  /* StepP1 Revival - bSilver ---------------------------------------------------------------------
 	if( IsTransitioning() )
 		return false;
+  */
+
+	if (input.MenuI == GameButton::GAME_BUTTON_START)
+		return MenuStart(input);
+
+	if (input.MenuI == GameButton::GAME_BUTTON_LEFT)
+		return MenuLeft(input);
+
+	if (input.MenuI == GameButton::GAME_BUTTON_RIGHT)
+		return MenuRight(input);
+  // ----------------------------------------------------------------------------------------------
 
 	return ScreenWithMenuElements::Input( input );
 }
@@ -44,7 +65,46 @@ bool ScreenSelectProfile::MenuLeft( const InputEventPlus &input )
 			return false;
 	}
 	m_TrackingRepeatingInput = input.MenuI;
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+	int currentIndex = m_iSelectedProfiles[pn];
+	int numProfiles = PROFILEMAN->GetNumLocalProfiles();
+
+	currentIndex--;
+	if (currentIndex < 0)
+		currentIndex = numProfiles;
+
+	SetProfileIndex(pn, currentIndex);
+  // ----------------------------------------------------------------------------------------------
+
 	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuLeftP1+pn) );
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+	RString sPlayer = "PlayerNumber_";
+	sPlayer += ( pn == PLAYER_1 ) ? "P1" : "P2";
+
+	if( m_iSelectedProfiles[pn] > 0 && m_iSelectedProfiles[pn] <= numProfiles )
+	{
+
+		RString ProfileID = PROFILEMAN->GetLocalProfileIDFromIndex(m_iSelectedProfiles[pn] - 1);
+		const Profile* pProfile = PROFILEMAN->GetLocalProfile(ProfileID);
+		if( pProfile )
+		{
+			Message msg("LocalProfileChange");
+			msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
+			msg.SetParam("name", pProfile->GetDisplayNameOrHighScoreName());
+			MESSAGEMAN->Broadcast(msg);
+
+		}
+	}
+	else
+	{
+		Message msg("HideProfileChanges");
+		msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
+		MESSAGEMAN->Broadcast(msg);
+	}
+  // ----------------------------------------------------------------------------------------------
+
 	return true;
 }
 
@@ -65,10 +125,51 @@ bool ScreenSelectProfile::MenuRight( const InputEventPlus &input )
 			return false;
 	}
 	m_TrackingRepeatingInput = input.MenuI;
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+	int currentIndex = m_iSelectedProfiles[pn];
+	int numProfiles = PROFILEMAN->GetNumLocalProfiles();
+
+	currentIndex++;
+	if (currentIndex > numProfiles)
+		currentIndex = 0;
+
+	SetProfileIndex(pn, currentIndex);
+  // ----------------------------------------------------------------------------------------------
+
 	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuRightP1+pn) );
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+	RString sPlayer = "PlayerNumber_";
+	sPlayer += ( pn == PLAYER_1 ) ? "P1" : "P2";
+
+	if( m_iSelectedProfiles[pn] > 0 && m_iSelectedProfiles[pn] <= numProfiles )
+	{
+
+		RString ProfileID = PROFILEMAN->GetLocalProfileIDFromIndex(m_iSelectedProfiles[pn] - 1);
+		const Profile* pProfile = PROFILEMAN->GetLocalProfile(ProfileID);
+		if( pProfile )
+		{
+			Message msg("LocalProfileChange");
+			msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
+			msg.SetParam("name", pProfile->GetDisplayNameOrHighScoreName());
+			MESSAGEMAN->Broadcast(msg);
+
+		}
+	}
+	else
+	{
+		Message msg("HideProfileChanges");
+		msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
+		MESSAGEMAN->Broadcast(msg);
+	}
+  // ----------------------------------------------------------------------------------------------
+
 	return true;
 }
 
+
+/* StepP1 Revival - bSilver -----------------------------------------------------------------------
 bool ScreenSelectProfile::MenuUp( const InputEventPlus &input )
 {
 	PlayerNumber pn = input.pn;
@@ -78,10 +179,8 @@ bool ScreenSelectProfile::MenuUp( const InputEventPlus &input )
 		return false;
 	if( input.type != IET_FIRST_PRESS )
 	{
-		/*
-		if( !ALLOW_REPEATING_INPUT )
-			return false;
-		*/
+		// if( !ALLOW_REPEATING_INPUT )
+		// 	return false;
 		if( m_TrackingRepeatingInput != input.MenuI )
 			return false;
 	}
@@ -99,10 +198,8 @@ bool ScreenSelectProfile::MenuDown( const InputEventPlus &input )
 		return false;
 	if( input.type != IET_FIRST_PRESS )
 	{
-		/*
-		if( !ALLOW_REPEATING_INPUT )
-			return false;
-		*/
+		// if( !ALLOW_REPEATING_INPUT )
+		// 	return false;
 		if( m_TrackingRepeatingInput != input.MenuI )
 			return false;
 	}
@@ -110,6 +207,44 @@ bool ScreenSelectProfile::MenuDown( const InputEventPlus &input )
 	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuDownP1+pn) );
 	return true;
 }
+*/
+
+bool ScreenSelectProfile::MenuStart(const InputEventPlus& input)
+{
+	PlayerNumber pn = input.pn;
+
+	if (input.type != IET_FIRST_PRESS)
+	{
+		if (m_TrackingRepeatingInput != input.MenuI)
+			return false;
+	}
+
+	m_TrackingRepeatingInput = input.MenuI;
+
+	if (!m_bPlayerIsSelecting[pn])
+	{
+		GAMESTATE->JoinPlayer(pn);
+		SCREENMAN->PlayStartSound();
+
+		SetProfileIndex(pn, 0); // Start with GUEST
+
+		m_bPlayerIsSelecting[pn] = true;
+
+		Message msg("PlayerStartedSelectProfile");
+		msg.SetParam("Player", pn);
+		MESSAGEMAN->Broadcast(msg);
+
+		return true;
+	}
+	else
+	{
+
+		bool bFinished = Finish();
+
+		return bFinished;
+	}
+}
+// -------------------------------------------------------------------------------------------------
 
 bool ScreenSelectProfile::SetProfileIndex( PlayerNumber pn, int iProfileIndex )
 {
@@ -139,6 +274,8 @@ bool ScreenSelectProfile::SetProfileIndex( PlayerNumber pn, int iProfileIndex )
 		MEMCARDMAN->UnlockCard( pn );
 		MEMCARDMAN->UnmountCard( pn );
 		m_iSelectedProfiles[pn]=-1;
+
+		MESSAGEMAN->Broadcast("PlayerUnjoined"); // StepP1 Revival - bSilver
 		return true;
 	}
 
@@ -181,6 +318,9 @@ bool ScreenSelectProfile::Finish(){
 	if( iUnselectedProfiles && iUsedLocalProfiles < PROFILEMAN->GetNumLocalProfiles() )
 		return false;
 
+	// StepP1 Revival - bSilver - Hide overlay before switching screen
+	MESSAGEMAN->Broadcast("HideProfileChanges");
+
 	// all ok - load profiles and go to next screen
 	FOREACH_PlayerNumber( p )
 	{
@@ -222,6 +362,7 @@ void ScreenSelectProfile::HandleScreenMessage( const ScreenMessage SM )
 		if( !bFinished )
 		{
 			// TODO: we need to decide how to handle unfinished business.
+			SCREENMAN->PlayInvalidSound(); // StepP1 Revival - bSilver
 		}
 	}
 
@@ -231,7 +372,7 @@ void ScreenSelectProfile::HandleScreenMessage( const ScreenMessage SM )
 // lua start
 #include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the ScreenSelectProfile. */ 
+/** @brief Allow Lua to have access to the ScreenSelectProfile. */
 class LunaScreenSelectProfile: public Luna<ScreenSelectProfile>
 {
 public:
@@ -278,7 +419,7 @@ LUA_REGISTER_DERIVED_CLASS( ScreenSelectProfile, ScreenWithMenuElements )
 /*
  * Copyright (c) 2007 vdl
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -288,7 +429,7 @@ LUA_REGISTER_DERIVED_CLASS( ScreenSelectProfile, ScreenWithMenuElements )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

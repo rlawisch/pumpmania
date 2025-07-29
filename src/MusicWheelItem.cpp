@@ -33,8 +33,8 @@ static const char *MusicWheelItemTypeNames[] = {
 };
 XToString( MusicWheelItemType );
 
-MusicWheelItemData::MusicWheelItemData( WheelItemDataType type, Song* pSong, 
-				       RString sSectionName, Course* pCourse, 
+MusicWheelItemData::MusicWheelItemData( WheelItemDataType type, Song* pSong,
+				       RString sSectionName, Course* pCourse,
 				       RageColor color, int iSectionCount ):
 	WheelItemBaseData(type, sSectionName, color),
 	m_pCourse(pCourse), m_pSong(pSong), m_Flags(WheelNotifyIcon::Flags()),
@@ -43,6 +43,7 @@ MusicWheelItemData::MusicWheelItemData( WheelItemDataType type, Song* pSong,
 MusicWheelItem::MusicWheelItem( RString sType ):
 	WheelItemBase( sType )
 {
+  /* StepP1 Revival - bSilver
 	GRADES_SHOW_MACHINE.Load( sType, "GradesShowMachine" );
 
 	FOREACH_ENUM( MusicWheelItemType, i )
@@ -118,14 +119,30 @@ MusicWheelItem::MusicWheelItem( RString sType ):
 	this->SubscribeToMessage( Message_CurrentTrailP2Changed );
 	this->SubscribeToMessage( Message_PreferredDifficultyP1Changed );
 	this->SubscribeToMessage( Message_PreferredDifficultyP2Changed );
+  */
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+  m_sprNormalPart.Load( THEME->GetPathG("","MusicWheelItem Song NormalPart") );
+  this->AddChild( m_sprNormalPart );
+
+	m_Banner.SetName("Banner");
+	m_Banner.SetZTestMode(ZTEST_WRITE_ON_PASS);
+	this->AddChild( &m_Banner );
+
+  m_sprOverPart.Load( THEME->GetPathG("","MusicWheelItem Song OverPart") );
+  this->AddChild( m_sprOverPart );
+  // ----------------------------------------------------------------------------------------------
 }
 
 MusicWheelItem::MusicWheelItem( const MusicWheelItem &cpy ):
-	WheelItemBase( cpy ),
-	GRADES_SHOW_MACHINE( cpy.GRADES_SHOW_MACHINE ),
+	WheelItemBase( cpy )//,
+	/* StepP1 Revival - bSilver
+  GRADES_SHOW_MACHINE( cpy.GRADES_SHOW_MACHINE ),
 	m_TextBanner( cpy.m_TextBanner ),
 	m_WheelNotifyIcon( cpy.m_WheelNotifyIcon )
+  */
 {
+	/* StepP1 Revival - bSilver
 	FOREACH_ENUM( MusicWheelItemType, i )
 	{
 		m_sprColorPart[i] = cpy.m_sprColorPart[i];
@@ -166,15 +183,31 @@ MusicWheelItem::MusicWheelItem( const MusicWheelItem &cpy ):
 		m_pGradeDisplay[p] = cpy.m_pGradeDisplay[p];
 		this->AddChild( m_pGradeDisplay[p] );
 	}
+  */
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+  m_sprNormalPart.Load( THEME->GetPathG("","MusicWheelItem Song NormalPart") );
+  this->AddChild( m_sprNormalPart );
+
+	m_Banner.SetName("Banner");
+	m_Banner.SetZTestMode(ZTEST_WRITE_ON_PASS);
+	this->AddChild( &m_Banner );
+
+  m_sprOverPart.Load( THEME->GetPathG("","MusicWheelItem Song OverPart") );
+  this->AddChild( m_sprOverPart );
+  // ----------------------------------------------------------------------------------------------
 }
 
 MusicWheelItem::~MusicWheelItem()
 {
+  // TODO: Check if this generates memory leaks - StepP1 Revival - Thequila
+  /* StepP1 Revival - bSilver
 	FOREACH_ENUM( MusicWheelItemType, i )
 	{
 		SAFE_DELETE(m_pText[i]);
 	}
 	delete m_pTextSectionCount;
+  */
 }
 
 void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int iIndex, bool bHasFocus, int iDrawIndex )
@@ -183,6 +216,7 @@ void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int 
 
 	const MusicWheelItemData *pWID = dynamic_cast<const MusicWheelItemData*>( pData );
 
+  /* StepP1 Revival - bSilver
 	// hide all
 	FOREACH_ENUM( MusicWheelItemType, i )
 	{
@@ -198,7 +232,7 @@ void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int 
 	m_WheelNotifyIcon.SetVisible( false );
 	FOREACH_PlayerNumber( p )
 		m_pGradeDisplay[p]->SetVisible( false );
-
+  */
 
 	// Fill these in below
 	RString sDisplayName, sTranslitName;
@@ -210,14 +244,21 @@ void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int 
 	case WheelItemDataType_Song:
 		type = MusicWheelItemType_Song;
 
+    // StepP1 Revival - bSilver -------------------------------------------------------------------
+    m_Banner.LoadFromCachedBanner( pWID->m_pSong->GetBannerPath() );
+    m_Banner.SetVisible( true );
+    // --------------------------------------------------------------------------------------------
+
+    /* StepP1 Revival - bSilver
 		m_TextBanner.SetFromSong( pWID->m_pSong );
 		// We can do this manually if we wanted... maybe have a metric for overrides? -aj
-		m_TextBanner.SetDiffuse( pWID->m_color ); 
+		m_TextBanner.SetDiffuse( pWID->m_color );
 		m_TextBanner.SetVisible( true );
 
 		m_WheelNotifyIcon.SetFlags( pWID->m_Flags );
 		m_WheelNotifyIcon.SetVisible( true );
 		RefreshGrades();
+    */
 		break;
 	case WheelItemDataType_Section:
 		{
@@ -228,16 +269,26 @@ void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int 
 			else
 				type = MusicWheelItemType_SectionCollapsed;
 
+      /* StepP1 Revival - bSilver
 			m_pTextSectionCount->SetText( ssprintf("%d",pWID->m_iSectionCount) );
 			m_pTextSectionCount->SetVisible( true );
+      */
 		}
 		break;
 	case WheelItemDataType_Course:
 		sDisplayName = pWID->m_pCourse->GetDisplayFullTitle();
 		sTranslitName = pWID->m_pCourse->GetTranslitFullTitle();
 		type = MusicWheelItemType_Course;
+
+    // StepP1 Revival - bSilver -------------------------------------------------------------------
+    m_Banner.LoadFromCachedBanner( pWID->m_pSong->GetBannerPath() );
+    m_Banner.SetVisible( true );
+    // --------------------------------------------------------------------------------------------
+
+    /* StepP1 Revival - bSilver
 		m_WheelNotifyIcon.SetFlags( pWID->m_Flags );
 		m_WheelNotifyIcon.SetVisible( true );
+    */
 		break;
 	case WheelItemDataType_Sort:
 		sDisplayName = pWID->m_sLabel;
@@ -260,11 +311,16 @@ void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int 
 		type = MusicWheelItemType_Portal;
 		break;
 	case WheelItemDataType_Custom:
-		sDisplayName = pWID->m_sLabel;
+		// sDisplayName = pWID->m_sLabel; // StepP1 Revival - bSilver
 		type = MusicWheelItemType_Custom;
+
+    //xMAx - added generic empty music wheel banner
+    m_Banner.Load( THEME->GetPathG("","EmptyMusicWheel banner") );
+    m_Banner.SetVisible( true );
 		break;
 	}
 
+  /* StepP1 Revival - bSilver
 	m_sprColorPart[type]->SetVisible( true );
 	m_sprColorPart[type]->SetDiffuse( pWID->m_color );
 	m_sprNormalPart[type]->SetVisible( true );
@@ -301,10 +357,12 @@ void MusicWheelItem::LoadFromWheelItemData( const WheelItemBaseData *pData, int 
 
 		this->HandleMessage( msg );
 	}
+  */
 }
 
 void MusicWheelItem::RefreshGrades()
 {
+  /* StepP1 Revival - bSilver
 	if(!IsLoaded()) { return; }
 	const MusicWheelItemData *pWID = dynamic_cast<const MusicWheelItemData*>( m_pData );
 
@@ -372,10 +430,12 @@ void MusicWheelItem::RefreshGrades()
 		}
 		m_pGradeDisplay[p]->HandleMessage( msg );
 	}
+  */
 }
 
 void MusicWheelItem::HandleMessage( const Message &msg )
 {
+  /* StepP1 Revival - bSilver
 	if(!IsLoaded()) { return; }
 	if( msg == Message_CurrentStepsP1Changed ||
 	    msg == Message_CurrentStepsP2Changed ||
@@ -430,9 +490,10 @@ void MusicWheelItem::HandleMessage( const Message &msg )
 		msg.SetParam( "Color", pWID->m_color );
 		msg.SetParam( "Label", pWID->m_sLabel );
 		this->HandleMessage( msg );
-		
+
 		RefreshGrades();
 	}
+  */
 
 	WheelItemBase::HandleMessage( msg );
 }
@@ -440,7 +501,7 @@ void MusicWheelItem::HandleMessage( const Message &msg )
 /*
  * (c) 2001-2004 Chris Danford, Chris Gomez, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -450,7 +511,7 @@ void MusicWheelItem::HandleMessage( const Message &msg )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

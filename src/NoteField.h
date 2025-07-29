@@ -25,10 +25,12 @@ public:
 	void DrawBoardPrimitive();
 
 	virtual void Init( const PlayerState* pPlayerState, float fYReverseOffsetPixels, bool use_states_zoom= true );
-	virtual void Load( 
-		const NoteData* pNoteData, 
-		int iDrawDistanceAfterTargetsPixels, 
-		int iDrawDistanceBeforeTargetsPixels );
+	virtual void Load(
+		const NoteData* pNoteData,
+		int iDrawDistanceAfterTargetsPixels,
+		int iDrawDistanceBeforeTargetsPixels,
+    bool bIsDoublePerformance // xMAx
+   );
 	virtual void Unload();
 
 	void ensure_note_displays_have_skin();
@@ -64,6 +66,8 @@ public:
 	// public so that the Lua API can access it. -Kyz
 	vector<NoteColumnRenderer> m_ColumnRenderers;
 
+	void UpdateHoldBody(TapNote* tn); // xMAx
+
 protected:
 	void CacheNoteSkin( const RString &sNoteSkin );
 	void UncacheNoteSkin( const RString &sNoteSkin );
@@ -85,7 +89,7 @@ protected:
 	void DrawAttackText(const float beat, const Attack &attack, const RageColor& glow);
 	void DrawBGChangeText(const float beat, const RString new_bg_name, const RageColor& glow);
 	float GetWidth() const;
-	
+
 	const NoteData *m_pNoteData;
 
 	const PlayerState*	m_pPlayerState;
@@ -111,7 +115,9 @@ protected:
 	/* All loaded note displays, mapped by their name. */
 	map<RString, NoteDisplayCols *> m_NoteDisplays;
 	NoteDisplayCols		*m_pCurDisplay;
-	NoteDisplayCols		*m_pDisplays[NUM_PlayerNumber];
+	// NoteDisplayCols		*m_pDisplays[NUM_PlayerNumber]; // xMAx
+	NoteDisplayCols*	m_pDisplays[4];	//xMAx
+	BitmapText			m_textNoteTypeWord; // xMAx
 
 	// decorations, mostly used in MODE_EDIT
 	AutoActor	m_sprBoard;
@@ -123,6 +129,20 @@ protected:
 	BitmapText	m_textMeasureNumber;
 	Quad		m_rectMarkerBar;
 	Quad		m_rectAreaHighlight;
+
+	// xMAx -----------------------------------------------------------------------------------------
+	vector<RString> asSkinNames;
+	bool	m_bUseRandomSkin;
+	bool	m_bIsRoutine;
+	NoteDisplayCols		*m_pReceptorDisplay;
+	struct NoteDrawData
+	{
+		float fYPos;
+		float fAlpha;
+	};
+
+	map<int,NoteDrawData> m_NoteDrawData;
+  // ----------------------------------------------------------------------------------------------
 };
 
 #endif
@@ -132,7 +152,7 @@ protected:
  * @author Chris Danford (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -142,7 +162,7 @@ protected:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

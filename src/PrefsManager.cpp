@@ -129,6 +129,16 @@ XToString( BackgroundFitMode );
 StringToX( BackgroundFitMode );
 LuaXType( BackgroundFitMode );
 
+static const char *RandomExcludeNames [] = {
+	"None",
+	"Pro",
+	"Fan",
+	"ProAndFan"
+};
+XToString(RandomExclude);
+StringToX(RandomExclude);
+LuaXType(RandomExclude);
+
 bool g_bAutoRestart = false;
 #ifdef DEBUG
 # define TRUE_IF_DEBUG true
@@ -148,7 +158,7 @@ void ValidateSongsPerPlay( int &val )
 }
 
 PrefsManager::PrefsManager() :
-	m_sCurrentGame			( "CurrentGame",		"" ),
+	m_sCurrentGame			( "CurrentGame",		"pump" ),
 
 	m_sAnnouncer			( "Announcer",			"" ),
 	m_sTheme			( "Theme",			SpecialFiles::BASE_THEME_NAME ),
@@ -188,6 +198,17 @@ PrefsManager::PrefsManager() :
 	m_bOnlyDedicatedMenuButtons	( "OnlyDedicatedMenuButtons",	false ),
 	m_bMenuTimer			( "MenuTimer",			false ),
 
+	// StepP1 Revival - bSilver --------------
+	m_bShowUCSCharts		( "ShowUCSCharts",		false ),
+	m_bShowQUESTCharts		( "ShowQUESTCharts",		false ),
+	m_RandomExclude			( "RandomExclude",		RN_EXCLUDE_NONE ),
+	m_bShowSpecialSongsInLevelChannels( "ShowSpecialSongsInLevelChannels", false ),
+	m_bShowLevelChannels		( "ShowLevelChannels",		false ),
+	m_bShowCategoryChannels		( "ShowCategoryChannels",	true ),
+	m_bShowSpecialSongsInCategoryChannels( "ShowSpecialSongsInCategoryChannels", false ),
+	m_bLockWheelAfterRoulette	( "LockWheelAfterRoulette",	false ),
+	// ---------------------------------------
+
 	m_fLifeDifficultyScale		( "LifeDifficultyScale",	1.0f ),
 
 	m_bRateModsAffectTweens		( "RateModsAffectFGChanges",	false ),
@@ -210,8 +231,8 @@ PrefsManager::PrefsManager() :
 	m_ThreeKeyNavigation		( "ThreeKeyNavigation",		false ),
 	m_MusicWheelUsesSections	( "MusicWheelUsesSections",	MusicWheelUsesSections_ALWAYS ),
 	m_iMusicWheelSwitchSpeed	( "MusicWheelSwitchSpeed",	15 ),
-	m_AllowW1			( "AllowW1",			ALLOW_W1_EVERYWHERE ),
-	m_bEventMode			( "EventMode",			true ),
+	m_AllowW1			( "AllowW1",			ALLOW_W1_NEVER ),
+	m_bEventMode			( "EventMode",			false ),
 	m_iCoinsPerCredit		( "CoinsPerCredit",		1 ),
 	m_iSongsPerPlay			( "SongsPerPlay",		3, ValidateSongsPerPlay ),
 	m_bDelayedCreditsReconcile	( "DelayedCreditsReconcile",	false ),
@@ -268,7 +289,7 @@ PrefsManager::PrefsManager() :
 	m_sAdditionalSongFolders	( "AdditionalSongFolders",		"" ),
 	m_sAdditionalCourseFolders	( "AdditionalCourseFolders",		"" ),
 	m_sAdditionalFolders		( "AdditionalFolders",			"" ),
-	m_sDefaultTheme			( "DefaultTheme",			"default" ),
+	m_sDefaultTheme			( "DefaultTheme",			"Fiesta 2" ),
 	m_sLastSeenVideoDriver		( "LastSeenVideoDriver",		"" ),
 	m_sVideoRenderers		( "VideoRenderers",			"" ),	// StepMania.cpp sets these on first run:
 	m_bSmoothLines			( "SmoothLines",			false ),

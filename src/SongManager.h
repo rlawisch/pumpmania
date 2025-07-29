@@ -18,6 +18,7 @@ struct lua_State;
 #include "ThemeMetric.h"
 #include "RageTexturePreloader.h"
 #include "RageUtil.h"
+#include "Song.h"	//included cause of "SongType" - xMAx
 
 RString SONG_GROUP_COLOR_NAME( size_t i );
 RString COURSE_GROUP_COLOR_NAME( size_t i );
@@ -27,6 +28,19 @@ bool CompareNotesPointersForExtra(const Steps *n1, const Steps *n2);
 const int MAX_EDIT_STEPS_PER_PROFILE	= 200;
 /** @brief The max number of edit courses a profile can have. */
 const int MAX_EDIT_COURSES_PER_PROFILE	= 20;
+
+/** by xMAx */
+struct LevelSongList {
+	LevelSongList( int level ) { m_pStyle.push_back( m_pSingle ); m_pStyle.push_back( m_pDouble ); m_iLevel = level; };
+	void clear() { m_pSingle.clear(); m_pDouble.clear(); m_pStyle.clear(); };
+	vector<vector<Song*>>	m_pStyle;
+	vector<Song*>	m_pSingle;
+	vector<Song*>	m_pDouble;
+	vector<Song*>	m_pAllStyles;
+	int				m_iLevel;
+	//const vector<Song*> &operator[]( unsigned int i ) const { return m_pStyleList[i]; };
+	vector<Song*> &operator[]( unsigned int i ) { return m_pStyle[i]; };
+};
 
 /** @brief The holder for the Songs and its Steps. */
 class SongManager
@@ -163,7 +177,7 @@ public:
 
 	void UpdatePopular();
 	void UpdateShuffled();	// re-shuffle songs and courses
-	void UpdatePreferredSort(RString sPreferredSongs = "PreferredSongs.txt", RString sPreferredCourses = "PreferredCourses.txt"); 
+	void UpdatePreferredSort(RString sPreferredSongs = "PreferredSongs.txt", RString sPreferredCourses = "PreferredCourses.txt");
 	void SortSongs();		// sort m_pSongs by CompareSongPointersByTitle
 
 	void UpdateRankingCourses();	// courses shown on the ranking screen
@@ -172,7 +186,65 @@ public:
 	// Lua
 	void PushSelf( lua_State *L );
 
+	// xMAx -----------------------------------------------------------------------------------------
+	const vector<Song*> &GetFullSongs() const 		{ return m_pFullSongs; };
+	const vector<Song*> &GetRemixSongs() const 		{ return m_pRemixSongs; };
+	const vector<Song*> &GetShortCutSongs() const 	{ return m_pShortCutSongs; };
+	const vector<Song*> &GetOriginalSongs() const 	{ return m_pOriginalSongs; };
+	const vector<Song*> &GetKpopSongs() const 		{ return m_pKpopSongs; };
+	const vector<Song*> &GetWorldMusicSongs() const { return m_pWorldMusicSongs; };
+	const vector<Song*> &GetAllTunes() const 		{ return m_pAllTunes; };
+	const vector<Song*> &GetUCS() const 			{ return m_pUCS; };
+	const vector<Song*> &GetQuestSongs() const 		{ return m_pQUEST; };
+	const vector<Song*> &GetCoOpPlaySongs() const 	{ return m_pCoOpPlay; };
+	const vector<Song*> &GetRandomSongs() const 	{ return m_pRandomChannel; };
+	const vector<Song*> &GetJMusicSongs() const 	{ return m_pJMusic; };
+	const vector<LevelSongList*> &GetLevelSections() const { return m_vLevelsList; };
+
+	bool IsFullSongChannelAvailable(void) 	{ return !m_pFullSongs.empty(); };
+	bool IsRemixChannelAvailable(void) 		{ return !m_pRemixSongs.empty(); };
+	bool IsShortCutChannelAvailable(void) 	{ return !m_pShortCutSongs.empty(); };
+	bool IsOriginalChannelAvailable(void) 	{ return !m_pOriginalSongs.empty(); };
+	bool IsKpopChannelAvailable(void)		{ return !m_pKpopSongs.empty(); };
+	bool IsWorldMusicChannelAvailable(void) { return !m_pWorldMusicSongs.empty(); };
+	bool IsUCSChannelAvailable(void) 		{ return !m_pUCS.empty(); };
+	bool IsMZChannelAvailable(void) 		{ return !m_pQUEST.empty(); };
+	bool IsCoOpPlayChannelAvailable(void) 	{ return !m_pCoOpPlay.empty(); };
+	bool IsJMusicChannelAvailable(void) 	{ return !m_pJMusic.empty(); };
+
+	void GetAvailableGroupNames( vector<RString> &arrayGroupNames );
+	void GetSongGroupNamesAvailables( vector<RString> &AddTo );
+	bool IsGroupAvailable( RString &sGroupName );
+	void UpdateSortArrays();
+	void CleanUpSortArrays(void);
+
+	void UpdateSongSortByType( SongType m_SongTypeToSort, vector<Song*> &arraySongType );
+	void UpdateSongSortByCategory( SongCategory m_SongCategoryToSort, vector<Song*> &arraySongCategory );
+	void UpdateSongSortByLabel( RString m_sLabel, vector<Song*> &arraySongLabel );
+	void UpdateCoOpChannel( vector<Song*> &arraySongCoOp );
+	//-----------------------------------------------------------------------------------------------
+
 protected:
+	// xMAx -----------------------------------------------------------------------------------------
+	vector<Song*>		m_pFullSongs;
+	vector<Song*>		m_pRemixSongs;
+	vector<Song*>		m_pShortCutSongs;
+	vector<Song*>		m_pOriginalSongs;
+	vector<Song*>		m_pKpopSongs;
+	vector<Song*>		m_pWorldMusicSongs;
+	vector<Song*>		m_pAllTunes;
+	vector<Song*>		m_pUCS;
+	vector<Song*>		m_pQUEST;
+	vector<Song*>		m_pCoOpPlay;
+	vector<Song*>		m_pJMusic;
+
+	vector<Song*>			m_pRandomChannel;
+	vector<LevelSongList*>	m_vLevelsList;
+
+	void InitRandomChannel();
+	void LoadLevelChannelsForSong( Song* pSong );
+	//-----------------------------------------------------------------------------------------------
+
 	void LoadStepManiaSongDir( RString sDir, LoadingWindow *ld );
 	void LoadDWISongDir( RString sDir );
 	bool GetExtraStageInfoFromCourse( bool bExtra2, RString sPreferredGroup, Song*& pSongOut, Steps*& pStepsOut, StepsType stype );
@@ -236,7 +308,7 @@ extern SongManager*	SONGMAN;	// global and accessible from anywhere in our progr
  * @author Chris Danford, Glenn Maynard (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -246,7 +318,7 @@ extern SongManager*	SONGMAN;	// global and accessible from anywhere in our progr
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -179,6 +179,7 @@ static void GetTimingTags( vector<RString> &lines, const TimingData &timing, boo
 
 static void WriteTimingTags( RageFile &f, const TimingData &timing, bool bIsSong = false )
 {
+  /* xMAx -----------------------------------------------------------------------------------------
 	f.PutLine(ssprintf("#BPMS:%s;",
 			   join(",\r\n", timing.ToVectorString(SEGMENT_BPM, 3)).c_str()));
 	f.PutLine(ssprintf("#STOPS:%s;",
@@ -201,6 +202,64 @@ static void WriteTimingTags( RageFile &f, const TimingData &timing, bool bIsSong
 			   join(",\r\n", timing.ToVectorString(SEGMENT_FAKE, 3)).c_str()));
 	f.PutLine(ssprintf("#LABELS:%s;",
 			   join(",\r\n", timing.ToVectorString(SEGMENT_LABEL, 3)).c_str()));
+  */
+
+	vector<RString> sTemp;
+
+	sTemp = timing.ToVectorString(SEGMENT_BPM, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#BPMS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_STOP, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#STOPS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_DELAY, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#DELAYS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_WARP, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#WARPS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_TIME_SIG, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#TIMESIGNATURES:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_TICKCOUNT, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#TICKCOUNTS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_COMBO, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#COMBOS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_SPEED, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#SPEEDS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_SCROLL, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#SCROLLS:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_FAKE, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#FAKES:%s;", join(",\r\n", sTemp).c_str()));
+	sTemp.clear();
+
+	sTemp = timing.ToVectorString(SEGMENT_LABEL, 3);
+	if( sTemp.size() )
+		f.PutLine(ssprintf("#LABELS:%s;", join(",\r\n", sTemp).c_str()));
+  // ----------------------------------------------------------------------------------------------
 
 }
 
@@ -208,31 +267,54 @@ static void WriteTimingTags( RageFile &f, const TimingData &timing, bool bIsSong
  * @brief Write out the common tags for .SSC files.
  * @param f the file in question.
  * @param out the Song in question. */
-static void WriteGlobalTags( RageFile &f, const Song &out )
+// static void WriteGlobalTags( RageFile &f, const Song &out ) // xMAx
+static void WriteGlobalTags( RageFile &f, const Song &out, bool bSavingCache ) // xMAx
 {
-	f.PutLine( ssprintf( "#VERSION:%.2f;", STEPFILE_VERSION_NUMBER ) );
-	f.PutLine( ssprintf( "#TITLE:%s;", SmEscape(out.m_sMainTitle).c_str() ) );
-	f.PutLine( ssprintf( "#SUBTITLE:%s;", SmEscape(out.m_sSubTitle).c_str() ) );
-	f.PutLine( ssprintf( "#ARTIST:%s;", SmEscape(out.m_sArtist).c_str() ) );
-	f.PutLine( ssprintf( "#TITLETRANSLIT:%s;", SmEscape(out.m_sMainTitleTranslit).c_str() ) );
-	f.PutLine( ssprintf( "#SUBTITLETRANSLIT:%s;", SmEscape(out.m_sSubTitleTranslit).c_str() ) );
-	f.PutLine( ssprintf( "#ARTISTTRANSLIT:%s;", SmEscape(out.m_sArtistTranslit).c_str() ) );
-	f.PutLine( ssprintf( "#GENRE:%s;", SmEscape(out.m_sGenre).c_str() ) );
-	f.PutLine( ssprintf( "#ORIGIN:%s;", SmEscape(out.m_sOrigin).c_str() ) );
-	f.PutLine( ssprintf( "#CREDIT:%s;", SmEscape(out.m_sCredit).c_str() ) );
-	f.PutLine( ssprintf( "#BANNER:%s;", SmEscape(out.m_sBannerFile).c_str() ) );
-	f.PutLine( ssprintf( "#BACKGROUND:%s;", SmEscape(out.m_sBackgroundFile).c_str() ) );
-	f.PutLine( ssprintf( "#PREVIEWVID:%s;", SmEscape(out.m_sPreviewVidFile).c_str() ) );
-	f.PutLine( ssprintf( "#JACKET:%s;", SmEscape(out.m_sJacketFile).c_str() ) );
-	f.PutLine( ssprintf( "#CDIMAGE:%s;", SmEscape(out.m_sCDFile).c_str() ) );
-	f.PutLine( ssprintf( "#DISCIMAGE:%s;", SmEscape(out.m_sDiscFile).c_str() ) );
-	f.PutLine( ssprintf( "#LYRICSPATH:%s;", SmEscape(out.m_sLyricsFile).c_str() ) );
-	f.PutLine( ssprintf( "#CDTITLE:%s;", SmEscape(out.m_sCDTitleFile).c_str() ) );
-	f.PutLine( ssprintf( "#MUSIC:%s;", SmEscape(out.m_sMusicFile).c_str() ) );
-	if(!out.m_PreviewFile.empty())
+  // xMAx -----------------------------------------------------------------------------------------
+	if( bSavingCache )
 	{
-		f.PutLine(ssprintf("#PREVIEW:%s;", SmEscape(out.m_PreviewFile).c_str()));
+		if( out.m_sMainTitle != "" ) 			f.PutLine( ssprintf( "#TITLE:%s;", SmEscape(out.m_sMainTitle).c_str() ) );
+		if( out.m_sSubTitle != "" ) 			f.PutLine( ssprintf( "#SUBTITLE:%s;", SmEscape(out.m_sSubTitle).c_str() ) );
+		if( out.m_sArtist != "" ) 				f.PutLine( ssprintf( "#ARTIST:%s;", SmEscape(out.m_sArtist).c_str() ) );
+		if( out.m_sMainTitleTranslit != "" ) 	f.PutLine( ssprintf( "#TITLETRANSLIT:%s;", SmEscape(out.m_sMainTitleTranslit).c_str() ) );
+		if( out.m_sSubTitleTranslit != "" ) 	f.PutLine( ssprintf( "#SUBTITLETRANSLIT:%s;", SmEscape(out.m_sSubTitleTranslit).c_str() ) );
+		if( out.m_sArtistTranslit != "" ) 	f.PutLine( ssprintf( "#ARTISTTRANSLIT:%s;", SmEscape(out.m_sArtistTranslit).c_str() ) );
+		if( out.m_sGenre != "" ) 			f.PutLine( ssprintf( "#GENRE:%s;", SmEscape(out.m_sGenre).c_str() ) );
+		if( out.m_sOrigin != "" ) 			f.PutLine( ssprintf( "#ORIGIN:%s;", SmEscape(out.m_sOrigin).c_str() ) );
+		if( out.m_sCredit != "" ) 			f.PutLine( ssprintf( "#CREDIT:%s;", SmEscape(out.m_sCredit).c_str() ) );
+		if( out.m_sBannerFile != "" ) 		f.PutLine( ssprintf( "#BANNER:%s;", SmEscape(out.m_sBannerFile).c_str() ) );
+		if( out.m_sBackgroundFile != "" ) 	f.PutLine( ssprintf( "#BACKGROUND:%s;", SmEscape(out.m_sBackgroundFile).c_str() ) );
+		if( out.m_sPreviewVidFile != "" ) 	f.PutLine( ssprintf( "#PREVIEWVID:%s;", SmEscape(out.m_sPreviewVidFile).c_str() ) );
+		if( out.m_sCDTitleFile != "" ) 		f.PutLine( ssprintf( "#CDTITLE:%s;", SmEscape(out.m_sCDTitleFile).c_str() ) );
+		if( out.m_sMusicFile != "" ) 		f.PutLine( ssprintf( "#MUSIC:%s;", SmEscape(out.m_sMusicFile).c_str() ) );
 	}
+	else
+	{
+  // ----------------------------------------------------------------------------------------------
+    f.PutLine( ssprintf( "#VERSION:%.2f;", STEPFILE_VERSION_NUMBER ) );
+    f.PutLine( ssprintf( "#TITLE:%s;", SmEscape(out.m_sMainTitle).c_str() ) );
+    f.PutLine( ssprintf( "#SUBTITLE:%s;", SmEscape(out.m_sSubTitle).c_str() ) );
+    f.PutLine( ssprintf( "#ARTIST:%s;", SmEscape(out.m_sArtist).c_str() ) );
+    f.PutLine( ssprintf( "#TITLETRANSLIT:%s;", SmEscape(out.m_sMainTitleTranslit).c_str() ) );
+    f.PutLine( ssprintf( "#SUBTITLETRANSLIT:%s;", SmEscape(out.m_sSubTitleTranslit).c_str() ) );
+    f.PutLine( ssprintf( "#ARTISTTRANSLIT:%s;", SmEscape(out.m_sArtistTranslit).c_str() ) );
+    f.PutLine( ssprintf( "#GENRE:%s;", SmEscape(out.m_sGenre).c_str() ) );
+    f.PutLine( ssprintf( "#ORIGIN:%s;", SmEscape(out.m_sOrigin).c_str() ) );
+    f.PutLine( ssprintf( "#CREDIT:%s;", SmEscape(out.m_sCredit).c_str() ) );
+    f.PutLine( ssprintf( "#BANNER:%s;", SmEscape(out.m_sBannerFile).c_str() ) );
+    f.PutLine( ssprintf( "#BACKGROUND:%s;", SmEscape(out.m_sBackgroundFile).c_str() ) );
+    f.PutLine( ssprintf( "#PREVIEWVID:%s;", SmEscape(out.m_sPreviewVidFile).c_str() ) );
+    f.PutLine( ssprintf( "#JACKET:%s;", SmEscape(out.m_sJacketFile).c_str() ) );
+    f.PutLine( ssprintf( "#CDIMAGE:%s;", SmEscape(out.m_sCDFile).c_str() ) );
+    f.PutLine( ssprintf( "#DISCIMAGE:%s;", SmEscape(out.m_sDiscFile).c_str() ) );
+    f.PutLine( ssprintf( "#LYRICSPATH:%s;", SmEscape(out.m_sLyricsFile).c_str() ) );
+    f.PutLine( ssprintf( "#CDTITLE:%s;", SmEscape(out.m_sCDTitleFile).c_str() ) );
+    f.PutLine( ssprintf( "#MUSIC:%s;", SmEscape(out.m_sMusicFile).c_str() ) );
+    if(!out.m_PreviewFile.empty())
+    {
+      f.PutLine(ssprintf("#PREVIEW:%s;", SmEscape(out.m_PreviewFile).c_str()));
+    }
+  } // xMAx
 
 	{
 		vector<RString> vs = out.GetInstrumentTracksToVectorString();
@@ -255,6 +337,20 @@ static void WriteGlobalTags( RageFile &f, const Song &out )
 		case Song::SHOW_NEVER:		f.Write( "NO" );		break;
 	}
 	f.PutLine( ";" );
+
+	// xMAx -----------------------------------------------------------------------------------------
+	f.Write( "#SONGTYPE:" );
+	f.Write( SongTypeToString(out.m_SongType) );
+	f.PutLine( ";" );
+	/////////////////////////////
+	f.Write( "#SONGCATEGORY:" );
+	f.Write( SongCategoryToString(out.m_SongCategory) );
+	f.PutLine( ";" );
+	/////////////////////////////
+	f.Write( "#VOLUME:" );
+	f.Write( IntToString(out.m_iVolume) );
+	f.PutLine( ";" );
+	// ----------------------------------------------------------------------------------------------
 
 	switch( out.m_DisplayBPMType )
 	{
@@ -281,64 +377,98 @@ static void WriteGlobalTags( RageFile &f, const Song &out )
 
 	FOREACH_BackgroundLayer( b )
 	{
+		// xMAx - Skip
+		if( out.GetBackgroundChanges(b).empty() )
+			continue;
+
 		if( b==0 )
 			f.Write( "#BGCHANGES:" );
+    /* xMAx
 		else if( out.GetBackgroundChanges(b).empty() )
 			continue;	// skip
+    */
 		else
 			f.Write( ssprintf("#BGCHANGES%d:", b+1) );
 
-		for (BackgroundChange const &bgc : out.GetBackgroundChanges(b))
-			f.PutLine( bgc.ToString() +"," );
+    BackgroundChange bgc = out.GetBackgroundChanges(b)[0];
+    // xMAx - if the song uses only one bga video, then save it as it is, one line video ----------
+		if( bgc.bOneLineBGA )
+		{
+			f.PutLine( bgc.m_def.m_sFile1 + ";");
+		}
+		else
+		{
+    // --------------------------------------------------------------------------------------------
+      for (BackgroundChange const &bgc : out.GetBackgroundChanges(b))
+        f.PutLine( bgc.ToString() +"," );
 
-		/* If there's an animation plan at all, add a dummy "-nosongbg-" tag to
-		 * indicate that this file doesn't want a song BG entry added at the end.
-		 * See SSCLoader::TidyUpData. This tag will be removed on load. Add it
-		 * at a very high beat, so it won't cause problems if loaded in older versions. */
-		if( b==0 && !out.GetBackgroundChanges(b).empty() )
-			f.PutLine( "99999=-nosongbg-=1.000=0=0=0 // don't automatically add -songbackground-" );
-		f.PutLine( ";" );
+      /* If there's an animation plan at all, add a dummy "-nosongbg-" tag to
+      * indicate that this file doesn't want a song BG entry added at the end.
+      * See SSCLoader::TidyUpData. This tag will be removed on load. Add it
+      * at a very high beat, so it won't cause problems if loaded in older versions. */
+      if( b==0 && !out.GetBackgroundChanges(b).empty() )
+        f.PutLine( "99999=-nosongbg-=1.000=0=0=0 // don't automatically add -songbackground-" );
+      f.PutLine( ";" );
+    } // xMAx
 	}
 
 	if( out.GetForegroundChanges().size() )
 	{
-		f.Write( "#FGCHANGES:" );
-		for (BackgroundChange const &bgc : out.GetForegroundChanges())
+    // xMAx ---------------------------------------------------------------------------------------
+		if( out.GetForegroundChanges()[0].bOneLineBGA )
 		{
-			f.PutLine( bgc.ToString() +"," );
+			BackgroundChange bgc = out.GetForegroundChanges()[0];
+			f.PutLine( "#FGCHANGES:" + bgc.m_def.m_sFile1 + ";");
 		}
-		f.PutLine( ";" );
+		else
+		{
+    // --------------------------------------------------------------------------------------------
+      f.Write( "#FGCHANGES:" );
+      for (BackgroundChange const &bgc : out.GetForegroundChanges())
+      {
+        f.PutLine( bgc.ToString() +"," );
+      }
+      f.PutLine( ";" );
+    } // xMAx
 	}
 
-	f.Write( "#KEYSOUNDS:" );
-	for( unsigned i=0; i<out.m_vsKeysoundFile.size(); i++ )
+
+	if( out.m_vsKeysoundFile.size() ) // xMAx
 	{
-		// some keysound files has the first sound that starts with #,
-		// which makes MsdFile fail parsing the whole declaration.
-		// in this case, add a backslash at the front
-		// (#KEYSOUNDS:\#bgm.wav,01.wav,02.wav,..) and handle that on load.
-		if( i == 0 && out.m_vsKeysoundFile[i].size() > 0 && out.m_vsKeysoundFile[i][0] == '#' )
-			f.Write("\\");
-		f.Write( out.m_vsKeysoundFile[i] );
-		if( i != out.m_vsKeysoundFile.size()-1 )
-			f.Write( "," );
-	}
-	f.PutLine( ";" );
+    f.Write( "#KEYSOUNDS:" );
+    for( unsigned i=0; i<out.m_vsKeysoundFile.size(); i++ )
+    {
+      // some keysound files has the first sound that starts with #,
+      // which makes MsdFile fail parsing the whole declaration.
+      // in this case, add a backslash at the front
+      // (#KEYSOUNDS:\#bgm.wav,01.wav,02.wav,..) and handle that on load.
+      if( i == 0 && out.m_vsKeysoundFile[i].size() > 0 && out.m_vsKeysoundFile[i][0] == '#' )
+        f.Write("\\");
+      f.Write( out.m_vsKeysoundFile[i] );
+      if( i != out.m_vsKeysoundFile.size()-1 )
+        f.Write( "," );
+    }
+    f.PutLine( ";" );
+  } // xMAx
 
-	// attacks section
-	//f.PutLine( ssprintf("#ATTACKS:%s;", out.GetAttackString().c_str()) );
-	f.PutLine( "#ATTACKS:" );
-	for(unsigned j = 0; j < out.m_Attacks.size(); j++)
+
+	if( out.m_Attacks.size() ) // xMAx
 	{
-		const Attack &a = out.m_Attacks[j];
-		f.Write( ssprintf( "  TIME=%.2f:LEN=%.2f:MODS=%s",
-			a.fStartSecond, a.fSecsRemaining, a.sModifiers.c_str() ) );
+    // attacks section
+    //f.PutLine( ssprintf("#ATTACKS:%s;", out.GetAttackString().c_str()) );
+    f.PutLine( "#ATTACKS:" );
+    for(unsigned j = 0; j < out.m_Attacks.size(); j++)
+    {
+      const Attack &a = out.m_Attacks[j];
+      f.Write( ssprintf( "  TIME=%.2f:LEN=%.2f:MODS=%s",
+        a.fStartSecond, a.fSecsRemaining, a.sModifiers.c_str() ) );
 
-		if( j+1 < out.m_Attacks.size() )
-			f.Write( ":" );
-	}
-	f.Write( ";" );
-	f.PutLine("");
+      if( j+1 < out.m_Attacks.size() )
+        f.Write( ":" );
+    }
+    f.Write( ";" );
+    f.PutLine("");
+  } // xMAx
 }
 
 /**
@@ -356,10 +486,13 @@ static RString GetSSCNoteData( const Song &song, const Steps &in, bool bSavingCa
 	lines.push_back( ssprintf("//---------------%s - %s----------------",
 		in.m_StepsTypeStr.c_str(), SmEscape(in.GetDescription()).c_str()) );
 	lines.push_back( "#NOTEDATA:;" ); // our new separator.
-	lines.push_back( ssprintf( "#CHARTNAME:%s;", SmEscape(in.GetChartName()).c_str()));
+  if( in.GetChartName() != "" ) //xMAx
+	  lines.push_back( ssprintf( "#CHARTNAME:%s;", SmEscape(in.GetChartName()).c_str()));
 	lines.push_back( ssprintf( "#STEPSTYPE:%s;", in.m_StepsTypeStr.c_str() ) );
-	lines.push_back( ssprintf( "#DESCRIPTION:%s;", SmEscape(in.GetDescription()).c_str() ) );
-	lines.push_back( ssprintf( "#CHARTSTYLE:%s;", SmEscape(in.GetChartStyle()).c_str() ) );
+  if( in.GetDescription() != "" ) // xMAx
+  	lines.push_back( ssprintf( "#DESCRIPTION:%s;", SmEscape(in.GetDescription()).c_str() ) );
+  if( in.GetChartStyle() != "" )  // xMAx
+  	lines.push_back( ssprintf( "#CHARTSTYLE:%s;", SmEscape(in.GetChartStyle()).c_str() ) );
 	lines.push_back( ssprintf( "#DIFFICULTY:%s;", DifficultyToString(in.GetDifficulty()).c_str() ) );
 	lines.push_back( ssprintf( "#METER:%d;", in.GetMeter() ) );
 
@@ -378,7 +511,8 @@ static RString GetSSCNoteData( const Song &song, const Steps &in, bool bSavingCa
 	}
 	lines.push_back( ssprintf( "#RADARVALUES:%s;", join(",",asRadarValues).c_str() ) );
 
-	lines.push_back( ssprintf( "#CREDIT:%s;", SmEscape(in.GetCredit()).c_str() ) );
+  if( in.GetCredit() != "" ) // xMAx
+    lines.push_back( ssprintf( "#CREDIT:%s;", SmEscape(in.GetCredit()).c_str() ) );
 
 	// If the Steps TimingData is not empty, then they have their own
 	// timing.  Write out the corresponding tags.
@@ -448,8 +582,9 @@ bool NotesWriterSSC::Write( RString sPath, const Song &out, const vector<Steps*>
 		return false;
 	}
 
-	WriteGlobalTags( f, out );
-	
+	// WriteGlobalTags( f, out ); // xMAx
+	WriteGlobalTags( f, out, bSavingCache ); // xMAx
+
 	if( bSavingCache )
 	{
 		f.PutLine( ssprintf( "// cache tags:" ) );
@@ -514,8 +649,8 @@ bool NotesWriterSSC::WriteEditFileToMachine( const Song *pSong, Steps *pSteps, R
 	RString sPath = sDir + GetEditFileName(pSong,pSteps);
 
 	// Check to make sure that we're not clobering an existing file before opening.
-	bool bFileNameChanging = 
-		pSteps->GetSavedToDisk()  && 
+	bool bFileNameChanging =
+		pSteps->GetSavedToDisk()  &&
 		pSteps->GetFilename() != sPath;
 	if( bFileNameChanging  &&  DoesFileExist(sPath) )
 	{
@@ -551,7 +686,7 @@ bool NotesWriterSSC::WriteEditFileToMachine( const Song *pSong, Steps *pSteps, R
 /*
  * (c) 2011 Jason Felds
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -561,7 +696,7 @@ bool NotesWriterSSC::WriteEditFileToMachine( const Song *pSong, Steps *pSteps, R
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

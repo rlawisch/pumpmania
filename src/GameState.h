@@ -104,7 +104,7 @@ public:
 	/**
 	 * @brief The number of coins presently in the machine.
 	 *
-	 * Note that coins are not "credits". One may have to put in two coins 
+	 * Note that coins are not "credits". One may have to put in two coins
 	 * to get one credit, only to have to put in another four coins to get
 	 * the three credits needed to begin the game. */
 	BroadcastOnChange<int>			m_iCoins;
@@ -356,7 +356,7 @@ public:
 	void GetRankingFeats( PlayerNumber pn, vector<RankingFeat> &vFeatsOut ) const;
 	bool AnyPlayerHasRankingFeats() const;
 	void StoreRankingName( PlayerNumber pn, RString name );	// Called by name entry screens
-	vector<RString*> m_vpsNamesThatWereFilled;	// filled on StoreRankingName, 
+	vector<RString*> m_vpsNamesThatWereFilled;	// filled on StoreRankingName,
 
 	// Award stuff
 	// lowest priority in front, highest priority at the back.
@@ -376,7 +376,7 @@ public:
 	// Preferences
 	static Preference<bool> m_bAutoJoin;
 
-	// These options have weird interactions depending on m_bEventMode, 
+	// These options have weird interactions depending on m_bEventMode,
 	// so wrap them.
 	bool		m_bTemporaryEventMode;
 	bool		IsEventMode() const;
@@ -384,7 +384,7 @@ public:
 	Premium		GetPremium() const;
 
 	// Edit stuff
-	
+
 	/**
 	 * @brief Is the game right now using Song timing or Steps timing?
 	 *
@@ -420,6 +420,31 @@ public:
 
 	// Lua
 	void PushSelf( lua_State *L );
+
+	// xMAx -----------------------------------------------------------------------------------------
+	bool		m_bHasProfile[NUM_PLAYERS];	// Used on ScreenSelectProfile.cpp to check if player has a local profile
+	int			m_iProfileIndex[NUM_PLAYERS];	// Used on ScreenSelectProfile.cpp to check if player has a local profile
+	int			m_iProfileIndexRandom[NUM_PLAYERS];	// Used on ScreenSelectProfile.cpp to check if player has a local profile
+	RString 	GetAvatarURLFromPlayerNumber( PlayerNumber pn );
+	bool 		m_bBasicMode;
+	bool		m_bNoteSkin1Unlocked;
+	bool		m_bNoteSkin2Unlocked;
+	RString		m_sCurrentGroupName;	// Used on ScreenSelectMusic.cpp
+	RString		m_sBasicModeGroupName;
+
+	int			GetHighestNumStagesLeftForAnyHumanPlayer() const;
+	inline bool IsBasicMode() { return m_bBasicMode; };
+	inline void SetBasicMode( bool b ) { m_bBasicMode = b; };
+
+	BroadcastOnChange<BattleMode>		m_BattleMode; // Battle type
+	int									m_iNumBattleStagesWon[NUM_PLAYERS];
+	PlayerNumber						m_PlayerWonBattleMode;
+	int									m_iNumBattleStages;		// General for both players
+	void 		ResetBattleVars();
+
+	int		m_bPlayerChartIndex[NUM_PLAYERS];
+	bool 	IsDouble(void) const;
+	// ----------------------------------------------------------------------------------------------
 
 	// Keep extra stage logic internal to GameState.
 private:
@@ -465,7 +490,7 @@ extern GameState*	GAMESTATE;	// global and accessible from anywhere in our progr
  * @author Chris Danford, Glenn Maynard, Chris Gomez (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -475,7 +500,7 @@ extern GameState*	GAMESTATE;	// global and accessible from anywhere in our progr
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

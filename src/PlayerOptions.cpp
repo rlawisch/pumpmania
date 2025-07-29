@@ -87,6 +87,7 @@ void PlayerOptions::Init()
 	m_fDrawSize = 0;		m_SpeedfDrawSize = 1.0f;
 	m_fDrawSizeBack = 0;		m_SpeedfDrawSizeBack = 1.0f;
 	ZERO( m_bTurns );
+  m_bEW = false; // StepP1 Revival - bSilver
 	ZERO( m_bTransforms );
 	m_bMuteOnError = false;
 	m_bStealthType = false;
@@ -548,6 +549,28 @@ void PlayerOptions::GetMods( vector<RString> &AddTo, bool bForceNoteSkin ) const
 		AddPart( AddTo, m_fPerspectiveTilt, "Tilt" );
 	}
 
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+  switch( m_iJudgment )
+  {
+    case EASY_JUDGMENT: AddTo.push_back("Easy"); break;
+    case NORMAL_JUDGMENT: AddTo.push_back("Normal"); break;
+    case HARD_JUDGMENT: AddTo.push_back("Hard"); break;
+    case VERY_HARD_JUDGMENT: AddTo.push_back("VeryHard"); break;
+    case XTRA_HARD_JUDGMENT: AddTo.push_back("ExtraHard"); break;
+    case ULTRA_HARD_JUDGMENT: AddTo.push_back("UltraHard"); break;
+  }
+
+  AddPart( AddTo, m_bRandomSkin, "RandomNoteSkin");
+  AddPart( AddTo, m_bJudgmentReverse, "JudgementReverse");
+  AddPart( AddTo, m_bAutoNoteskin, "AutoNoteskin");
+  AddPart( AddTo, m_bRouletteNoteskin, "RouletteNoteskin");
+  AddPart( AddTo, m_bNX, "ModNX");
+  AddPart( AddTo, m_iAutoVelocity, "AutoVelocity%.0f");
+  AddPart( AddTo, m_bFreePerformance, "FreePerformance");
+  AddPart( AddTo, m_bJudgeByNote, "JudgeByNote");
+  AddPart( AddTo, m_bMinis, "Minis");
+  // ----------------------------------------------------------------------------------------------
+
 	// Don't display a string if using the default NoteSkin unless we force it.
 	if( bForceNoteSkin || (!m_sNoteSkin.empty() && m_sNoteSkin != CommonMetrics::DEFAULT_NOTESKIN_NAME.GetValue()) )
 	{
@@ -641,14 +664,17 @@ bool PlayerOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut
 	else if( sscanf( sBit, "c%f", &level ) == 1 )
 	{
 		if( !isfinite(level) || level <= 0.0f )
-			level = CMOD_DEFAULT;
+      // StepP1 Revival - bSilver - Reverse engineering says 100.0f
+			// level = CMOD_DEFAULT;
+      level = 100.0f;
 		SET_FLOAT( fScrollBPM )
 		SET_FLOAT( fTimeSpacing )
 		m_fTimeSpacing = 1;
 		m_fMaxScrollBPM = 0;
 	}
 	// oITG's m-mods
-	else if( sscanf( sBit, "m%f", &level ) == 1 )
+	// else if( sscanf( sBit, "m%f", &level ) == 1 ) // StepP1 Revival - bSilver
+	else if( sscanf( sBit, "autovelocity%f", &level ) == 1 ) // StepP1 Revival - bSilver
 	{
 		// OpenITG doesn't have this block:
 		/*

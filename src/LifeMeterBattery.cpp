@@ -9,8 +9,10 @@
 
 LifeMeterBattery::LifeMeterBattery()
 {
+  /* xMAx
 	m_iLivesLeft= 4;
 	m_iTrailingLivesLeft = m_iLivesLeft;
+  */
 
 	m_soundGainLife.Load( THEME->GetPathS("LifeMeterBattery","gain") );
 	m_soundLoseLife.Load( THEME->GetPathS("LifeMeterBattery","lose"),true );
@@ -84,6 +86,7 @@ void LifeMeterBattery::OnSongEnded()
 	if( m_pPlayerStageStats->m_bFailed || m_iLivesLeft == 0 )
 		return;
 
+  /* xMAx
 	if( m_iLivesLeft < m_pPlayerState->m_PlayerOptions.GetSong().m_BatteryLives )
 	{
 		m_iTrailingLivesLeft = m_iLivesLeft;
@@ -109,6 +112,7 @@ void LifeMeterBattery::OnSongEnded()
 		if( m_iTrailingLivesLeft < m_iLivesLeft )
 			m_soundGainLife.Play(false);
 	}
+  */
 
 	Refresh();
 }
@@ -180,7 +184,8 @@ void LifeMeterBattery::ChangeLife( HoldNoteScore score, TapNoteScore tscore )
 	bool bSubtract = false;
 	if( score == HNS_Held && HELD_ADD_LIVES > 0 )
 		AddLives(HELD_ADD_LIVES);
-	if( score == HNS_LetGo && LET_GO_SUBTRACT_LIVES > 0 )
+	// if( score == HNS_LetGo && LET_GO_SUBTRACT_LIVES > 0 ) // xMAx
+	if( score == HNS_Missed && LET_GO_SUBTRACT_LIVES > 0 ) // xMAx
 	{
 		SubtractLives(LET_GO_SUBTRACT_LIVES);
 		bSubtract = true;
@@ -222,7 +227,8 @@ bool LifeMeterBattery::IsInDanger() const
 
 bool LifeMeterBattery::IsHot() const
 {
-	return m_iLivesLeft == m_pPlayerState->m_PlayerOptions.GetSong().m_BatteryLives;
+	// return m_iLivesLeft == m_pPlayerState->m_PlayerOptions.GetSong().m_BatteryLives; // xMAx
+  return 1; // xMAx
 }
 
 bool LifeMeterBattery::IsFailing() const
@@ -232,15 +238,20 @@ bool LifeMeterBattery::IsFailing() const
 
 float LifeMeterBattery::GetLife() const
 {
+  /* xMAx
 	if(!m_pPlayerState->m_PlayerOptions.GetSong().m_BatteryLives)
 		return 1;
 
 	return float(m_iLivesLeft) / m_pPlayerState->m_PlayerOptions.GetSong().m_BatteryLives;
+  */
+ return 1; // xMAx
 }
 int LifeMeterBattery::GetRemainingLives() const
 {
+  /* xMAx
 	if( !m_pPlayerState->m_PlayerOptions.GetSong().m_BatteryLives )
 		return 1;
+  */
 
 	return m_iLivesLeft;
 }
@@ -268,18 +279,18 @@ void LifeMeterBattery::Update( float fDeltaTime )
 // lua start
 #include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the LifeMeterBattery. */ 
+/** @brief Allow Lua to have access to the LifeMeterBattery. */
 class LunaLifeMeterBattery: public Luna<LifeMeterBattery>
 {
 public:
 	static int GetLivesLeft( T* p, lua_State *L )	{ lua_pushnumber( L, p->GetLivesLeft() ); return 1; }
-	static int GetTotalLives( T* p, lua_State *L )	{ lua_pushnumber(L, p->GetTotalLives()); return 1; }
+	// static int GetTotalLives( T* p, lua_State *L )	{ lua_pushnumber(L, p->GetTotalLives()); return 1; } // xMAx
 	static int ChangeLives( T* p, lua_State *L )	{ p->ChangeLives(IArg(1)); COMMON_RETURN_SELF; }
 
 	LunaLifeMeterBattery()
 	{
 		ADD_METHOD( GetLivesLeft );
-		ADD_METHOD( GetTotalLives );
+		// ADD_METHOD( GetTotalLives ); //xMAx
 		ADD_METHOD( ChangeLives );
 	}
 };
@@ -289,7 +300,7 @@ LUA_REGISTER_DERIVED_CLASS( LifeMeterBattery, LifeMeter )
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -299,7 +310,7 @@ LUA_REGISTER_DERIVED_CLASS( LifeMeterBattery, LifeMeter )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -46,14 +46,16 @@ XToString( DisplayBPM );
 LuaXType( DisplayBPM );
 
 Steps::Steps(Song *song): m_StepsType(StepsType_Invalid), m_pSong(song),
-	parent(nullptr), m_pNoteData(new NoteData), m_bNoteDataIsFilled(false), 
-	m_sNoteDataCompressed(""), m_sFilename(""), m_bSavedToDisk(false), 
+	parent(nullptr), m_pNoteData(new NoteData), m_bNoteDataIsFilled(false),
+	m_sNoteDataCompressed(""), m_sFilename(""), m_bSavedToDisk(false),
 	m_LoadedFromProfile(ProfileSlot_Invalid), m_iHash(0),
-	m_sDescription(""), m_sChartStyle(""), 
+	m_sDescription(""), m_sChartStyle(""),
 	m_Difficulty(Difficulty_Invalid), m_iMeter(0),
 	m_bAreCachedRadarValuesJustLoaded(false),
 	m_sCredit(""), displayBPMType(DISPLAY_BPM_ACTUAL),
-	specifiedBPMMin(0), specifiedBPMMax(0) {}
+	specifiedBPMMin(0), specifiedBPMMax(0),
+	m_sLabel(""),m_sUnderLabel(""),m_bShowInfoBar(false),m_bLoadedFromEditFile(false),m_bIsDoubleAsHalfDouble(false) //xMAx
+	{}
 
 Steps::~Steps()
 {
@@ -117,16 +119,16 @@ bool Steps::GetNoteDataFromSimfile()
 			/*
 			HACK: 7/20/12 -- see bugzilla #740
 			users who edit songs using the ever popular .sm file
-			that remove or tamper with the .ssc file later on 
+			that remove or tamper with the .ssc file later on
 			complain of blank steps in the editor after reloading.
-			Despite the blank steps being well justified since 
+			Despite the blank steps being well justified since
 			the cache files contain only the SSC step file,
 			give the user some leeway and search for a .sm replacement
 			*/
 			SMLoader backup_loader;
 			RString transformedStepFile = stepFile;
 			transformedStepFile.Replace(".ssc", ".sm");
-			
+
 			return backup_loader.LoadNoteDataFromSimfile(transformedStepFile, *this);
 		}
 		else
@@ -178,7 +180,7 @@ void Steps::SetNoteData( const NoteData& noteDataNew )
 
 	*m_pNoteData = noteDataNew;
 	m_bNoteDataIsFilled = true;
-	
+
 	m_sNoteDataCompressed = RString();
 	m_iHash = 0;
 }
@@ -219,7 +221,7 @@ void Steps::GetSMNoteData( RString &notes_comp_out ) const
 {
 	if( m_sNoteDataCompressed.empty() )
 	{
-		if( !m_bNoteDataIsFilled ) 
+		if( !m_bNoteDataIsFilled )
 		{
 			/* no data is no data */
 			notes_comp_out = "";
@@ -287,8 +289,8 @@ void Steps::TidyUpData()
 		else if( GetMeter() <= 6 )	SetDifficulty( Difficulty_Medium );
 		else				SetDifficulty( Difficulty_Hard );
 	}
-
-	if( GetMeter() < 1) // meter is invalid
+  // xMAx - Changed to also include -1 and 0
+	if( GetMeter() < -1) // meter is invalid
 		SetMeter( int(PredictMeter()) );
 }
 
@@ -450,7 +452,7 @@ void Steps::Compress() const
 		m_sNoteDataCompressed = RString();
 		return;
 	}
-	
+
 	// Don't compress data in the editor: it's still in use.
 	if (GAMESTATE->m_bInStepEditor)
 	{
@@ -550,6 +552,83 @@ void Steps::SetDifficultyAndDescription( Difficulty dc, RString sDescription )
 	m_sDescription = sDescription;
 	if( GetDifficulty() == Difficulty_Edit )
 		MakeValidEditDescription( m_sDescription );
+
+	// xMAx - Spot to review steps' description
+	RString sTDescription = sDescription;
+	sTDescription.MakeUpper();
+
+	m_sLabel = "";
+	m_bShowInfoBar = false;
+	m_sUnderLabel = "";
+
+	//-----------
+	if( m_StepsType == StepsType_pump_double && (sTDescription.find("HALFDOUBLE") != std::string::npos) || m_StepsType == StepsType_pump_halfdouble )
+	{
+		m_sUnderLabel = "HALFDOUBLE";
+		m_bIsDoubleAsHalfDouble = true;
+	}
+	else if( m_StepsType == StepsType_pump_couple )
+	{
+		m_sUnderLabel = "COUPLE";
+	}
+
+	//-----------
+	if( sTDescription.find("INFOBAR") != std::string::npos )
+	{
+		m_bShowInfoBar = true;
+	}
+
+	//-----------
+	if( sTDescription.find("ANOTHER") != std::string::npos )
+	{
+		m_sLabel = "ANOTHER";
+		return;
+	}
+	else if ( sTDescription.find("PRO") != std::string::npos )
+	{
+		m_sLabel = "PRO";
+		return;
+	}
+	else if ( sTDescription.find("TRAIN") != std::string::npos )
+	{
+		m_sLabel = "TRAIN";
+		return;
+	}
+	else if ( sTDescription.find("QUEST") != std::string::npos )
+	{
+		m_sLabel = "QUEST";
+		return;
+	}
+	else if ( sTDescription.find("OUCS") != std::string::npos )
+	{
+		m_sLabel = "OUCS";
+		return;
+	}
+	else if ( sTDescription.find("UCS") != std::string::npos )
+	{
+		m_sLabel = "UCS";
+		return;
+	}
+	else if ( sTDescription.find("HIDDEN") != std::string::npos )
+	{
+		m_sLabel = "HIDDEN";
+		return;
+	}
+	else if ( sTDescription.find("NEW") != std::string::npos )
+	{
+		m_sLabel = "NEW";
+		return;
+	}
+	else if ( sTDescription.find("INFINITY") != std::string::npos )
+	{
+		m_sLabel = "INFINITY";
+		return;
+	}
+	else if ( sTDescription.find("JUMP") != std::string::npos )
+	{
+		m_sLabel = "JUMP";
+		return;
+	}
 }
 
 void Steps::SetCredit( RString sCredit )
@@ -627,6 +706,27 @@ void Steps::SetCachedRadarValues( const RadarValues v[NUM_PLAYERS] )
 	copy( v, v + NUM_PLAYERS, m_CachedRadarValues );
 	m_bAreCachedRadarValuesJustLoaded = true;
 }
+
+// xMAx -------------------------------------------------------------------------------------------
+RString Steps::GetMeterString( void ) const
+{
+	RString sMeter;
+	int iMeter = this->GetMeter();
+	if( iMeter == 99 )
+		sMeter = "??";
+	else if ( iMeter == -1 )
+		sMeter = "!!";
+	else
+		sMeter = ssprintf("%d", this->GetMeter());
+
+	return sMeter;
+}
+
+bool Steps::HasNoteSkinPlayer() const
+{
+	return this->GetNoteData().HasNoteSkinPlayer();
+}
+//-------------------------------------------------------------------------------------------------
 
 RString Steps::GenerateChartKey()
 {
@@ -718,13 +818,13 @@ public:
 
 	static int HasSignificantTimingChanges( T* p, lua_State *L )
 	{
-		lua_pushboolean(L, p->HasSignificantTimingChanges()); 
-		return 1; 
+		lua_pushboolean(L, p->HasSignificantTimingChanges());
+		return 1;
 	}
 	static int HasAttacks( T* p, lua_State *L )
-	{ 
-		lua_pushboolean(L, p->HasAttacks()); 
-		return 1; 
+	{
+		lua_pushboolean(L, p->HasAttacks());
+		return 1;
 	}
 	static int GetRadarValues( T* p, lua_State *L )
 	{
@@ -732,7 +832,7 @@ public:
 		if (!lua_isnil(L, 1)) {
 			pn = Enum::Check<PlayerNumber>(L, 1);
 		}
-		
+
 		RadarValues &rv = const_cast<RadarValues &>(p->GetRadarValues(pn));
 		rv.PushSelf(L);
 		return 1;
@@ -796,6 +896,17 @@ public:
 		return 1;
 	}
 
+	// xMAx -----------------------------------------------------------------------------------------
+	static int HasNoteSkinPlayer( T* p, lua_State *L )
+	{
+		lua_pushboolean(L, p->HasNoteSkinPlayer());
+		return 1;
+	}
+	DEFINE_METHOD( GetLabel,		GetLabel() 		)
+	DEFINE_METHOD( GetUnderLabel,	GetUnderLabel() )
+	DEFINE_METHOD( ShowInfoBar,		ShowInfoBar() 	)
+	//-----------------------------------------------------------------------------------------------
+
 	LunaSteps()
 	{
 		ADD_METHOD( GetAuthorCredit );
@@ -821,6 +932,12 @@ public:
 		ADD_METHOD( IsDisplayBpmRandom );
 		ADD_METHOD( PredictMeter );
 		ADD_METHOD( GetDisplayBPMType );
+
+		// xMAx --------------------------------------------
+		ADD_METHOD( HasNoteSkinPlayer );
+		ADD_METHOD( GetLabel );
+		ADD_METHOD( GetUnderLabel );
+		ADD_METHOD( ShowInfoBar );
 	}
 };
 
@@ -831,7 +948,7 @@ LUA_REGISTER_CLASS( Steps )
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard, David Wilson
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -841,7 +958,7 @@ LUA_REGISTER_CLASS( Steps )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

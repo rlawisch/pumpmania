@@ -84,7 +84,14 @@ public:
 		m_bStealthType(false), m_bStealthPastReceptors(false),
 		m_bDizzyHolds(false), m_bZBuffer(false),
 		m_bCosecant(false),
-		m_MinTNSToHideNotes(PREFSMAN->m_MinTNSToHideNotes)
+		m_MinTNSToHideNotes(PREFSMAN->m_MinTNSToHideNotes),
+    // xMAx
+		m_bNX(false), m_bJudgmentReverse(false),
+		m_bRandomSkin(false), m_bEW(false),
+		m_bAutoNoteskin(false), m_bRouletteNoteskin(false),
+		m_bFreePerformance(false), m_bJudgeByNote(true),
+		m_iJudgment(NORMAL_JUDGMENT), m_bMinis(false),
+    m_iAutoVelocity(300)
 	{
 		m_sNoteSkin = "";
 		ZERO( m_fAccels );	ONE( m_SpeedfAccels );
@@ -109,8 +116,8 @@ public:
 	RString GetString( bool bForceNoteSkin = false ) const;
 	RString GetSavedPrefsString() const;	// only the basic options that players would want for every song
 	enum ResetPrefsType
-	{ 
-		saved_prefs, 
+	{
+		saved_prefs,
 		saved_prefs_invalid_for_course
 	};
 	void ResetPrefs( ResetPrefsType type );
@@ -289,7 +296,7 @@ public:
 		TURN_SHUFFLE, /**< Some of the arrow columns are changed throughout the whole song. */
 		TURN_SOFT_SHUFFLE, /**< Only shuffle arrow columns on an axis of symmetry. */
 		TURN_SUPER_SHUFFLE, /**< Every arrow is placed on a random column. */
-		NUM_TURNS 
+		NUM_TURNS
 	};
 	enum Transform {
 		TRANSFORM_NOHOLDS,
@@ -323,7 +330,20 @@ public:
 		SCROLL_ALTERNATE,
 		SCROLL_CROSS,
 		SCROLL_CENTERED,
+		SCROLL_UNDER_ATTACK, // StepP1 Revival -- bSilver
+ 		SCROLL_DROP, // StepP1 Revival -- bSilver
 		NUM_SCROLLS
+	};
+
+  // StepP1 Revival -- bSilver
+	enum Judgment {
+		EASY_JUDGMENT,
+		NORMAL_JUDGMENT,
+		HARD_JUDGMENT,
+		VERY_HARD_JUDGMENT,
+		XTRA_HARD_JUDGMENT,
+		ULTRA_HARD_JUDGMENT,
+		NUM_Judments
 	};
 
 	float GetReversePercentForColumn( int iCol ) const; // accounts for all Directions
@@ -416,6 +436,19 @@ public:
 	// return true if any mods being used will make the song(s) easier
 	bool IsEasierForSongAndSteps( Song* pSong, Steps* pSteps, PlayerNumber pn ) const;
 	bool IsEasierForCourseAndTrail( Course* pCourse, Trail* pTrail ) const;
+
+	// StepP1 Revival -- bSilver
+	bool		m_bJudgeByNote = false;
+	bool		m_bNX; // NXMode
+	Judgment	m_iJudgment; // Judges
+	bool		m_bFreePerformance; // Play double in one side
+	bool		m_bJudgmentReverse; // Judgment Reverse
+	bool		m_bEW; // Earthworm
+	bool		m_bAutoNoteskin; // Auto NoteSkin (Based on Songs Folder)
+	bool		m_bRouletteNoteskin; // Select ONE Skin random
+	bool		m_bRandomSkin; // Change skins in the gameplay.
+  int     m_iAutoVelocity;
+  bool    m_bMinis;
 };
 
 #define ADD_MULTICOL_METHOD( method_name) \
@@ -458,7 +491,7 @@ public:
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -468,7 +501,7 @@ public:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -129,7 +129,7 @@ public:
 	enum Effect { no_effect,
 			diffuse_blink, diffuse_shift, diffuse_ramp,
 			glow_blink, glow_shift, glow_ramp, rainbow,
-			wag, bounce, bob, pulse, spin, vibrate
+			wag, bounce, bob, pulse, spin, vibrate, xpulse // xMAx - add xpulse effect
 	};
 
 	/** @brief Various values an Actor's effect can be tied to. */
@@ -275,8 +275,8 @@ public:
 	virtual void DrawPrimitives() {};
 	/** @brief Pop the transform from the world matrix stack. */
 	virtual void EndDraw();
-	
-	// TODO: make Update non virtual and change all classes to override UpdateInternal 
+
+	// TODO: make Update non virtual and change all classes to override UpdateInternal
 	// instead.
 	bool IsFirstUpdate() const;
 	virtual void Update( float fDeltaTime );		// this can short circuit UpdateInternal
@@ -397,9 +397,9 @@ public:
 	 * @brief Set the zoom factor for all dimensions of the Actor.
 	 * @param zoom the zoom factor for all dimensions. */
 	void  SetZoom( float zoom )
-	{ 
-		DestTweenState().scale.x = zoom; 
-		DestTweenState().scale.y = zoom; 
+	{
+		DestTweenState().scale.x = zoom;
+		DestTweenState().scale.y = zoom;
 		DestTweenState().scale.z = zoom;
 	}
 	/**
@@ -497,7 +497,7 @@ public:
 
 	/** @brief How do we handle stretching the Actor? */
 	enum StretchType
-	{ 
+	{
 		fit_inside, /**< Have the Actor fit inside its parent, using the smaller zoom. */
 		cover /**< Have the Actor cover its parent, using the larger zoom. */
 	};
@@ -555,6 +555,7 @@ public:
 	void SetEffectBounce( float fPeriod, RageVector3 vect );
 	void SetEffectBob( float fPeriod, RageVector3 vect );
 	void SetEffectPulse( float fPeriod, float fMinZoom, float fMaxZoom );
+	void SetEffectXPulse( float fPeriod, float fMinZoom, float fMaxZoom ); //xMAx
 	void SetEffectSpin( RageVector3 vect );
 	void SetEffectVibrate( RageVector3 vect );
 
@@ -579,16 +580,16 @@ public:
 	void StopAnimating()				{ this->EnableAnimation(false); }
 
 	// render states
-	void SetBlendMode( BlendMode mode )		{ m_BlendMode = mode; } 
+	void SetBlendMode( BlendMode mode )		{ m_BlendMode = mode; }
 	void SetTextureTranslate( float x, float y )	{ m_texTranslate.x = x; m_texTranslate.y = y; }
-	void SetTextureWrapping( bool b ) 			{ m_bTextureWrapping = b; } 
-	void SetTextureFiltering( bool b ) 		{ m_bTextureFiltering = b; } 
-	void SetClearZBuffer( bool b ) 			{ m_bClearZBuffer = b; } 
-	void SetUseZBuffer( bool b ) 				{ SetZTestMode(b?ZTEST_WRITE_ON_PASS:ZTEST_OFF); SetZWrite(b); } 
-	virtual void SetZTestMode( ZTestMode mode )	{ m_ZTestMode = mode; } 
-	virtual void SetZWrite( bool b ) 			{ m_bZWrite = b; } 
+	void SetTextureWrapping( bool b ) 			{ m_bTextureWrapping = b; }
+	void SetTextureFiltering( bool b ) 		{ m_bTextureFiltering = b; }
+	void SetClearZBuffer( bool b ) 			{ m_bClearZBuffer = b; }
+	void SetUseZBuffer( bool b ) 				{ SetZTestMode(b?ZTEST_WRITE_ON_PASS:ZTEST_OFF); SetZWrite(b); }
+	virtual void SetZTestMode( ZTestMode mode )	{ m_ZTestMode = mode; }
+	virtual void SetZWrite( bool b ) 			{ m_bZWrite = b; }
 	void SetZBias( float f )					{ m_fZBias = f; }
-	virtual void SetCullMode( CullMode mode ) { m_CullMode = mode; } 
+	virtual void SetCullMode( CullMode mode ) { m_CullMode = mode; }
 
 	// Lua
 	virtual void PushSelf( lua_State *L );
@@ -761,7 +762,7 @@ private:
  * @author Chris Danford (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -771,7 +772,7 @@ private:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -94,18 +94,18 @@ bool SongCriteria::Matches( const Song *pSong ) const
 	return true;
 }
 
-void SongUtil::GetSteps( 
-	const Song *pSong, 
-	vector<Steps*>& arrayAddTo, 
-	StepsType st, 
-	Difficulty dc, 
-	int iMeterLow, 
-	int iMeterHigh, 
+void SongUtil::GetSteps(
+	const Song *pSong,
+	vector<Steps*>& arrayAddTo,
+	StepsType st,
+	Difficulty dc,
+	int iMeterLow,
+	int iMeterHigh,
 	const RString &sDescription,
 	const RString &sCredit,
-	bool bIncludeAutoGen, 
+	bool bIncludeAutoGen,
 	unsigned uHash,
-	int iMaxToGet 
+	int iMaxToGet
 	)
 {
 	if( !iMaxToGet )
@@ -142,12 +142,12 @@ void SongUtil::GetSteps(
 	}
 }
 
-Steps* SongUtil::GetOneSteps( 
-	const Song *pSong, 
-	StepsType st, 
-	Difficulty dc, 
-	int iMeterLow, 
-	int iMeterHigh, 
+Steps* SongUtil::GetOneSteps(
+	const Song *pSong,
+	StepsType st,
+	Difficulty dc,
+	int iMeterLow,
+	int iMeterHigh,
 	const RString &sDescription,
 	const RString &sCredit,
 	unsigned uHash,
@@ -204,7 +204,7 @@ Steps* SongUtil::GetStepsByDescription( const Song *pSong, StepsType st, RString
 	GetSteps( pSong, vNotes, st, Difficulty_Invalid, -1, -1, sDescription, "" );
 	if( vNotes.size() == 0 )
 		return nullptr;
-	else 
+	else
 		return vNotes[0];
 }
 
@@ -327,7 +327,7 @@ void SongUtil::DeleteDuplicateSteps( Song *pSong, vector<Steps*> &vSteps )
 
 			LOG->Trace("Removed %p duplicate steps in song \"%s\" with description \"%s\", step author \"%s\", and meter \"%i\"",
 				s2, pSong->GetSongDir().c_str(), s1->GetDescription().c_str(), s1->GetCredit().c_str(), s1->GetMeter() );
-				
+
 			pSong->DeleteSteps( s2, false );
 
 			vSteps.erase(vSteps.begin()+j);
@@ -393,7 +393,31 @@ static bool CompareSongPointersByTitle( const Song *pSong1, const Song *pSong2 )
 	if(ret < 0) return true;
 	if(ret > 0) return false;
 
-	/* The titles are the same.  Ensure we get a consistent ordering
+	/* The titles are the same. Ensure we get a consistent ordering
+	 * by comparing the unique SongFilePaths. */
+	return pSong1->GetSongFilePath().CompareNoCase(pSong2->GetSongFilePath()) < 0;
+}
+
+// xMAx
+static bool CompareSongPointersBySongFolder( const Song *pSong1, const Song *pSong2 )
+{
+	RString s1 = pSong1->GetSongFolder();
+	RString s2 = pSong2->GetSongFolder();
+
+	if( s1 == s2 )
+	{
+		s1 = pSong1->GetDisplayMainTitle();
+		s2 = pSong2->GetDisplayMainTitle();
+	}
+
+	s1 = SongUtil::MakeSortString(s1);
+	s2 = SongUtil::MakeSortString(s2);
+
+	int ret = strcmp( s1, s2 );
+	if(ret < 0) return true;
+	if(ret > 0) return false;
+
+	/* The titles are the same. Ensure we get a consistent ordering
 	 * by comparing the unique SongFilePaths. */
 	return pSong1->GetSongFilePath().CompareNoCase(pSong2->GetSongFilePath()) < 0;
 }
@@ -413,7 +437,7 @@ static bool CompareSongPointersByBPM( const Song *pSong1, const Song *pSong2 )
 		return true;
 	if( bpms1.GetMax() > bpms2.GetMax() )
 		return false;
-	
+
 	return CompareRStringsAsc( pSong1->GetSongFilePath(), pSong2->GetSongFilePath() );
 }
 
@@ -507,6 +531,18 @@ void SongUtil::SortSongPointerArrayByDisplayArtist( vector<Song*> &vpSongsInOut 
 	stable_sort( vpSongsInOut.begin(), vpSongsInOut.end(), CompareSongPointersBySortValueAscending );
 }
 
+// xMAx -------------------------------------------------------------------------------------------
+static int CompareSongPointersByCategory(const Song *pSong1, const Song *pSong2)
+{
+	return pSong1->m_SongCategory < pSong2->m_SongCategory;
+}
+
+void SongUtil::SortSongPointerArrayByCategory( vector<Song*> &vpSongsInOut )
+{
+	stable_sort( vpSongsInOut.begin(), vpSongsInOut.end(), CompareSongPointersByCategory );
+}
+//-------------------------------------------------------------------------------------------------
+
 static int CompareSongPointersByGenre(const Song *pSong1, const Song *pSong2)
 {
 	return pSong1->m_sGenre < pSong2->m_sGenre;
@@ -541,6 +577,29 @@ void SongUtil::SortSongPointerArrayByGroupAndTitle( vector<Song*> &vpSongsInOut 
 	sort( vpSongsInOut.begin(), vpSongsInOut.end(), CompareSongPointersByGroupAndTitle );
 }
 
+// xMAx -------------------------------------------------------------------------------------------
+static int CompareSongPointersByGroupAndSongFolder( const Song *pSong1, const Song *pSong2 )
+{
+	const RString &sGroup1 = pSong1->m_sGroupName;
+	const RString &sGroup2 = pSong2->m_sGroupName;
+
+	if( sGroup1 < sGroup2 )
+		return true;
+	if( sGroup1 > sGroup2 )
+		return false;
+
+	/* Same group; compare by song folder. */
+	return CompareSongPointersBySongFolder( pSong1, pSong2 );
+}
+
+
+void SongUtil::SortSongPointerArrayByGroupAndSongFolder( vector<Song*> &vpSongsInOut )
+{
+	sort( vpSongsInOut.begin(), vpSongsInOut.end(), CompareSongPointersByGroupAndSongFolder );
+}
+
+// xMAx -------------------------------------------------------------------------------------------
+
 void SongUtil::SortSongPointerArrayByNumPlays( vector<Song*> &vpSongsInOut, ProfileSlot slot, bool bDescending )
 {
 	if( !PROFILEMAN->IsPersistentProfile(slot) )
@@ -565,10 +624,21 @@ RString SongUtil::GetSectionNameFromSongAndSort( const Song* pSong, SortOrder so
 
 	switch( so )
 	{
+	case SORT_REMIX:	// xMAx
+	case SORT_SHORTCUT:	// xMAx
+	case SORT_UCS:		// xMAx
+	case SORT_LEVEL_1:		// xMAx
+	case SORT_QUEST:
+	case SORT_FULLSONG:	// xMAx
+	case SORT_ORIGINAL:
+	case SORT_KPOP:
+	case SORT_WORLDMUSIC:
+	case SORT_ALLTUNES:	// xMAx
+		return RString();
 	case SORT_PREFERRED:
 		return SONGMAN->SongToPreferredSortSectionName( pSong );
 	case SORT_GROUP:
-		// guaranteed not empty	
+		// guaranteed not empty
 		return pSong->m_sGroupName;
 	case SORT_TITLE:
 	case SORT_ARTIST:
@@ -807,7 +877,7 @@ bool SongUtil::ValidateCurrentEditStepsDescription( const RString &sAnswer, RStr
 
 	// Steps name must be unique for this song.
 	vector<Steps*> v;
-	GetSteps( pSong, v, StepsType_Invalid, Difficulty_Edit ); 
+	GetSteps( pSong, v, StepsType_Invalid, Difficulty_Edit );
 	for (Steps const *s : v)
 	{
 		if( pSteps == s )
@@ -847,20 +917,20 @@ bool SongUtil::ValidateCurrentStepsDescription( const RString &sAnswer, RString 
 bool SongUtil::ValidateCurrentStepsChartName(const RString &answer, RString &error)
 {
 	if (answer.empty()) return true;
-	
+
 	static const RString sInvalidChars = "\\/:*?\"<>|";
 	if( strpbrk(answer, sInvalidChars) != nullptr )
 	{
 		error = ssprintf( CHART_NAME_CANNOT_CONTAIN.GetValue(), sInvalidChars.c_str() );
 		return false;
 	}
-	
+
 	/* Don't allow duplicate title names within the same StepsType.
 	 * We need some way of identifying the unique charts. */
 	Steps *pSteps = GAMESTATE->m_pCurSteps[PLAYER_1];
-	
+
 	if (pSteps->GetChartName() == answer) return true;
-	
+
 	// TODO next commit: borrow code from EditStepsDescription.
 	bool result = SongUtil::IsChartNameUnique(GAMESTATE->m_pCurSong, pSteps->m_StepsType,
 											  answer, pSteps);
@@ -875,12 +945,12 @@ bool SongUtil::ValidateCurrentStepsCredit( const RString &sAnswer, RString &sErr
 {
 	if( sAnswer.empty() )
 		return true;
-	
+
 	Steps *pSteps = GAMESTATE->m_pCurSteps[PLAYER_1];
 	// If unchanged:
 	if( pSteps->GetCredit() == sAnswer )
 		return true;
-	
+
 	// Borrow from EditDescription testing. Perhaps this should be abstracted? -Wolfman2000
 	static const RString sInvalidChars = "\\/:*?\"<>|";
 	if( strpbrk(sAnswer, sInvalidChars) != nullptr )
@@ -888,7 +958,7 @@ bool SongUtil::ValidateCurrentStepsCredit( const RString &sAnswer, RString &sErr
 		sErrorOut = ssprintf( AUTHOR_NAME_CANNOT_CONTAIN.GetValue(), sInvalidChars.c_str() );
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -941,6 +1011,29 @@ void SongUtil::GetAllSongGenres( vector<RString> &vsOut )
 		vsOut.push_back( genre );
 	}
 }
+
+// xMAx -------------------------------------------------------------------------------------------
+bool SongUtil::HasAtLeastOnePlayableSong( const SongCriteria &sc, const vector<Song*> &in, SortOrder so )
+{
+	for (Song *s : in)
+	{
+		if( !(sc.Matches( s ) && IsSongPlayable(s)))
+			continue;
+
+		vector<Steps*>	m_vpSteps;
+		GetPlayableSteps( s, m_vpSteps, so );
+		if( m_vpSteps.empty() )
+			continue;
+		else
+		{
+			return true;
+			break;
+		}
+	}
+
+	return false;
+}
+// ------------------------------------------------------------------------------------------------
 
 void SongUtil::FilterSongs( const SongCriteria &sc, const vector<Song*> &in,
 			   vector<Song*> &out, bool doCareAboutGame )
@@ -999,8 +1092,8 @@ void SongUtil::GetPlayableStepsTypes( const Song *pSong, set<StepsType> &vOut )
 		int iNumPlayers = GAMESTATE->GetNumPlayersEnabled();
 		iNumPlayers = max( iNumPlayers, 1 );
 
-		bool bEnoughStages = GAMESTATE->IsAnExtraStage() || 
-			GAMESTATE->GetSmallestNumStagesLeftForAnyHumanPlayer() >= 
+		bool bEnoughStages = GAMESTATE->IsAnExtraStage() ||
+			GAMESTATE->GetSmallestNumStagesLeftForAnyHumanPlayer() >=
 			GAMESTATE->GetNumStagesMultiplierForSong(pSong);
 
 		if( bShowThisStepsType && bEnoughStages )
@@ -1008,7 +1101,7 @@ void SongUtil::GetPlayableStepsTypes( const Song *pSong, set<StepsType> &vOut )
 	}
 }
 
-void SongUtil::GetPlayableSteps( const Song *pSong, vector<Steps*> &vOut )
+void SongUtil::GetPlayableSteps( const Song *pSong, vector<Steps*> &vOut, SortOrder so )
 {
 	set<StepsType> vStepsType;
 	GetPlayableStepsTypes( pSong, vStepsType );
@@ -1142,7 +1235,7 @@ XNode* SongID::CreateNode() const
 	return pNode;
 }
 
-void SongID::LoadFromNode( const XNode* pNode ) 
+void SongID::LoadFromNode( const XNode* pNode )
 {
 	ASSERT( pNode->GetName() == "Song" );
 	pNode->GetAttrValue("Dir", sDir);
@@ -1203,7 +1296,7 @@ LUA_REGISTER_NAMESPACE( SongUtil )
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -1213,7 +1306,7 @@ LUA_REGISTER_NAMESPACE( SongUtil )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

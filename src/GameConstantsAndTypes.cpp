@@ -156,6 +156,44 @@ LuaXType( Premium );
 
 
 static const char *SortOrderNames[] = {
+	// ------- Pump it Up Sorts - StepP1 Revival - bsilver --------
+	"Remix",
+	"ShortCut",
+	"UCS",
+	"Random",
+	"Level_1",
+	"Level_2",
+	"Level_3",
+	"Level_4",
+	"Level_5",
+	"Level_6",
+	"Level_7",
+	"Level_8",
+	"Level_9",
+	"Level_10",
+	"Level_11",
+	"Level_12",
+	"Level_13",
+	"Level_14",
+	"Level_15",
+	"Level_16",
+	"Level_17",
+	"Level_18",
+	"Level_19",
+	"Level_20",
+	"Level_21",
+	"Level_22",
+	"Level_23",
+	"Level_24_Over",
+	"Quest",
+	"FullSong",
+	"Original",
+	"KPop",
+	"WorldMusic",
+	"AllTunes", // "NewTunes",
+	"Coop",
+	"JMusic",
+	// ----------------------------------------------------------------------------------------------
 	"Preferred",
 	"Group",
 	"Title",
@@ -344,9 +382,9 @@ StringToX( StageAward );
 LuaFunction( StageAwardToLocalizedString, StageAwardToLocalizedString(Enum::Check<StageAward>(L, 1)) );
 LuaXType( StageAward );
 
-// Numbers are intentionally not at the front of these strings so that the 
+// Numbers are intentionally not at the front of these strings so that the
 // strings can be used as XML entity names.
-// Numbers are intentionally not at the back so that "1000" and "10000" don't 
+// Numbers are intentionally not at the back so that "1000" and "10000" don't
 // conflict when searching for theme elements.
 static const char *PeakComboAwardNames[] = {
 	"1000",
@@ -513,10 +551,25 @@ XToLocalizedString( FailType );
 StringToX( FailType );
 LuaXType( FailType );
 
+
+static const char *BattleModeNames [] = {
+	"BattleModeScoreBattle",
+	"BattleModeLowScoreBattle",
+	"BattleModeComboBattle",
+	"BattleModeLowComboBattle",
+	"BattleModeMoreGood",
+	"BattleModeBrainIQ",		// StepP1 revival - bsilver - Not implemented
+	"BattleModeHyperPotion",	// StepP1 revival - bsilver - Not implemented
+}; // StepP1 revival - bsilver
+XToString( BattleMode );
+XToLocalizedString( BattleMode );
+LuaXType( BattleMode );
+LuaFunction( BattleModeToLocalizedString, BattleModeToLocalizedString( Enum::Check<BattleMode>( L, 1 ) ) );
+
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -526,7 +579,7 @@ LuaXType( FailType );
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

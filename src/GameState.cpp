@@ -134,7 +134,8 @@ GameState::GameState() :
 	m_pEditSourceSteps(		Message_EditSourceStepsChanged ),
 	m_stEditSource(			Message_EditSourceStepsTypeChanged ),
 	m_iEditCourseEntryIndex(	Message_EditCourseEntryIndexChanged ),
-	m_sEditLocalProfileID(		Message_EditLocalProfileIDChanged )
+	m_sEditLocalProfileID(		Message_EditLocalProfileIDChanged ),
+	m_BattleMode( Message_BattleModeChanged )	// xMAx - Message for Battle Mode changes
 {
 	g_pImpl = new GameStateImpl;
 
@@ -185,6 +186,16 @@ GameState::GameState() :
 		lua_settable( L, LUA_GLOBALSINDEX );
 		LUA->Release( L );
 	}
+
+	// xMAx
+  ResetBattleVars();
+	m_sBasicModeGroupName = "BasicModeGroup";
+	// m_BattleMode.Set( BattleMode_Invalid );
+	// FOREACH_PlayerNumber( pn )
+	// 	m_iNumBattleStagesWon[pn] = 0;
+	// m_PlayerWonBattleMode = PlayerNumber_Invalid;
+	// m_iNumBattleStages = 0;
+  // TODO: If it compiles, remove commented code! - Thequila
 }
 
 GameState::~GameState()
@@ -270,6 +281,10 @@ void GameState::ResetPlayer( PlayerNumber pn )
 	m_pCurSteps[pn].Set(nullptr);
 	m_pCurTrail[pn].Set(nullptr);
 	m_pPlayerState[pn]->Reset();
+	m_bHasProfile[pn] = false;	//xMAx
+	m_iProfileIndex[pn] = -1;	//xMAx
+	m_iProfileIndexRandom[pn] = -1;	//xMAx
+	m_bPlayerChartIndex[pn] = 0; //xMAx
 	PROFILEMAN->UnloadProfile( pn );
 	ResetPlayerOptions(pn);
 }
@@ -279,6 +294,17 @@ void GameState::ResetPlayerOptions( PlayerNumber pn )
 	PlayerOptions po;
 	GetDefaultPlayerOptions( po );
 	m_pPlayerState[pn]->m_PlayerOptions.Assign( ModsLevel_Preferred, po );
+}
+
+// --- xMAx ----
+void GameState::ResetBattleVars()
+{
+	m_BattleMode.Set( BattleMode_Invalid );
+	m_PlayerWonBattleMode = PlayerNumber_Invalid;
+	m_iNumBattleStages = 0;
+
+	FOREACH_PlayerNumber( pn )
+		m_iNumBattleStagesWon[pn] = 0;
 }
 
 void GameState::Reset()
@@ -336,8 +362,29 @@ void GameState::Reset()
 	ResetStageStatistics();
 	AdjustSync::ResetOriginalSyncData();
 
+	/*
 	SONGMAN->UpdatePopular();
 	SONGMAN->UpdateShuffled();
+	*/ // xMAx: not needed by now
+
+	// xMAx -----------------------------------------------------------------------------------------
+	PREFSMAN->m_bEventMode.Set( true );
+	FOREACH_PlayerNumber( pn )
+	{
+		m_bHasProfile[pn] = false;
+		m_iProfileIndex[pn] = -1;
+		m_iProfileIndexRandom[pn] = -1;
+		m_bPlayerChartIndex[pn] = 0;
+	}
+
+	ResetBattleVars();
+	m_bBasicMode = false;
+	m_sCurrentGroupName = "";
+	m_sBasicModeGroupName = "BasicModeGroup";
+	m_bNoteSkin1Unlocked = true;
+	m_bNoteSkin2Unlocked = true;
+	SONGMAN->UpdateSortArrays(); // xMAx
+	//-----------------------------------------------------------------------------------------------
 
 	/* We may have cached trails from before everything was loaded (eg. from
 	 * before SongManager::UpdatePopular could be called). Erase the cache. */
@@ -397,9 +444,9 @@ void GameState::JoinPlayer( PlayerNumber pn )
 	/* If joint premium and we're not taking away a credit for the 2nd join,
 	 * give the new player the same number of stage tokens that the old player
 	 * has. */
-	if( GetCoinMode() == CoinMode_Pay && GetPremium() == Premium_2PlayersFor1Credit && GetNumSidesJoined() == 1 )
+	/* if( GetCoinMode() == CoinMode_Pay && GetPremium() == Premium_2PlayersFor1Credit && GetNumSidesJoined() == 1 )
 		m_iPlayerStageTokens[pn] = m_iPlayerStageTokens[this->GetMasterPlayerNumber()];
-	else
+	else */ // xMAx
 		m_iPlayerStageTokens[pn] = PREFSMAN->m_iSongsPerPlay;
 
 	m_bSideIsJoined[pn] = true;
@@ -445,6 +492,9 @@ void GameState::JoinPlayer( PlayerNumber pn )
 		// use SetCurrentStyle in case of StyleType_OnePlayerTwoSides
 		SetCurrentStyle( pStyle, pn );
 	}
+
+	// xMAx
+	STATSMAN->m_iStagesPlayed[pn] = 0;
 
 	Message msg( MessageIDToString(Message_PlayerJoined) );
 	msg.SetParam( "Player", pn );
@@ -547,8 +597,9 @@ int GameState::GetCoinsNeededToJoin() const
 {
 	int iCoinsToCharge = 0;
 
-	if( GetCoinMode() == CoinMode_Pay )
-		iCoinsToCharge = PREFSMAN->m_iCoinsPerCredit;
+  // xMAx
+	// if( GetCoinMode() == CoinMode_Pay )
+	// 	iCoinsToCharge = PREFSMAN->m_iCoinsPerCredit;
 
 	// If joint premium, don't take away a credit for the second join.
 	if( GetPremium() == Premium_2PlayersFor1Credit  &&
@@ -635,8 +686,9 @@ void GameState::SavePlayerProfile( PlayerNumber pn )
 	// AutoplayCPU should not save scores. -aj
 	// xxx: this MAY cause issues with Multiplayer. However, without a working
 	// Multiplayer build, we'll never know. -aj
-	if( m_pPlayerState[pn]->m_PlayerController != PC_HUMAN )
-		return;
+	// if( m_pPlayerState[pn]->m_PlayerController != PC_HUMAN )
+	// 	return;
+  //xMAx - autoplay can save profile
 
 	bool bWasMemoryCard = PROFILEMAN->ProfileWasLoadedFromMemoryCard(pn);
 	if( bWasMemoryCard )
@@ -672,6 +724,69 @@ bool GameState::HaveProfileToSave()
 	return false;
 }
 
+RString GameState::GetAvatarURLFromPlayerNumber( PlayerNumber pn )
+{
+	/*
+	if getenv( player.."HasProfile")  then
+		local ind = getenv( player.."_ProfileIndex" );
+		if ind ~= nil then
+			if ind ~= -1 then
+				local avatar = ReadAvatarID( ind-1 );
+
+				if avatar == nil then
+					WriteAvatarID( ind-1, 1 );
+					avatar = 1;
+				end;
+
+				if avatar == 165 then
+					if not getenv(player.."IsUsingRandomAvatar") then
+						setenv( player.."IsUsingRandomAvatar", true );
+						setenv( player.."RandomAvatar", math.random(1,14) );
+					end;
+
+					return THEME:GetPathG("","Avatars/CH_E_"..string.format("%.3d",getenv(player.."RandomAvatar"))..".png");
+				end;
+
+				return ( THEME:GetPathG("","Avatars/CH_"..string.format("%.3d",(avatar))..".png") );
+			else
+				-- Si el player no usa profile
+				--if player == PLAYER_1 then
+					return THEME:GetPathG("","Avatars/CH_233.png");
+				--[[elseif player == PLAYER_2 then
+					return THEME:GetPathG("","Avatars/CH_234.png");
+				end;]]--
+			end;
+		else
+			return THEME:GetPathG("","Avatars/CH_233.png");
+		end;
+	end;
+
+	return THEME:GetPathG("","Avatars/CH_233.png");
+	*/
+	char d[9] = {'_','a','v','a','t','a','r','s','/'};
+
+	if( !m_bHasProfile[pn] )
+		return THEME->GetPathG("",RString(d,9) + "CH_233.png");
+
+	if( m_bHasProfile[pn] && m_iProfileIndex[pn] == -1 )
+		return THEME->GetPathG("",RString(d,9) + "CH_233.png");
+
+	int iAvatarID = PROFILEMAN->GetLocalProfileFromIndex(m_iProfileIndex[pn]-1)->m_iAvatarID;
+
+	// is using random avatar?
+	if( iAvatarID == 165 )
+	{
+		if( m_iProfileIndexRandom[pn] == -1 )
+		{
+			m_iProfileIndexRandom[pn] = (rand() % 14) + 1; //1 ~ 14
+		}
+
+		return THEME->GetPathG("",RString(d,9) + "CH_E_"+ ssprintf("%03d",m_iProfileIndexRandom[pn]));
+	}
+
+	return THEME->GetPathG("",RString(d,9) + "CH_"+ ssprintf("%03d",iAvatarID) + ".png");
+}
+
 void GameState::SaveLocalData()
 {
 	BOOKKEEPER->WriteToDisk();
@@ -682,25 +797,41 @@ int GameState::GetNumStagesMultiplierForSong( const Song* pSong )
 {
 	int iNumStages = 1;
 
-	ASSERT( pSong != nullptr );
+	switch( pSong->m_SongType )
+	{
+		case SONGTYPE_SHORTCUT: break;
+		case SONGTYPE_ARCADE:  iNumStages = 2; break;
+		case SONGTYPE_SPECIAL: iNumStages = 2; break;
+		case SONGTYPE_REMIX:   iNumStages = 3; break;
+		case SONGTYPE_FULLSONG:   iNumStages = 4; break;
+		case SONGTYPE_MUSICTRAIN: iNumStages = PREFSMAN->m_iSongsPerPlay; break;
+		default:
+			break;
+	}
+	/*
+	ASSERT( pSong != NULL );
 	if( pSong->IsMarathon() )
 		iNumStages *= 3;
 	if( pSong->IsLong() )
 		iNumStages *= 2;
+	*/	// xMAx - Change criteria for Pump It Up rules
 
 	return iNumStages;
 }
 
 int GameState::GetNumStagesForCurrentSongAndStepsOrCourse() const
 {
+	if ( IsBattleMode() )	// xMAx - Battle Mode songs doesn't subtract from stages remaining
+		return 0;
+
 	int iNumStagesOfThisSong = 1;
 	if( m_pCurSong )
 	{
 		/* Extra stages need to only count as one stage in case a multi-stage
 		 * song is chosen. */
-		if( IsAnExtraStage() )
+		/* if( IsAnExtraStage() )
 			iNumStagesOfThisSong = 1;
-		else
+		else */ //xMAx - ExtraStages are not considered
 			iNumStagesOfThisSong = GameState::GetNumStagesMultiplierForSong( m_pCurSong );
 	}
 	else if( m_pCurCourse )
@@ -745,18 +876,26 @@ void GameState::BeginStage()
 	{
 		// only do this check with human players, assume CPU players (Rave)
 		// always have tokens. -aj (this could probably be moved below, even.)
-		if( !IsEventMode() && !IsCpuPlayer(p) )
+		/* if( !IsEventMode() && !IsCpuPlayer(p) )
 		{
 			if(m_iPlayerStageTokens[p] < m_iNumStagesOfThisSong)
 			{
 				LuaHelpers::ReportScriptErrorFmt("Player %d only has %d stage tokens, but needs %d.", p, m_iPlayerStageTokens[p], m_iNumStagesOfThisSong);
 			}
-		}
+		} */ // xMAx
+		//if (IsEventMode)
+		if ( true )	// xMAx - Event Mode takes no tokens
+			m_iNumStagesOfThisSong = 0;
+
 		m_iPlayerStageTokens[p] -= m_iNumStagesOfThisSong;
+
+		if ( m_iPlayerStageTokens[p] < 0 )
+			m_iPlayerStageTokens[p] = 0;	// xMAx - If tokens are negative, go back to zero
 	}
-	FOREACH_HumanPlayer( pn )
+	/* FOREACH_HumanPlayer( pn )
 		if( CurrentOptionsDisqualifyPlayer(pn) )
-			STATSMAN->m_CurStageStats.m_player[pn].m_bDisqualified = true;
+			STATSMAN->m_CurStageStats.m_player[pn].m_bDisqualified = true; */
+  // xMAx - disable this
 	m_bEarnedExtraStage = false;
 	m_sStageGUID = CryptManager::GenerateRandomUUID();
 }
@@ -775,6 +914,8 @@ void GameState::CancelStage()
 		}
 	}
 
+	if ( true )	// xMAx - Event Mode takes no tokens
+		m_iNumStagesOfThisSong = 0;
 	FOREACH_EnabledPlayer( p )
 		m_iPlayerStageTokens[p] += m_iNumStagesOfThisSong;
 	m_iNumStagesOfThisSong = 0;
@@ -841,7 +982,7 @@ void GameState::FinishStage()
 
 	// todo: simplify. profile saving is accomplished in ScreenProfileSave
 	// now; all this code does differently is save machine profile as well. -aj
-	if( IsEventMode() )
+	/* if( IsEventMode() )
 	{
 		const int iSaveProfileEvery = 3;
 		if( iOldStageIndex/iSaveProfileEvery < m_iCurrentStageIndex/iSaveProfileEvery )
@@ -850,7 +991,7 @@ void GameState::FinishStage()
 			PROFILEMAN->SaveMachineProfile();
 			this->SavePlayerProfiles();
 		}
-	}
+	} */ // xMAx - disable this
 }
 
 void GameState::LoadCurrentSettingsFromProfile( PlayerNumber pn )
@@ -1297,7 +1438,8 @@ int GameState::GetNumStagesLeft( PlayerNumber pn ) const
 
 int GameState::GetSmallestNumStagesLeftForAnyHumanPlayer() const
 {
-	if( IsEventMode() )
+	//if( IsEventMode() ) //xMAx
+	if( true )
 		return 999;
 	int iSmallest = INT_MAX;
 	FOREACH_HumanPlayer( p )
@@ -1833,6 +1975,42 @@ PlayerNumber GameState::GetBestPlayer() const
 
 StageResult GameState::GetStageResult( PlayerNumber pn ) const
 {
+	/* xMAx - Si el tipo de Batalla es "invalid" entonces no se sete� y se juega normal (esto est� medio mal, tendria que usar algo para sacar el USE_COMBINED_LIFE del ScreenGamePlay ). */
+	if ( m_PlayMode == PLAY_MODE_BATTLE && m_BattleMode != BattleMode_Invalid )
+	{
+		FOREACH_PlayerNumber( p )
+		{
+			if( p == pn )
+				continue;
+
+			switch( m_BattleMode )
+			{
+				case BATTLE_MODE_SCORE_BATTLE:
+					if( STATSMAN->m_CurStageStats.m_player[pn].m_iScore == STATSMAN->m_CurStageStats.m_player[p].m_iScore )	return RESULT_DRAW;
+					return ( STATSMAN->m_CurStageStats.m_player[pn].m_iScore > STATSMAN->m_CurStageStats.m_player[p].m_iScore )? RESULT_WIN : RESULT_LOSE;
+				case BATTLE_MODE_LOW_SCORE_BATTLE:
+					if( STATSMAN->m_CurStageStats.m_player[pn].m_iScore == STATSMAN->m_CurStageStats.m_player[p].m_iScore )	return RESULT_DRAW;
+					return ( STATSMAN->m_CurStageStats.m_player[pn].m_iScore < STATSMAN->m_CurStageStats.m_player[p].m_iScore )? RESULT_WIN : RESULT_LOSE;
+				case BATTLE_MODE_COMBO_BATTLE:
+					if( STATSMAN->m_CurStageStats.m_player[pn].m_iMaxCombo == STATSMAN->m_CurStageStats.m_player[p].m_iMaxCombo )	return RESULT_DRAW;
+					return ( STATSMAN->m_CurStageStats.m_player[pn].m_iMaxCombo > STATSMAN->m_CurStageStats.m_player[p].m_iMaxCombo )? RESULT_WIN : RESULT_LOSE;
+				case BATTLE_MODE_LOW_COMBO_BATTLE:
+					if( STATSMAN->m_CurStageStats.m_player[pn].m_iMaxCombo == STATSMAN->m_CurStageStats.m_player[p].m_iMaxCombo )	return RESULT_DRAW;
+					return ( STATSMAN->m_CurStageStats.m_player[pn].m_iMaxCombo < STATSMAN->m_CurStageStats.m_player[p].m_iMaxCombo )? RESULT_WIN : RESULT_LOSE;
+				case BATTLE_MODE_MORE_GOOD:	// TNS_W4 = GOOD
+					if( STATSMAN->m_CurStageStats.m_player[pn].m_iTapNoteScores[TNS_W4] == STATSMAN->m_CurStageStats.m_player[p].m_iTapNoteScores[TNS_W4] )	return RESULT_DRAW;
+					return ( STATSMAN->m_CurStageStats.m_player[pn].m_iTapNoteScores[TNS_W4] > STATSMAN->m_CurStageStats.m_player[p].m_iTapNoteScores[TNS_W4] )? RESULT_WIN : RESULT_LOSE;
+				/*case BATTLE_MODE_BRAIN_IQ:	//not implemented
+					return RESULT_DRAW;
+				case BATTLE_MODE_HYPER_POTION:	// Still need to get LifeBar data
+					if( fabsf( m_fPlayersFinalLife[pn] - m_fPlayersFinalLife[p] ) < 0.01f )	return RESULT_DRAW;
+					return ( m_fPlayersFinalLife[pn] > m_fPlayersFinalLife[p] )? RESULT_WIN : RESULT_LOSE;*/
+				default:
+					break;
+			}
+		}
+	}
+	/*
 	switch( m_PlayMode )
 	{
 		case PLAY_MODE_BATTLE:
@@ -1847,6 +2025,7 @@ StageResult GameState::GetStageResult( PlayerNumber pn ) const
 			}
 		default: break;
 	}
+	*/ //xMAx
 
 	StageResult win = RESULT_WIN;
 	FOREACH_PlayerNumber( p )
@@ -1908,8 +2087,10 @@ void GameState::ClearStageModifiersIllegalForCourse()
 
 bool GameState::CurrentOptionsDisqualifyPlayer( PlayerNumber pn )
 {
+	/*
 	if( !PREFSMAN->m_bDisqualification )
 		return false;
+	*/ //xMAx
 
 	if( !IsHumanPlayer(pn) )
 		return false;
@@ -1989,6 +2170,7 @@ void setmax( T &a, const T &b )
 
 FailType GameState::GetPlayerFailType( const PlayerState *pPlayerState ) const
 {
+  /*
 	PlayerNumber pn = pPlayerState->m_PlayerNumber;
 	FailType ft = pPlayerState->m_PlayerOptions.GetCurrent().m_FailType;
 
@@ -2018,8 +2200,8 @@ FailType GameState::GetPlayerFailType( const PlayerState *pPlayerState ) const
 		if( dc <= Difficulty_Easy && bFirstStage && PREFSMAN->m_bFailOffForFirstStageEasy )
 			setmax( ft, FailType_Off );
 
-		/* If beginner's steps were chosen, and this is the first stage,
-		 * turn off failure completely. */
+		// If beginner's steps were chosen, and this is the first stage,
+		// turn off failure completely.
 		if( dc == Difficulty_Beginner && bFirstStage )
 			setmax( ft, FailType_Off );
 
@@ -2028,6 +2210,24 @@ FailType GameState::GetPlayerFailType( const PlayerState *pPlayerState ) const
 	}
 
 	return ft;
+  */ //xMAx
+
+	if( m_bBasicMode )
+		return FailType_Off;
+
+	PlayerOptions po;
+	po.Init();
+	po.FromString( PREFSMAN->m_sDefaultModifiers );
+	return po.m_FailType;
+}
+
+bool GameState::IsDouble() const
+{
+  const Style* currentStyle = GetCurrentStyle(NUM_PlayerNumber);
+	if( currentStyle && (currentStyle->m_StyleType == StyleType_OnePlayerTwoSides || currentStyle->m_StyleType == StyleType_TwoPlayersSharedSides ) )
+		return true;
+
+	return false;
 }
 
 bool GameState::ShowW1() const
@@ -2057,7 +2257,7 @@ void GameState::GetRankingFeats( PlayerNumber pn, vector<RankingFeat> &asFeatsOu
 	// may have made high scores then switched modes.
 	PlayMode mode = m_PlayMode.Get();
 	char const *modeStr = PlayModeToString(mode).c_str();
-	
+
 	CHECKPOINT_M( ssprintf("Getting the feats for %s", modeStr));
 	switch( mode )
 	{
@@ -2558,9 +2758,9 @@ bool GameState::IsEventMode() const
 CoinMode GameState::GetCoinMode() const
 {
 	// XXX: Event mode shouldn't be valid if CoinMode_Pay
-	if( IsEventMode() && GamePreferences::m_CoinMode == CoinMode_Pay )
+	/* if( IsEventMode() && GamePreferences::m_CoinMode == CoinMode_Pay )
 		return CoinMode_Free;
-	else
+	else */ // xMAx
 		return GamePreferences::m_CoinMode;
 }
 
@@ -2656,6 +2856,18 @@ MultiPlayer GetNextEnabledMultiPlayer( MultiPlayer mp )
 			return mp;
 	return MultiPlayer_Invalid;
 }
+
+// xMAx - Functions -------------------------------------------------------------------------------
+int GameState::GetHighestNumStagesLeftForAnyHumanPlayer() const
+{
+/*	if( IsEventMode() )
+		return 999; */ //caused crash in channels (not automatic) as SkillUp - xMAx
+	int iHighest = 1;
+	FOREACH_HumanPlayer( p )
+		iHighest = max( iHighest, m_iPlayerStageTokens[p] );
+	return iHighest;
+}
+// ------------------------------------------------------------------------------------------------
 
 
 
@@ -2842,8 +3054,8 @@ public:
 	DEFINE_METHOD( GetHardestStepsDifficulty,	GetHardestStepsDifficulty() )
 	DEFINE_METHOD( IsEventMode,			IsEventMode() )
 	DEFINE_METHOD( GetNumPlayersEnabled,		GetNumPlayersEnabled() )
-	/*DEFINE_METHOD( GetSongBeat,			m_Position.m_fSongBeat )
-	DEFINE_METHOD( GetSongBeatVisible,		m_Position.m_fSongBeatVisible )
+	DEFINE_METHOD( GetSongBeat,			m_Position.m_fSongBeat )
+	/*DEFINE_METHOD( GetSongBeatVisible,		m_Position.m_fSongBeatVisible )
 	DEFINE_METHOD( GetSongBPS,			m_Position.m_fCurBPS )
 	DEFINE_METHOD( GetSongFreeze,			m_Position.m_bFreeze )
 	DEFINE_METHOD( GetSongDelay,			m_Position.m_bDelay )*/
@@ -3073,6 +3285,12 @@ public:
 		COMMON_RETURN_SELF;
 	}
 
+	static int SetMasterPlayerNumber( T* p, lua_State *L )	//xMAx
+	{
+		p->SetMasterPlayerNumber(Enum::Check<PlayerNumber>(L, 1));
+		return 0;
+	}
+
 	static int RefreshNoteSkinData( T* p, lua_State *L )
 	{
 		NOTESKIN->RefreshNoteSkinData(p->m_pCurGame);
@@ -3118,6 +3336,34 @@ public:
 
 	DEFINE_METHOD( HaveProfileToLoad, HaveProfileToLoad() )
 	DEFINE_METHOD( HaveProfileToSave, HaveProfileToSave() )
+
+	// xMAx -----------------------------------------------------------------------------------------
+	static int IsBasicMode( T* p, lua_State *L )
+	{
+		lua_pushboolean(L, p->m_bBasicMode);
+		return 1;
+	}
+	static int GetNumBattleStagesWon( T* p, lua_State *L )
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>(L, 1);
+		lua_pushnumber(L, p->m_iNumBattleStagesWon[pn]);
+		return 1;
+	}
+	static int GetAvatarFromProfile( T* p, lua_State *L )
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>(L, 1);
+		lua_pushstring(L, p->GetAvatarURLFromPlayerNumber( pn ));
+		return 1;
+	}
+	static int HasProfile( T* p, lua_State *L )
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>(L, 1);
+		lua_pushboolean(L, p->m_bHasProfile[pn]);
+		return 1;
+	}
+	DEFINE_METHOD( GetHighestNumStagesLeftForAnyHumanPlayer, GetHighestNumStagesLeftForAnyHumanPlayer() );
+	DEFINE_METHOD( GetBattleMode, m_BattleMode );
+	// ----------------------------------------------------------------------------------------------
 
 	static bool AreStyleAndPlayModeCompatible( T* p, lua_State* L, const Style *style, PlayMode pm )
 	{
@@ -3349,8 +3595,8 @@ public:
 		ADD_METHOD( GetHardestStepsDifficulty );
 		ADD_METHOD( IsEventMode );
 		ADD_METHOD( GetNumPlayersEnabled );
-		/*ADD_METHOD( GetSongBeat );
-		ADD_METHOD( GetSongBeatVisible );
+		ADD_METHOD( GetSongBeat );
+		/*ADD_METHOD( GetSongBeatVisible );
 		ADD_METHOD( GetSongBPS );
 		ADD_METHOD( GetSongFreeze );
 		ADD_METHOD( GetSongDelay );*/
@@ -3395,7 +3641,7 @@ public:
 		ADD_METHOD( SaveLocalData );
 		ADD_METHOD( SetJukeboxUsesModifiers );
 		ADD_METHOD( GetWorkoutGoalComplete );
-		ADD_METHOD( Reset );
+		ADD_METHOD( Reset ); //xMAx - only used in AfterGameOver
 		ADD_METHOD( JoinPlayer );
 		ADD_METHOD( UnjoinPlayer );
 		ADD_METHOD( JoinInput );
@@ -3423,6 +3669,17 @@ public:
 		ADD_METHOD( GetAutoGenFarg );
 		ADD_METHOD( SetAutoGenFarg );
 		ADD_METHOD(prepare_song_for_gameplay);
+		//xMAx
+		ADD_METHOD( IsBasicMode );
+		ADD_METHOD( GetBattleMode );
+		ADD_METHOD( SetMasterPlayerNumber );
+		ADD_METHOD( GetHighestNumStagesLeftForAnyHumanPlayer );
+		ADD_METHOD( GetNumBattleStagesWon );
+		ADD_METHOD( GetAvatarFromProfile ); //GetAvatarURLFromPlayerNumber
+		ADD_METHOD( HasProfile ); //GetAvatarURLFromPlayerNumber
+
+		// xMAx: new
+		//ADD_METHOD( SetBattleMode );
 	}
 };
 

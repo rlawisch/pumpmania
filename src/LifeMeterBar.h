@@ -23,7 +23,8 @@ public:
 	virtual void ChangeLife( HoldNoteScore score, TapNoteScore tscore  );
 	virtual void ChangeLife( float fDeltaLifePercent );
 	virtual void SetLife(float value);
-	virtual void HandleTapScoreNone();
+	// virtual void HandleTapScoreNone(); // xMAx
+	virtual void HandleTapScoreNone() {}; // xMAx
 	virtual void AfterLifeChanged();
 	virtual bool IsInDanger() const;
 	virtual bool IsHot() const;
@@ -45,10 +46,32 @@ private:
 
 	ThemeMetric1D<float> m_fLifePercentChange;
 
+  /* StepP1 Revival - bSilver
 	AutoActor		m_sprUnder;
 	AutoActor		m_sprDanger;
 	StreamDisplay*	m_pStream;
 	AutoActor		m_sprOver;
+  */
+
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	AutoActor m_sprBarBlue;
+	AutoActor m_sprBarGrey;
+	AutoActor m_sprFallback;
+	AutoActor m_sprFallbackRed;
+	AutoActor m_sprFrame;
+	AutoActor m_sprGlowColor;
+	AutoActor m_sprGlowRed;
+	AutoActor m_sprTipBlue;
+	AutoActor m_sprTipRed;
+
+	float m_fTipPosition; // Top TipBlue position (0.0 - 1.0)
+	float m_fBarBlueProgress; // bar_blue animated position
+	bool m_bGlowColorVisible;
+	bool m_bGlowRedVisible;
+	bool m_bUsingTipRed;
+
+	int m_iLastBeat = -1;
+	// ---------------------------------
 
 	float		m_fLifePercentage;
 
@@ -71,7 +94,7 @@ private:
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -81,7 +104,7 @@ private:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

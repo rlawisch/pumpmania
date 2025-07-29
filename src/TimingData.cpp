@@ -4,6 +4,7 @@
 #include "GameState.h"
 #include "RageUtil.h"
 #include "RageLog.h"
+#include "RageMath.h"	//xMAx
 #include "ThemeManager.h"
 #include "NoteTypes.h"
 #include <float.h>
@@ -415,7 +416,7 @@ int TimingData::GetSegmentIndexAtRow(TimingSegmentType tst, int iRow ) const
 			r = m - 1;
 		}
 	}
-	
+
 	// iRow is before the first segment of type tst
 	return INVALID_INDEX;
 }
@@ -1180,13 +1181,22 @@ float TimingData::GetDisplayedSpeedPercent( float fSongBeat, float fMusicSeconds
 		const float fPriorSpeed = (index == 0) ? 1 :
 			ToSpeed(speeds[index-1])->GetRatio();
 
-		float fTimeUsed = fCurTime - fStartTime;
-		float fDuration = fEndTime - fStartTime;
-		float fRatioUsed = fDuration == 0.0 ? 1 : fTimeUsed / fDuration;
+    float fTimeUsed = fCurTime - fStartTime;
+    float fDuration = fEndTime - fStartTime;
+    float fRatioUsed = fDuration == 0.0 ? 1 : fTimeUsed / fDuration;
+    float fDistance = seg->GetRatio() - fPriorSpeed;
 
-		float fDistance = fPriorSpeed - seg->GetRatio();
-		float fRatioNeed = fRatioUsed * -fDistance;
-		return (fPriorSpeed + fRatioNeed);
+    // xMAx
+    // Cleanup math -- StepP1 Revival - Thequila
+    if( fDuration <= 150.f ) // 0.15 seconds - linear effect
+    {
+      float fRatioNeed = fRatioUsed * fDistance;
+      return (fPriorSpeed + fRatioNeed);
+    }
+    else
+    {
+			return (fPriorSpeed + fDistance*RageFastSin((PI/2)*fRatioUsed));
+    }
 	}
 	else
 	{
@@ -1449,7 +1459,7 @@ LUA_REGISTER_CLASS( TimingData )
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -1459,7 +1469,7 @@ LUA_REGISTER_CLASS( TimingData )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -146,10 +146,12 @@ void SetMusic(SongTagInfo& info)
 {
 	info.song->m_sMusicFile = (*info.params)[1];
 }
+/* xMAx
 void SetPreview(SongTagInfo& info)
 {
 	info.song->m_PreviewFile= (*info.params)[1];
 }
+  */
 void SetInstrumentTrack(SongTagInfo& info)
 {
 	info.loader->ProcessInstrumentTracks(*info.song, (*info.params)[1]);
@@ -204,6 +206,74 @@ void SetSelectable(SongTagInfo& info)
 	else
 	{ LOG->UserLog("Song file", info.path, "has an unknown #SELECTABLE value, \"%s\"; ignored.", (*info.params)[1].c_str()); }
 }
+
+// xMAx -------------------------------------------------------------------------------------------
+void SetEditable(SongTagInfo& info)
+{
+	if((*info.params)[1].EqualsNoCase("NO"))
+	{ info.song->m_bCanBeEdited = false; }
+}
+void SetSongType(SongTagInfo& info)
+{
+	if((*info.params)[1].EqualsNoCase("ARCADE"))
+		info.song->m_SongType = SONGTYPE_ARCADE;
+	else if((*info.params)[1].EqualsNoCase("SHORTCUT"))
+		info.song->m_SongType = SONGTYPE_SHORTCUT;
+	else if((*info.params)[1].EqualsNoCase("REMIX"))
+		info.song->m_SongType = SONGTYPE_REMIX;
+	else if((*info.params)[1].EqualsNoCase("FULLSONG"))
+		info.song->m_SongType = SONGTYPE_FULLSONG;
+	else if((*info.params)[1].EqualsNoCase("MUSICTRAIN"))
+		info.song->m_SongType = SONGTYPE_MUSICTRAIN;
+	else if((*info.params)[1].EqualsNoCase("SPECIAL"))
+		info.song->m_SongType = SONGTYPE_SPECIAL;
+	else
+	{
+		info.song->m_SongType = SONGTYPE_ARCADE;
+		LOG->UserLog( "Song file", info.path, "has an unknown #SONGTYPE value, \"%s\"; ignored.", (*info.params)[1].c_str() );
+	}
+}
+void SetSongCategory(SongTagInfo& info)
+{
+	if((*info.params)[1].EqualsNoCase("USE_GENRE"))
+		info.song->m_SongCategory = SONGCATEGORY_USE_GENRE;
+	else if((*info.params)[1].EqualsNoCase("NEW TUNES"))
+		info.song->m_SongCategory = SONGCATEGORY_NEWTUNES;
+	else if((*info.params)[1].EqualsNoCase("K-POP"))
+		info.song->m_SongCategory = SONGCATEGORY_KPOP;
+	else if((*info.params)[1].EqualsNoCase("WORLD MUSIC"))
+		info.song->m_SongCategory = SONGCATEGORY_WORLDMUSIC;
+	else if((*info.params)[1].EqualsNoCase("ORIGINAL"))
+		info.song->m_SongCategory = SONGCATEGORY_ORIGINAL;
+	else if((*info.params)[1].EqualsNoCase("J-MUSIC"))
+		info.song->m_SongCategory = SONGCATEGORY_JMUSIC;
+	else
+	{
+		info.song->m_SongCategory = SONGCATEGORY_USE_GENRE;
+		LOG->UserLog( "Song file", info.path, "has an unknown #SONGCATEGORY value, \"%s\"; ignored.", (*info.params)[1].c_str() );
+	}
+}
+void SetVolume(SongTagInfo& info)
+{
+	// se usa StringToFloat para corroborar
+	float dump;
+	if( StringToFloat((*info.params)[1],dump) )
+	{
+		int volume = StringToInt( (*info.params)[1] );
+		if( volume > 140 )
+			info.song->m_iVolume = 140;
+		else if ( volume < 1 )
+			info.song->m_iVolume = 1;
+		else
+			info.song->m_iVolume = volume;
+	}
+	else
+	{
+		LOG->UserLog( "Song file", info.path, "has an invalid #VOLUME value, \"%s\"; ignored.", (*info.params)[1].c_str() );
+	}
+}
+//-------------------------------------------------------------------------------------------------
+
 void SetBGChanges(SongTagInfo& info)
 {
 	info.loader->ProcessBGChanges(*info.song, (*info.params)[0], info.path, (*info.params)[1]);
@@ -321,7 +391,7 @@ void SetChartName(StepsTagInfo& info)
 void SetStepsType(StepsTagInfo& info)
 {
 	info.steps->m_StepsType = GAMEMAN->StringToStepsType((*info.params)[1]);
-	info.steps->m_StepsTypeStr= (*info.params)[1];
+	// info.steps->m_StepsTypeStr= (*info.params)[1]; // xMAx
 	info.ssc_format= true;
 }
 void SetChartStyle(StepsTagInfo& info)
@@ -350,8 +420,18 @@ void SetDifficulty(StepsTagInfo& info)
 }
 void SetMeter(StepsTagInfo& info)
 {
+  /* xMAx
 	info.steps->SetMeter(StringToInt((*info.params)[1]));
 	info.ssc_format= true;
+  */
+
+  // xMAx - Uses StringToFloat to guarantee the value is a number
+	float dump;
+	if( StringToFloat((*info.params)[1], dump) )
+	{
+		info.steps->SetMeter(StringToInt((*info.params)[1]));
+		info.ssc_format= true;
+	}
 }
 void SetRadarValues(StepsTagInfo& info)
 {
@@ -384,10 +464,12 @@ void SetCredit(StepsTagInfo& info)
 	info.steps->SetCredit((*info.params)[1]);
 	info.ssc_format= true;
 }
+/* xMAx
 void SetStepsMusic(StepsTagInfo& info)
 {
 	info.steps->SetMusicFile((*info.params)[1]);
 }
+*/
 void SetStepsBPMs(StepsTagInfo& info)
 {
 	if(info.song->m_fVersion >= VERSION_SPLIT_TIMING || info.for_load_edit)
@@ -553,7 +635,7 @@ struct ssc_parser_helper_t
 		song_tag_handlers["LYRICSPATH"]= &SetLyricsPath;
 		song_tag_handlers["CDTITLE"]= &SetCDTitle;
 		song_tag_handlers["MUSIC"]= &SetMusic;
-		song_tag_handlers["PREVIEW"]= &SetPreview;
+		// song_tag_handlers["PREVIEW"]= &SetPreview; // xMAx
 		song_tag_handlers["INSTRUMENTTRACK"]= &SetInstrumentTrack;
 		song_tag_handlers["MUSICLENGTH"]= &SetMusicLength;
 		song_tag_handlers["LASTSECONDHINT"]= &SetLastSecondHint;
@@ -561,6 +643,14 @@ struct ssc_parser_helper_t
 		song_tag_handlers["SAMPLELENGTH"]= &SetSampleLength;
 		song_tag_handlers["DISPLAYBPM"]= &SetDisplayBPM;
 		song_tag_handlers["SELECTABLE"]= &SetSelectable;
+
+		// xMAx ---------------------------------------------------------------------------------------
+		song_tag_handlers["EDITABLE"]= &SetEditable; // Disables the editor for this song
+		song_tag_handlers["SONGTYPE"]= &SetSongType;
+		song_tag_handlers["SONGCATEGORY"]= &SetSongCategory;
+		song_tag_handlers["VOLUME"]= &SetVolume;
+    // --------------------------------------------------------------------------------------------
+
 		// It's a bit odd to have the tag that exists for backwards compatibility
 		// in this list and not the replacement, but the BGCHANGES tag has a
 		// number on the end, allowing up to NUM_BackgroundLayer tags, so it
@@ -607,7 +697,7 @@ struct ssc_parser_helper_t
 		steps_tag_handlers["METER"]= &SetMeter;
 		steps_tag_handlers["RADARVALUES"]= &SetRadarValues;
 		steps_tag_handlers["CREDIT"]= &SetCredit;
-		steps_tag_handlers["MUSIC"]= &SetStepsMusic;
+		// steps_tag_handlers["MUSIC"]= &SetStepsMusic; // xMAx
 		steps_tag_handlers["BPMS"]= &SetStepsBPMs;
 		steps_tag_handlers["STOPS"]= &SetStepsStops;
 		steps_tag_handlers["DELAYS"]= &SetStepsDelays;
@@ -645,7 +735,7 @@ void SSCLoader::ProcessBPMs( TimingData &out, const RString sParam )
 {
 	vector<RString> arrayBPMExpressions;
 	split( sParam, ",", arrayBPMExpressions );
-	
+
 	for( unsigned b=0; b<arrayBPMExpressions.size(); b++ )
 	{
 		vector<RString> arrayBPMValues;
@@ -658,7 +748,7 @@ void SSCLoader::ProcessBPMs( TimingData &out, const RString sParam )
 				     arrayBPMExpressions[b].c_str() );
 			continue;
 		}
-		
+
 		const float fBeat = std::stof( arrayBPMValues[0] );
 		const float fNewBPM = std::stof( arrayBPMValues[1] );
 		if( fBeat >= 0 && fNewBPM > 0 )
@@ -679,7 +769,7 @@ void SSCLoader::ProcessStops( TimingData &out, const RString sParam )
 {
 	vector<RString> arrayStopExpressions;
 	split( sParam, ",", arrayStopExpressions );
-	
+
 	for( unsigned b=0; b<arrayStopExpressions.size(); b++ )
 	{
 		vector<RString> arrayStopValues;
@@ -692,7 +782,7 @@ void SSCLoader::ProcessStops( TimingData &out, const RString sParam )
 				     arrayStopExpressions[b].c_str() );
 			continue;
 		}
-		
+
 		const float fBeat = std::stof( arrayStopValues[0] );
 		const float fNewStop = std::stof( arrayStopValues[1] );
 		if( fBeat >= 0 && fNewStop > 0 )
@@ -711,7 +801,7 @@ void SSCLoader::ProcessWarps( TimingData &out, const RString sParam, const float
 {
 	vector<RString> arrayWarpExpressions;
 	split( sParam, ",", arrayWarpExpressions );
-	
+
 	for( unsigned b=0; b<arrayWarpExpressions.size(); b++ )
 	{
 		vector<RString> arrayWarpValues;
@@ -724,7 +814,7 @@ void SSCLoader::ProcessWarps( TimingData &out, const RString sParam, const float
 				     arrayWarpExpressions[b].c_str() );
 			continue;
 		}
-		
+
 		const float fBeat = std::stof( arrayWarpValues[0] );
 		const float fNewBeat = std::stof( arrayWarpValues[1] );
 		// Early versions were absolute in beats. They should be relative.
@@ -748,7 +838,7 @@ void SSCLoader::ProcessLabels( TimingData &out, const RString sParam )
 {
 	vector<RString> arrayLabelExpressions;
 	split( sParam, ",", arrayLabelExpressions );
-	
+
 	for( unsigned b=0; b<arrayLabelExpressions.size(); b++ )
 	{
 		vector<RString> arrayLabelValues;
@@ -761,20 +851,20 @@ void SSCLoader::ProcessLabels( TimingData &out, const RString sParam )
 				     arrayLabelExpressions[b].c_str() );
 			continue;
 		}
-		
+
 		const float fBeat = std::stof( arrayLabelValues[0] );
 		RString sLabel = arrayLabelValues[1];
 		TrimRight(sLabel);
 		if( fBeat >= 0.0f )
 			out.AddSegment( LabelSegment(BeatToNoteRow(fBeat), sLabel) );
-		else 
+		else
 		{
 			LOG->UserLog("Song file",
 				     this->GetSongTitle(),
 				     "has an invalid Label at beat %f called %s.",
 				     fBeat, sLabel.c_str() );
 		}
-		
+
 	}
 }
 
@@ -782,7 +872,7 @@ void SSCLoader::ProcessCombos( TimingData &out, const RString line, const int ro
 {
 	vector<RString> arrayComboExpressions;
 	split( line, ",", arrayComboExpressions );
-	
+
 	for( unsigned f=0; f<arrayComboExpressions.size(); f++ )
 	{
 		vector<RString> arrayComboValues;
@@ -807,12 +897,12 @@ void SSCLoader::ProcessScrolls( TimingData &out, const RString sParam )
 {
 	vector<RString> vs1;
 	split( sParam, ",", vs1 );
-	
+
 	for (RString const &s1 : vs1)
 	{
 		vector<RString> vs2;
 		split( s1, "=", vs2 );
-		
+
 		if( vs2.size() < 2 )
 		{
 			LOG->UserLog("Song file",
@@ -841,7 +931,7 @@ void SSCLoader::ProcessScrolls( TimingData &out, const RString sParam )
 bool SSCLoader::LoadNoteDataFromSimfile( const RString & cachePath, Steps &out )
 {
 	LOG->Trace( "Loading notes from %s", cachePath.c_str() );
-	
+
 	MsdFile msd;
 	if (!msd.ReadFile(cachePath, true))
 	{
@@ -851,11 +941,11 @@ bool SSCLoader::LoadNoteDataFromSimfile( const RString & cachePath, Steps &out )
 			     msd.GetError().c_str());
 		return false;
 	}
-	
+
 	bool tryingSteps = false;
 	float storedVersion = 0;
 	const unsigned values = msd.GetNumValues();
-	
+
 	for (unsigned i = 0; i < values; i++)
 	{
 		const MsdFile::value_t &params = msd.GetValue(i);
@@ -1049,6 +1139,8 @@ bool SSCLoader::LoadFromSimfile( const RString &sPath, Song &out, bool bFromCach
 
 bool SSCLoader::LoadEditFromFile( RString sEditFilePath, ProfileSlot slot, bool bAddStepsToSong, Song *givenSong /* = nullptr */ )
 {
+	LOG->Trace( "NotesLoaderSSC::About to load Edit from file \"%s\"", sEditFilePath.c_str() ); // xMAx
+  /* xMAx
 	LOG->Trace( "SSCLoader::LoadEditFromFile(%s)", sEditFilePath.c_str() );
 
 	int iBytes = FILEMAN->GetFileSizeInBytes( sEditFilePath );
@@ -1059,11 +1151,13 @@ bool SSCLoader::LoadEditFromFile( RString sEditFilePath, ProfileSlot slot, bool 
 			     "is unreasonably large. It won't be loaded." );
 		return false;
 	}
+  */
 
 	MsdFile msd;
 	if( !msd.ReadFile( sEditFilePath, true ) ) // unescape
 	{
-		LOG->UserLog("Edit file",
+		// LOG->UserLog("Edit file", // xMAx
+		LOG->UserLog("NotesLoaderSSC::Edit file", // xMAx
 			     sEditFilePath,
 			     "couldn't be opened: %s", msd.GetError().c_str() );
 		return false;
@@ -1107,12 +1201,14 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
 				pNewNotes = pSong->CreateSteps();
 				reused_steps_info.steps= pNewNotes;
 				reused_steps_info.ssc_format= true;
+        pNewNotes->SetDifficulty(Difficulty_Edit); //xMAx
 			}
 			else if(sValueName=="NOTES")
 			{
 				if(pSong == nullptr)
 				{
-					LOG->UserLog("Edit file", sEditFilePath,
+					// LOG->UserLog("Edit file", sEditFilePath, // xMAx
+					LOG->UserLog("NotesLoaderSSC::Edit file", sEditFilePath, // xMAx
 						"doesn't have a #SONG tag preceeding the first #NOTES tag,"
 						" and is not in a valid song-specific folder.");
 					return false;
@@ -1120,7 +1216,8 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
 
 				if(!reused_steps_info.ssc_format && iNumParams < 7)
 				{
-					LOG->UserLog("Edit file", sEditFilePath,
+					// LOG->UserLog("Edit file", sEditFilePath, // xMAx
+					LOG->UserLog("NotesLoaderSSC::Edit file", sEditFilePath, // xMAx
 						"has %d fields in a #NOTES tag, but should have at least 7.",
 						iNumParams);
 					continue;
@@ -1139,10 +1236,11 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
 				// shouldn't be able to add charts of other difficulties. -Kyz
 				if(pNewNotes != nullptr)
 				{
-					pNewNotes->SetDifficulty(Difficulty_Edit);
+					// pNewNotes->SetDifficulty(Difficulty_Edit); //xMAx
 					if(pSong->IsEditAlreadyLoaded(pNewNotes))
 					{
-						LOG->UserLog("Edit file", sEditFilePath,
+						// LOG->UserLog("Edit file", sEditFilePath, // xMAx
+						LOG->UserLog("NotesLoaderSSC::Edit file", sEditFilePath, // xMAx
 							"is a duplicate of another edit that was already loaded.");
 						SAFE_DELETE(pNewNotes);
 						return false;
@@ -1169,15 +1267,22 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
 				}
 
 				pNewNotes->SetLoadedFromProfile(slot);
-				pNewNotes->SetDifficulty(Difficulty_Edit);
-				pNewNotes->SetFilename(sEditFilePath);
+				// pNewNotes->SetDifficulty(Difficulty_Edit); // xMAx
+				// pNewNotes->SetFilename(sEditFilePath); // xMAx
+				pNewNotes->SetLoadedFromEditFile( true ); //xMAx
 
 				pSong->AddSteps(pNewNotes);
+
+        // xMAx
+				LOG->UserLog("NotesLoaderSSC::Edit file", sEditFilePath,
+					"was correctly loaded.");
+
 				return true; // Only allow one Steps per edit file!
 			}
 			else
 			{
-				LOG->UserLog("Edit file", sEditFilePath,
+				// LOG->UserLog("Edit file", sEditFilePath, // xMAx
+				LOG->UserLog("NotesLoaderSSC::Edit file", sEditFilePath, // xMAx
 					"has an unexpected value \"%s\".", sValueName.c_str());
 			}
 		}
@@ -1199,14 +1304,16 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
 				reused_steps_info.song= pSong;
 				if(pSong == nullptr)
 				{
-					LOG->UserLog("Edit file", sEditFilePath,
+					// LOG->UserLog("Edit file", sEditFilePath, // xMAx
+					LOG->UserLog("NotesLoaderSSC::Edit file", sEditFilePath, // xMAx
 						"requires a song \"%s\" that isn't present.",
 						sSongFullTitle.c_str());
 					return false;
 				}
 				if(pSong->GetNumStepsLoadedFromProfile(slot) >= MAX_EDITS_PER_SONG_PER_PROFILE)
 				{
-					LOG->UserLog("Song file", sSongFullTitle,
+					// LOG->UserLog("Song file", sSongFullTitle, // xMAx
+					LOG->UserLog("NotesLoaderSSC::Song file", sSongFullTitle, // xMAx
 						"already has the maximum number of edits allowed for ProfileSlotP%d.",
 						slot+1);
 					return false;
@@ -1222,7 +1329,7 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
 /*
  * (c) 2011 Jason Felds
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -1232,7 +1339,7 @@ bool SSCLoader::LoadEditFromMsd(const MsdFile &msd,
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

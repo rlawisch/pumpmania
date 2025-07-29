@@ -20,7 +20,7 @@ struct TapNoteResult
 	/**
 	 * @brief Offset, in seconds, for a tap grade.
 	 *
-	 * Negative numbers mean the note was hit early; positive numbers mean 
+	 * Negative numbers mean the note was hit early; positive numbers mean
 	 * it was hit late. These values are only meaningful for graded taps
 	 * (tns >= TNS_W5). */
 	float		fTapNoteOffset;
@@ -38,18 +38,19 @@ struct TapNoteResult
 /** @brief The result of holding (or letting go of) a hold note. */
 struct HoldNoteResult
 {
-	HoldNoteResult() : hns(HNS_None), fLife(1.f), fOverlappedTime(0), iLastHeldRow(0), iCheckpointsHit(0), iCheckpointsMissed(0), bHeld(false), bActive(false) { }
+	// xMAx - fLife was 1.0f by default..changed it to 0
+	HoldNoteResult() : hns(HNS_None), fLife(0), fOverlappedTime(0), iLastHeldRow(0), iCheckpointsHit(0), iCheckpointsMissed(0), bHeld(false), bActive(false) { }
 	float GetLastHeldBeat() const;
 
 	HoldNoteScore	hns;
 
 	/**
 	 * @brief the current life of the hold.
-	 * 
+	 *
 	 * 1.0 means this HoldNote has full life.
-	 * 
+	 *
 	 * 0.0 means this HoldNote is dead.
-	 * 
+	 *
 	 * When this value hits 0.0 for the first time, m_HoldScore becomes HNS_LetGo.
 	 * If the life is > 0.0 when the HoldNote ends, then m_HoldScore becomes HNS_Held. */
 	float	fLife;
@@ -73,6 +74,10 @@ struct HoldNoteResult
 	/** @brief Is there life in the hold and does it overlap the current beat? */
 	bool		bActive;
 
+	// xMAx
+	/** xMAx - Counts the checkpoints not judged (after the hold passed the receptor). Use this value when hold is judged as perfect or miss */
+	vector<int>	viCheckpointsNotJudged;
+
 	// XML
 	XNode* CreateNode() const;
 	void LoadFromNode( const XNode* pNode );
@@ -92,7 +97,7 @@ enum TapNoteType
 	TapNoteType_Lift,		/**< Lift your foot up when it crosses the target area. */
 	TapNoteType_Attack,		/**< Hitting this note causes an attack to take place. */
 	TapNoteType_AutoKeysound,	/**< A special sound is played when this note crosses the target area. */
-	TapNoteType_Fake,		/**< This arrow can't be scored for or against the player. */
+	// TapNoteType_Fake,		/**< This arrow can't be scored for or against the player. */
 	NUM_TapNoteType,
 	TapNoteType_Invalid
 };
@@ -112,6 +117,47 @@ enum TapNoteSubType
 const RString& TapNoteSubTypeToString( TapNoteSubType tnst );
 const RString& TapNoteSubTypeToLocalizedString( TapNoteSubType tnst );
 LuaDeclareType( TapNoteSubType );
+
+// xMAx -------------------------------------------------------------------------------------------
+enum TapNoteAppearance
+{
+  TapNoteAppearance_Normal,
+  TapNoteAppearance_Hidden,
+  TapNoteAppearance_Sudden,
+  TapNoteAppearance_Vanish,
+  NUM_TapNoteAppearance,
+  TapNoteAppearance_Invalid
+};
+const RString& TapNoteAppearanceToString( TapNoteAppearance tnj );
+const RString& TapNoteAppearanceToLocalizedString( TapNoteAppearance tnj );
+LuaDeclareType( TapNoteAppearance );
+
+enum TapNoteJudge
+{
+  TapNoteJudge_Normal,
+  TapNoteJudge_Fake,
+  TapNoteJudge_Bonus,
+  NUM_TapNoteJudge,
+  TapNoteJudge_Invalid
+};
+const RString& TapNoteJudgeToString( TapNoteJudge tnj );
+const RString& TapNoteJudgeToLocalizedString( TapNoteJudge tnj );
+LuaDeclareType( TapNoteJudge );
+
+/** @brief Distinguish tap notes for players. xMAx */
+enum TapNotePlayerNoteSkin
+{
+  TapNotePlayerNoteSkin_Default = 0,
+  TapNotePlayerNoteSkin_P1,
+  TapNotePlayerNoteSkin_P2,
+  TapNotePlayerNoteSkin_P3,
+  NUM_TapNotePlayerNoteSkin,
+  TapNotePlayerNoteSkin_Invalid
+};
+const RString& TapNotePlayerNoteSkinToString( TapNotePlayerNoteSkin tns );
+const RString& TapNotePlayerNoteSkinToLocalizedString( TapNotePlayerNoteSkin tns );
+LuaDeclareType( TapNotePlayerNoteSkin );
+// ------------------------------------------------------------------------------------------------
 
 /** @brief The different places a TapNote could come from. */
 enum TapNoteSource
@@ -139,6 +185,13 @@ struct TapNote
 	/** @brief The Player that is supposed to hit this note. This is mainly for Routine Mode. */
 	PlayerNumber	pn;
 
+	// xMAx - NoteSkin Player to distinguish players in Double Performance (Co-op)
+	TapNotePlayerNoteSkin			playerNoteSkin; // 0 = default, 1 = player1, etc..
+	TapNoteAppearance	appearance;
+	TapNoteJudge		judge;
+	bool 	bIsFake;
+	int		iSkin;
+
 	// used only if Type == attack:
 	RString		sAttackModifiers;
 	float		fAttackDurationSeconds;
@@ -149,7 +202,7 @@ struct TapNote
 	// also used for hold_head only:
 	int		iDuration;
 	HoldNoteResult	HoldResult;
-	
+
 	// XML
 	XNode* CreateNode() const;
 	void LoadFromNode( const XNode* pNode );
@@ -158,31 +211,48 @@ struct TapNote
 	void PushSelf( lua_State *L );
 
 	TapNote(): type(TapNoteType_Empty), subType(TapNoteSubType_Invalid),
-		source(TapNoteSource_Original),	result(), pn(PLAYER_INVALID),  sAttackModifiers(""), 
-		fAttackDurationSeconds(0), iKeysoundIndex(-1), iDuration(0), HoldResult() {}
+		source(TapNoteSource_Original),	result(), pn(PLAYER_INVALID),  sAttackModifiers(""),
+		fAttackDurationSeconds(0), iKeysoundIndex(-1), iDuration(0), HoldResult(),
+    // xMAx
+    playerNoteSkin(TapNotePlayerNoteSkin_Default), iSkin(-1),
+    appearance(TapNoteAppearance_Normal), judge(TapNoteJudge_Normal)
+    {}
 	void Init()
 	{
 		type = TapNoteType_Empty;
-		subType = TapNoteSubType_Invalid; 
-		source = TapNoteSource_Original; 
-		pn = PLAYER_INVALID, 
-		fAttackDurationSeconds = 0.f; 
+		subType = TapNoteSubType_Invalid;
+		source = TapNoteSource_Original;
+		pn = PLAYER_INVALID,
+		fAttackDurationSeconds = 0.f;
 		iKeysoundIndex = -1;
 		iDuration = 0;
+    // xMAx
+    playerNoteSkin = TapNotePlayerNoteSkin_Default;
+    iSkin = -1;
+    appearance = TapNoteAppearance_Normal;
+    judge = TapNoteJudge_Normal;
 	}
-	TapNote( 
+	TapNote(
 		TapNoteType type_,
 		TapNoteSubType subType_,
-		TapNoteSource source_, 
+		TapNoteSource source_,
 		RString sAttackModifiers_,
 		float fAttackDurationSeconds_,
-		int iKeysoundIndex_ ):
+		int iKeysoundIndex_,
+    // xMAx
+    TapNotePlayerNoteSkin playerNoteSkin_ = TapNotePlayerNoteSkin_Default,
+    TapNoteJudge judge_ = TapNoteJudge_Normal
+  ):
 		type(type_), subType(subType_), source(source_), result(),
 		pn(PLAYER_INVALID), sAttackModifiers(sAttackModifiers_),
 		fAttackDurationSeconds(fAttackDurationSeconds_),
-		iKeysoundIndex(iKeysoundIndex_), iDuration(0), HoldResult()
+		iKeysoundIndex(iKeysoundIndex_), iDuration(0), HoldResult(),
+    // xMAx
+    playerNoteSkin(playerNoteSkin_), iSkin(-1), judge(judge_),
+    appearance(TapNoteAppearance_Normal)
 	{
-		if (type_ > TapNoteType_Fake )
+		// if (type_ > TapNoteType_Fake )
+		if (type_ > TapNoteType_AutoKeysound ) // xMAx
 		{
 			LOG->Trace("Invalid tap note type %s (most likely) due to random vanish issues. Assume it doesn't need judging.", TapNoteTypeToString(type_).c_str() );
 			type = TapNoteType_Empty;
@@ -204,6 +274,11 @@ struct TapNote
 		COMPARE(iKeysoundIndex);
 		COMPARE(iDuration);
 		COMPARE(pn);
+    // xMAx
+    COMPARE(playerNoteSkin);
+    COMPARE(iSkin);
+    COMPARE(judge);
+    COMPARE(appearance);
 #undef COMPARE
 		return true;
 	}
@@ -223,6 +298,12 @@ extern TapNote TAP_ORIGINAL_LIFT;		// 'L'
 extern TapNote TAP_ORIGINAL_ATTACK;		// 'A'
 extern TapNote TAP_ORIGINAL_AUTO_KEYSOUND;	// 'K'
 extern TapNote TAP_ORIGINAL_FAKE;		// 'F'
+extern TapNote TAP_ORIGINAL_P1;					// 'X' - xMAx
+extern TapNote TAP_ORIGINAL_P1_HOLD_HEAD;		// 'x' - xMAx
+extern TapNote TAP_ORIGINAL_P2;					// 'Y' - xMAx
+extern TapNote TAP_ORIGINAL_P2_HOLD_HEAD;		// 'y' - xMAx
+extern TapNote TAP_ORIGINAL_P3;					// 'Z' - xMAx
+extern TapNote TAP_ORIGINAL_P3_HOLD_HEAD;		// 'z' - xMAx
 //extern TapNote TAP_ORIGINAL_MINE_HEAD;	// 'N' (tentative, we'll see when iDance gets ripped.)
 extern TapNote TAP_ADDITION_TAP;
 extern TapNote TAP_ADDITION_MINE;
@@ -248,8 +329,8 @@ const int ROWS_PER_BEAT	= 48;
 const int MAX_NOTE_ROW = (1<<30);
 
 /** @brief The list of quantized note types allowed at present. */
-enum NoteType 
-{ 
+enum NoteType
+{
 	NOTE_TYPE_4TH,	/**< quarter note */
 	NOTE_TYPE_8TH,	/**< eighth note */
 	NOTE_TYPE_12TH,	/**< quarter note triplet */
@@ -350,7 +431,7 @@ inline T ScalePosition( T start, T length, T newLength, T position )
  * @author Chris Danford, Glenn Maynard (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -360,7 +441,7 @@ inline T ScalePosition( T start, T length, T newLength, T position )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

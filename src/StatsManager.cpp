@@ -49,6 +49,8 @@ void StatsManager::Reset()
 	m_vPlayedStageStats.clear();
 	m_AccumPlayedStageStats.Init();
 
+	m_iStagesPlayed.assign( NUM_PLAYERS, 0 ); // StepP1 Revival -- bSilver
+
 	CalcAccumPlayedStageStats();
 }
 
@@ -234,9 +236,11 @@ void StatsManager::CommitStatsToProfiles( const StageStats *pSS )
 				AddPlayerStatsToProfile( pPlayerProfile, *pSS, pn );
 			}
 
+      /* StepP1 Revival - Thequila
 			// No marathons etc for now...
 			if ( g_PadmissEnabled.Get() && pSS->m_playMode == PLAY_MODE_REGULAR )
 				SavePadmissScore( pSS, pn );
+      */
 		}
 	}
 
@@ -296,6 +300,7 @@ void StatsManager::SaveUploadFile( const StageStats *pSS )
 	}
 }
 
+/* StepP1 Revival - Thequila
 void StatsManager::SavePadmissScore( const StageStats *pSS, PlayerNumber pn )
 {
 	const PlayerStageStats *playerStats = &pSS->m_player[ pn ];
@@ -465,6 +470,7 @@ void StatsManager::SavePadmissScore( const StageStats *pSS, PlayerNumber pn )
 	RString fn = dir + Profile::MakeUniqueFileNameNoExtension( dir, sDate + " " ) + ".xml";
 	XmlFileUtil::SaveToFile( xml.get(), fn, "", true );
 }
+*/
 
 void StatsManager::UnjoinPlayer( PlayerNumber pn )
 {

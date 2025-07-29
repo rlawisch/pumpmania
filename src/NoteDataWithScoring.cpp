@@ -1,6 +1,7 @@
 #include "global.h"
 #include "NoteDataWithScoring.h"
 #include "NoteData.h"
+#include "NoteTypes.h" // xMAx
 #include "PlayerStageStats.h"
 #include "Game.h"
 #include "GameConstantsAndTypes.h"
@@ -28,14 +29,14 @@ int LastTapNoteScoreTrack( const NoteData &in, unsigned iRow, PlayerNumber pn )
 		const TapNote &tn = in.GetTapNote( t, iRow );
 		if (tn.type == TapNoteType_Empty ||
 			tn.type == TapNoteType_Mine ||
-			tn.type == TapNoteType_Fake ||
-			tn.type == TapNoteType_AutoKeysound) 
+			// tn.type == TapNoteType_Fake || // xMAx
+			tn.type == TapNoteType_AutoKeysound)
 			continue;
 		if( tn.pn != PLAYER_INVALID && tn.pn != pn && pn != PLAYER_INVALID )
 			continue;
 
 		TapNoteScore tns = tn.result.tns;
-		
+
 		if( tns == TNS_Miss || tns == TNS_None )
 			return t;
 
@@ -66,7 +67,7 @@ int MinTapNoteScoreTrack( const NoteData &in, unsigned iRow, PlayerNumber pn )
 		if (tn.type == TapNoteType_Empty ||
 			tn.type == TapNoteType_Mine ||
 			tn.type == TapNoteType_Fake ||
-			tn.type == TapNoteType_AutoKeysound) 
+			tn.type == TapNoteType_AutoKeysound)
 			continue;
 		if( tn.pn != PLAYER_INVALID && tn.pn != pn && pn != PLAYER_INVALID )
 			continue;
@@ -121,8 +122,13 @@ const TapNote &NoteDataWithScoring::LastTapNoteWithResult( const NoteData &in, u
 
 /* Return the minimum tap score of a row.  If the row isn't complete (not all
  * taps have been hit), return TNS_None or TNS_Miss. */
-TapNoteScore NoteDataWithScoring::MinTapNoteScore( const NoteData &in, unsigned row, PlayerNumber plnum )
+TapNoteScore NoteDataWithScoring::MinTapNoteScore( const NoteData &in, unsigned row, int iPlayerNoteSkin, PlayerNumber plnum )
 {
+	TapNotePlayerNoteSkin playerNoteSkin = TapNotePlayerNoteSkin_Invalid;
+
+	if( iPlayerNoteSkin >= TapNotePlayerNoteSkin_Default && iPlayerNoteSkin < NUM_TapNotePlayerNoteSkin)
+		playerNoteSkin = static_cast< TapNotePlayerNoteSkin >( iPlayerNoteSkin );
+
 	//LOG->Trace("Hey I'm NoteDataWithScoring::MinTapNoteScore");
 	TapNoteScore score = TNS_W1;
 	for( int t=0; t<in.GetNumTracks(); t++ )
@@ -131,8 +137,9 @@ TapNoteScore NoteDataWithScoring::MinTapNoteScore( const NoteData &in, unsigned 
 		const TapNote &tn = in.GetTapNote( t, row );
 		if (tn.type == TapNoteType_Empty ||
 			tn.type == TapNoteType_Mine ||
-			tn.type == TapNoteType_Fake ||
+			// tn.type == TapNoteType_Fake || // xMAx
 			tn.type == TapNoteType_AutoKeysound ||
+      (playerNoteSkin != TapNotePlayerNoteSkin_Invalid && tn.pn != playerNoteSkin) || // xMAx
 			( plnum != PlayerNumber_Invalid && tn.pn != plnum ) )
 			continue;
 		score = min( score, tn.result.tns );
@@ -142,9 +149,9 @@ TapNoteScore NoteDataWithScoring::MinTapNoteScore( const NoteData &in, unsigned 
 	return score;
 }
 
-bool NoteDataWithScoring::IsRowCompletelyJudged( const NoteData &in, unsigned row, PlayerNumber plnum )
+bool NoteDataWithScoring::IsRowCompletelyJudged( const NoteData &in, unsigned row, TapNotePlayerNoteSkin playerNoteSkin, PlayerNumber plnum )
 {
-	return MinTapNoteScore( in, row, plnum ) >= TNS_Miss;
+	return MinTapNoteScore( in, row, playerNoteSkin, plnum ) >= TNS_Miss;
 }
 
 namespace
@@ -372,7 +379,7 @@ void NoteDataWithScoring::GetActualRadarValues(const NoteData &in,
 				case TapNoteType_Mine:
 					state.mines_avoided+= (curr_note->result.tns == TNS_AvoidMine);
 					break;
-				case TapNoteType_Fake:
+				// case TapNoteType_Fake:
 				default:
 					break;
 			}
@@ -387,10 +394,10 @@ void NoteDataWithScoring::GetActualRadarValues(const NoteData &in,
 	int jump_count= out[RadarCategory_Jumps];
 	int hold_count= out[RadarCategory_Holds];
 	int tap_count= out[RadarCategory_TapsAndHolds];
-	float hittable_steps_length= max(0, 
+	float hittable_steps_length= max(0,
 		timing->GetElapsedTimeFromBeat(NoteRowToBeat(last_hittable_row)) -
 		timing->GetElapsedTimeFromBeat(NoteRowToBeat(first_hittable_row)));
-	// The for loop and the assert are used to ensure that all fields of 
+	// The for loop and the assert are used to ensure that all fields of
 	// RadarValue get set in here.
 	FOREACH_ENUM(RadarCategory, rc)
 	{
@@ -446,7 +453,7 @@ void NoteDataWithScoring::GetActualRadarValues(const NoteData &in,
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -456,7 +463,7 @@ void NoteDataWithScoring::GetActualRadarValues(const NoteData &in,
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

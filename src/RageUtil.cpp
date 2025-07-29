@@ -1917,6 +1917,14 @@ int StringToInt( const std::string& str, std::size_t* pos, int base, int exceptV
   return exceptVal;
 }
 
+// xMAx
+RString IntToString( const int &iNum )
+{
+	stringstream ss;
+	ss << iNum;
+	return ss.str();
+}
+
 long StringToLong( const std::string& str, std::size_t* pos, int base, long exceptVal )
 {
   try

@@ -24,6 +24,18 @@ struct CacheNoteStat {
 	int notesUpper;
 };
 
+// StepP1 Revival - bSilver -----------------------------------------------------------------------
+struct SpeedFlags
+{
+	float m_NewSpeed;
+	bool m_IsActive;
+	float m_StartTime;
+	float m_EndTime;
+	float m_OldSpeed;
+	float m_CurSpeed;
+};
+// ------------------------------------------------------------------------------------------------
+
 /** @brief The player's indivdual state. */
 class PlayerState
 {
@@ -32,7 +44,7 @@ public:
 	PlayerState();
 	/** @brief Reset the PlayerState with the initial values. */
 	void Reset();
-	/** 
+	/**
 	 * @brief Update the PlayerState based on the present time.
 	 * @param fDelta the current time. */
 	void Update( float fDelta );
@@ -42,8 +54,8 @@ public:
 	/**
 	 * @brief The PlayerNumber assigned to this Player: usually 1 or 2.
 	 *
-	 * TODO: Remove use of PlayerNumber.  All data about the player should live 
-	 * in PlayerState and callers should not use PlayerNumber to index into 
+	 * TODO: Remove use of PlayerNumber.  All data about the player should live
+	 * in PlayerState and callers should not use PlayerNumber to index into
 	 * GameState. */
 	PlayerNumber	m_PlayerNumber;
 	/**
@@ -132,6 +144,13 @@ public:
 
 	// Lua
 	void PushSelf( lua_State *L );
+
+  // StepP1 Revival - bSilver
+	// float m_fReadBPM;
+
+	SpeedFlags	m_SpeedFlags;
+	void SetSpeed( float fSpeed );
+	float		m_fSpeed;
 };
 
 #endif
@@ -141,7 +160,7 @@ public:
  * @author Chris Danford, Chris Gomez (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -151,7 +170,7 @@ public:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

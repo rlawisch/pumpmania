@@ -56,10 +56,15 @@ public:
 	// Lua
 	void PushSelf( lua_State *L );
 
+  // xMAx
+	void CheckCurrentSongOnWheel();
+	MusicWheelItemData* dummyMWID;
+
 protected:
 	MusicWheelItem *MakeItem();
 
-	void GetSongList( vector<Song*> &arraySongs, SortOrder so );
+	// void GetSongList( vector<Song*> &arraySongs, SortOrder so ); // xMAx
+	void GetSongList( vector<Song*> &arraySongs, SortOrder so, RString SongGroup = "" ); // xMAx
 	bool SelectSongOrCourse();
 	bool SelectModeMenuItem();
 
@@ -67,6 +72,7 @@ protected:
 
 	vector<MusicWheelItemData *> & getWheelItemsData(SortOrder so);
 	void readyWheelItemsData(SortOrder so);
+	void readyWheelChannelItemsData(RString group);	//xMAx - use this to make a cache for normal channels items
 
 	RString				m_sLastModeMenuItem;
 	SortOrder			m_SortOrder;
@@ -107,11 +113,14 @@ protected:
 private:
 	//use getWheelItemsData instead of touching this one
 	enum {INVALID,NEEDREFILTER,VALID} m_WheelItemDatasStatus[NUM_SortOrder];
-	vector<MusicWheelItemData *> m__WheelItemDatas[NUM_SortOrder];
-	vector<MusicWheelItemData *> m__UnFilteredWheelItemDatas[NUM_SortOrder];
+	vector<MusicWheelItemData *> m_WheelItemsData[NUM_SortOrder];
+	vector<MusicWheelItemData *> m_UnfilteredWheelItemsData[NUM_SortOrder];
 
-	void BuildWheelItemDatas( vector<MusicWheelItemData *> &arrayWheelItems, SortOrder so );
-	void FilterWheelItemDatas(vector<MusicWheelItemData *> &aUnFilteredDatas, vector<MusicWheelItemData *> &aFilteredData, SortOrder so );
+	map<RString,vector<MusicWheelItemData *>> m_WheelItemsDataForGroups; // xMAx
+
+	// void BuildWheelItemsData( vector<MusicWheelItemData *> &arrayWheelItems, SortOrder so ); // xMAx
+	void BuildWheelItemsData( vector<MusicWheelItemData *> &arrayWheelItems, SortOrder so, RString SongGroup = "");
+	void FilterWheelItemsData(vector<MusicWheelItemData *> &aUnfilteredItemsData, vector<MusicWheelItemData *> &aFilteredData, SortOrder so );
 };
 
 #endif
@@ -119,7 +128,7 @@ private:
 /*
  * (c) 2001-2004 Chris Danford, Chris Gomez, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -129,7 +138,7 @@ private:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

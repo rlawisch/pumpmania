@@ -409,7 +409,9 @@ void MakeUpper( wchar_t *p, size_t iLen );
 void MakeLower( wchar_t *p, size_t iLen );
 
 // TODO: Have the three functions below be moved to better locations.
+RString IntToString( const int &iNum ); // xMAx
 float StringToFloat( const RString &sString );
+RString FloatToString( const float &num );
 bool StringToFloat( const RString &sString, float &fOut );
 // Better than IntToString because you can check for success.
 template<class T>

@@ -23,7 +23,7 @@ XToString( SoundEffectType );
 XToLocalizedString( SoundEffectType );
 LuaXType( SoundEffectType );
 
-void SongOptions::Init() 
+void SongOptions::Init()
 {
 	m_bAssistClap = false;
 	m_bAssistMetronome = false;
@@ -37,6 +37,13 @@ void SongOptions::Init()
 	m_bRandomBGOnly = false;
 	m_bSaveScore = true;
 	m_bSaveReplay = false; // don't save replays by default?
+
+	// xMAx
+	m_bUseBGAOff = false;
+	m_bUseBGADark = false;
+	m_bShowSingles = true;
+	m_bShowHalfDoubles = true;
+	m_bShowDoubles = true;
 }
 
 void SongOptions::Approach( const SongOptions& other, float fDeltaSeconds )
@@ -56,6 +63,13 @@ void SongOptions::Approach( const SongOptions& other, float fDeltaSeconds )
 	DO_COPY( m_bRandomBGOnly );
 	DO_COPY( m_bSaveScore );
 	DO_COPY( m_bSaveReplay );
+
+  // xMAx
+	DO_COPY( m_bUseBGAOff );
+	DO_COPY( m_bUseBGADark );
+	DO_COPY( m_bShowSingles );
+	DO_COPY( m_bShowHalfDoubles );
+	DO_COPY( m_bShowDoubles );
 #undef APPROACH
 #undef DO_COPY
 }
@@ -179,7 +193,7 @@ bool SongOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut )
 	if( sBit == "clap" )				m_bAssistClap = on;
 	else if( sBit == "metronome" )				m_bAssistMetronome = on;
 	else if( sBit == "autosync" || sBit == "autosyncsong" )	m_AutosyncType = on ? AutosyncType_Song : AutosyncType_Off;
-	else if( sBit == "autosyncmachine" )			m_AutosyncType = on ? AutosyncType_Machine : AutosyncType_Off; 
+	else if( sBit == "autosyncmachine" )			m_AutosyncType = on ? AutosyncType_Machine : AutosyncType_Off;
 	else if( sBit == "autosynctempo" )			m_AutosyncType = on ? AutosyncType_Tempo : AutosyncType_Off;
 	else if( sBit == "effect" && !on )			m_SoundEffectType = SoundEffectType_Off;
 	else if( sBit == "effectspeed" )			m_SoundEffectType = on ? SoundEffectType_Speed : SoundEffectType_Off;
@@ -208,6 +222,13 @@ bool SongOptions::operator==( const SongOptions &other ) const
 	COMPARE( m_bRandomBGOnly );
 	COMPARE( m_bSaveScore );
 	COMPARE( m_bSaveReplay );
+
+  // xMAx
+	COMPARE( m_bUseBGAOff );
+	COMPARE( m_bUseBGADark );
+	COMPARE( m_bShowSingles );
+	COMPARE( m_bShowHalfDoubles );
+	COMPARE( m_bShowDoubles );
 #undef COMPARE
 	return true;
 }
@@ -233,6 +254,9 @@ public:
 	FLOAT_INTERFACE(MusicRate, MusicRate, (v > 0.0f && v <= 3.0f)); // Greater than 3 seems to crash frequently, haven't investigated why. -Kyz
 	FLOAT_INTERFACE(Haste, Haste, (v >= -1.0f && v <= 1.0f));
 
+	// xMAx
+	BOOL_INTERFACE(UseBGAOff, UseBGAOff);
+
 	LunaSongOptions()
 	{
 		ADD_METHOD(AutosyncSetting);
@@ -245,6 +269,9 @@ public:
 		ADD_METHOD(SaveReplay);
 		ADD_METHOD(MusicRate);
 		ADD_METHOD(Haste);
+
+		// xMAx
+		ADD_METHOD(UseBGAOff);
 	}
 };
 
@@ -254,7 +281,7 @@ LUA_REGISTER_CLASS( SongOptions )
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -264,7 +291,7 @@ LUA_REGISTER_CLASS( SongOptions )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

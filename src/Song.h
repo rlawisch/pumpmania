@@ -54,6 +54,46 @@ enum InstrumentTrack
 const RString& InstrumentTrackToString( InstrumentTrack it );
 InstrumentTrack StringToInstrumentTrack( const RString& s );
 
+/** xMAx */
+/**------------------------------------------------------------------------------------------------------------------*/
+/** @brief Relates how many hearts each song type takes */
+enum SongType
+{
+	SONGTYPE_ARCADE,	// 2 hearts
+	SONGTYPE_SHORTCUT,	// 1 hearts
+	SONGTYPE_REMIX,		// 3 hearts
+	SONGTYPE_FULLSONG,	// 4 hearts
+	SONGTYPE_MUSICTRAIN,	// All hearts
+	SONGTYPE_SPECIAL,
+	NUM_SongType,
+	SongType_Invalid
+};
+const RString& SongTypeToString( SongType st );
+const RString& SongTypeToLocalizedString( SongType st );
+SongType StringToSongType( const RString& s );
+LuaDeclareType( SongType );
+
+// TODO: Missing Get and Set functions - Useful for MusicWheel.cpp
+/** @brief The category for each song */
+
+enum SongCategory
+{
+	SONGCATEGORY_NEWTUNES,
+	SONGCATEGORY_ORIGINAL,
+	SONGCATEGORY_KPOP,
+	SONGCATEGORY_WORLDMUSIC,
+	SONGCATEGORY_JMUSIC,
+	SONGCATEGORY_USE_GENRE,
+	NUM_SongCategory,
+	SongCategory_Invalid
+};
+const RString& SongCategoryToString( SongCategory st );
+const RString& SongCategoryToLocalizedString( SongCategory st );
+SongCategory StringToSongCategory( const RString& s );
+LuaDeclareType( SongCategory );
+// TODO: Missing Get and Set functions - Useful for MusicWheel.cpp
+/**------------------------------------------------------------------------------------------------------------------*/
+
 /** @brief The collection of lyrics for the Song. */
 struct LyricSegment
 {
@@ -74,7 +114,7 @@ public:
 
 	/** @brief When should this song be displayed in the music wheel? */
 	enum SelectionDisplay
-	{ 
+	{
 		SHOW_ALWAYS,	/**< always show on the wheel. */
 		SHOW_NEVER	/**< never show on the wheel (unless song hiding is turned off). */
 	} m_SelectionDisplay;
@@ -90,7 +130,8 @@ public:
 	 * This assumes that there is no song present right now.
 	 * @param sDir the song directory from which to load. */
 	bool LoadFromSongDir(RString sDir, bool load_autosave= false,
-		ProfileSlot from_profile= ProfileSlot_Invalid);
+		ProfileSlot from_profile= ProfileSlot_Invalid,
+    bool bForceNoCache = false );	// xMAx - added bForceNoCache
 	// This one takes the effort to reuse Steps pointers as best as it can
 	bool ReloadFromSongDir( RString sDir );
 	bool ReloadFromSongDir() { return ReloadFromSongDir(GetSongDir()); }
@@ -124,11 +165,11 @@ public:
 	bool SaveToSSCFile(RString sPath, bool bSavingCache, bool autosave= false);
 	/** @brief Save to the SSC and SM files no matter what. */
 	void Save(bool autosave= false);
-	/** 
+	/**
 	  * @brief Save the current Song to a JSON file.
 	  * @return its success or failure. */
 	bool SaveToJsonFile( RString sPath );
-	/** 
+	/**
 	  * @brief Save the current Song to a cache file using the preferred format.
 	  * @return its success or failure. */
 	bool SaveToCacheFile();
@@ -136,7 +177,7 @@ public:
 	 * @brief Save the current Song to a SM file.
 	 * @return its success or failure. */
 	bool SaveToSMFile();
-	/** 
+	/**
 	 * @brief Save the current Song to a DWI file if possible.
 	 * @return its success or failure. */
 	bool SaveToDWIFile();
@@ -179,9 +220,9 @@ public:
 	bool	m_bEnabled;
 
 	/** @brief The title of the Song. */
-	RString	m_sMainTitle; 
+	RString	m_sMainTitle;
 	/** @brief The subtitle of the Song, if it exists. */
-	RString m_sSubTitle; 
+	RString m_sSubTitle;
 	/** @brief The artist of the Song, if it exists. */
 	RString m_sArtist;
 	/** @brief The transliterated title of the Song, if it exists. */
@@ -205,22 +246,22 @@ public:
 	 * @brief Retrieve the transliterated title, or the main title if there is no translit.
 	 * @return the proper title. */
 	RString GetTranslitMainTitle() const
-	{ 
-		return m_sMainTitleTranslit.size()? m_sMainTitleTranslit: m_sMainTitle; 
+	{
+		return m_sMainTitleTranslit.size()? m_sMainTitleTranslit: m_sMainTitle;
 	}
 	/**
 	 * @brief Retrieve the transliterated subtitle, or the main subtitle if there is no translit.
 	 * @return the proper subtitle. */
-	RString GetTranslitSubTitle() const 
-	{ 
+	RString GetTranslitSubTitle() const
+	{
 		return m_sSubTitleTranslit.size()? m_sSubTitleTranslit: m_sSubTitle;
 	}
 	/**
 	 * @brief Retrieve the transliterated artist, or the main artist if there is no translit.
 	 * @return the proper artist. */
-	RString GetTranslitArtist() const 
-	{ 
-		return m_sArtistTranslit.size()? m_sArtistTranslit:m_sArtist; 
+	RString GetTranslitArtist() const
+	{
+		return m_sArtistTranslit.size()? m_sArtistTranslit:m_sArtist;
 	}
 
 	// "title subtitle"
@@ -278,7 +319,7 @@ public:
 	RString GetPreviewVidPath() const;
 	RString GetPreviewMusicPath() const;
 	float GetPreviewStartSeconds() const;
-	
+
 	RString GetCacheFile( RString sPath );
 
 	// For loading only:
@@ -313,6 +354,8 @@ public:
 	float GetFirstSecond() const;
 	float GetLastBeat() const;
 	float GetLastSecond() const;
+	RString GetGroupName() const;
+
 	float GetSpecifiedLastBeat() const;
 	float GetSpecifiedLastSecond() const;
 
@@ -321,6 +364,17 @@ public:
 	void SetSpecifiedLastSecond(const float f);
 
 	typedef vector<BackgroundChange> 	VBackgroundChange;
+
+	// xMAx -----------------------------------------------------------------------------------
+	SongType 	 	m_SongType;
+	SongCategory 	m_SongCategory;
+	int				m_iVolume;
+
+	/** @brief The name of the folder cantaining the song */
+	RString m_sSongFolder;
+	RString GetSongFolder() const;
+	bool	m_bCanBeEdited;
+
 private:
 	/** @brief The first second that a note is hit. */
 	float firstSecond;
@@ -381,11 +435,11 @@ public:
 	void InitSteps(Steps *pSteps);
 
 	/* [splittiming]
-	float SongGetBeatFromElapsedTime( float fElapsedTime ) const 
+	float SongGetBeatFromElapsedTime( float fElapsedTime ) const
 	{
 		return m_SongTiming.GetBeatFromElapsedTime( fElapsedTime );
 	}
-	float StepsGetBeatFromElapsedTime( float fElapsedTime, const Steps &steps ) const 
+	float StepsGetBeatFromElapsedTime( float fElapsedTime, const Steps &steps ) const
 	{
 		return steps.m_Timing.GetBeatFromElapsedTime( fElapsedTime );
 	}
@@ -401,8 +455,8 @@ public:
 	*/
 
 	/* [splittiming]
-	float GetBeatFromElapsedTime( float fElapsedTime ) const 
-	{ 
+	float GetBeatFromElapsedTime( float fElapsedTime ) const
+	{
 		return m_Timing.GetBeatFromElapsedTime( fElapsedTime );
 	}
 	float GetElapsedTimeFromBeat( float fBeat ) const { return m_Timing.GetElapsedTimeFromBeat( fBeat ); }
@@ -467,6 +521,11 @@ public:
 	// Lua
 	void PushSelf( lua_State *L );
 
+	// xMAx -------------------------------------------------------------------------
+	// Separate BPMChanges from Stops
+	bool HasSignificantBpmChanges() const;
+	DisplayBPM GetDisplayBPM() const { return this->m_DisplayBPMType; };
+
 private:
 	bool m_loaded_from_autosave;
 	/** @brief the Steps that belong to this Song. */
@@ -484,7 +543,7 @@ private:
  * @author Chris Danford, Glenn Maynard (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -494,7 +553,7 @@ private:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

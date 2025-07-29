@@ -21,7 +21,7 @@ enum NotePart
 	NotePart_Tap, /**< The part representing a traditional TapNote. */
 	NotePart_Mine, /**< The part representing a mine. */
 	NotePart_Lift, /**< The part representing a lift note. */
-	NotePart_Fake, /**< The part representing a fake note. */
+	// NotePart_Fake, /**< The part representing a fake note. */ // xMAx
 	NotePart_HoldHead, /**< The part representing a hold head. */
 	NotePart_HoldTail, /**< The part representing a hold tail. */
 	NotePart_HoldTopCap, /**< The part representing a hold's top cap. */
@@ -65,9 +65,9 @@ private:
 	NoteResource *m_p;
 };
 /** @brief What types of holds are there? */
-enum HoldType 
+enum HoldType
 {
-	hold, /**< Merely keep your foot held on the body for it to count. */
+	hold = 0, /**< Merely keep your foot held on the body for it to count. */ // xMAx
 	roll, /**< Keep hitting the hold body for it to stay alive. */
 	// minefield,
 	NUM_HoldType,
@@ -179,7 +179,9 @@ public:
 	NoteDisplay();
 	~NoteDisplay();
 
-	void Load( int iColNum, const PlayerState* pPlayerState, float fYReverseOffsetPixels );
+  // xMAx
+	// void Load( int iColNum, const PlayerState* pPlayerState, float fYReverseOffsetPixels );
+	void Load( int iColNum, const PlayerState* pPlayerState );
 
 	static void Update( float fDeltaTime );
 
@@ -200,18 +202,25 @@ public:
 	 * @param bOnSameRowAsRollStart a flag to see if a roll is on the same beat.
 	 * @param bIsAddition a flag to see if this note was added via mods.
 	 * @param fPercentFadeToFail at what point do the notes fade on failure?
-	 * @param fReverseOffsetPixels How are the notes adjusted on Reverse? 
+	 * @param fReverseOffsetPixels How are the notes adjusted on Reverse?
 	 * @param fDrawDistanceAfterTargetsPixels how much to draw after the receptors.
 	 * @param fDrawDistanceBeforeTargetsPixels how much ot draw before the receptors.
 	 * @param fFadeInPercentOfDrawFar when to start fading in. */
 	void DrawTap(const TapNote& tn, const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args, float fBeat,
 		bool bOnSameRowAsHoldStart,
-		bool bOnSameRowAsRollBeat, bool bIsAddition, float fPercentFadeToFail);
+		bool bOnSameRowAsRollBeat, bool bIsAddition, float fPercentFadeToFail,
+    // xMAx - Added
+    float fCenterLine, float fYOffset = -1
+  );
 	void DrawHold(const TapNote& tn, const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args, int iRow, bool bIsBeingHeld,
 		const HoldNoteResult &Result,
-		bool bIsAddition, float fPercentFadeToFail);
+		bool bIsAddition, float fPercentFadeToFail,
+    // xMAx - Added
+    float fStartYOffset, float fEndYOffset,
+    bool bStartIsPastPeak, bool bEndIsPastPeak, float fCenterLine
+  );
 
 	bool DrawHoldHeadForTapsOnSameRow() const;
 	bool DrawRollHeadForTapsOnSameRow() const;
@@ -243,11 +252,17 @@ private:
 		const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args, float fYOffset, float fBeat,
 		bool bIsAddition, float fPercentFadeToFail, float fColorScale,
-		bool is_being_held);
+		bool is_being_held,
+    // xMAx
+    float fCenterLine
+  );
 	void DrawHoldPart(vector<Sprite*> &vpSpr,
 		const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args,
-		const draw_hold_part_args& part_args, bool glow, int part_type);
+		const draw_hold_part_args& part_args, bool glow, int part_type,
+    // xMAx - added bIsHidden & fYHoldHead & Force conditions
+    bool bIsHidden, float fYHoldHead,
+    float fCenterLine, bool bForceSudden, bool bForceVanish);
 	void DrawHoldBodyInternal(vector<Sprite*>& sprite_top,
 		vector<Sprite*>& sprite_body, vector<Sprite*>& sprite_bottom,
 		const NoteFieldRenderArgs& field_args,
@@ -255,11 +270,17 @@ private:
 		draw_hold_part_args& part_args,
 		const float head_minus_top, const float tail_plus_bottom,
 		const float y_head, const float y_tail, const float top_beat,
-		const float bottom_beat, bool glow);
+		const float bottom_beat, bool glow,
+    // xMAx - added bIsHidden & fYHoldHead & Force conditions
+    bool bIsHidden, float fYHoldHead,
+    float fCenterLine, bool bForceSudden, bool bForceVanish
+  );
 	void DrawHoldBody(const TapNote& tn, const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args, float beat, bool being_held,
 		float y_head, float y_tail, float percent_fade_to_fail,
-		float color_scale, float top_beat, float bottom_beat);
+		float color_scale, float top_beat, float bottom_beat,
+    // xMAx
+    float fCenterLine);
 
 	const PlayerState	*m_pPlayerState;	// to look up PlayerOptions
 	NoteMetricCache_t	*cache;
@@ -267,7 +288,12 @@ private:
 	NoteColorActor		m_TapNote;
 	NoteColorActor		m_TapMine;
 	NoteColorActor		m_TapLift;
-	NoteColorActor		m_TapFake;
+  // xMAx -----------------------------------------------------------------------------------------
+	// NoteColorActor		m_TapFake;
+	NoteColorActor		m_TapNoteP1;
+	NoteColorActor		m_TapNoteP2;
+	NoteColorActor		m_TapNoteP3;
+  // ----------------------------------------------------------------------------------------------
 	NoteColorActor		m_HoldHead[NUM_HoldType][NUM_ActiveType];
 	NoteColorSprite		m_HoldTopCap[NUM_HoldType][NUM_ActiveType];
 	NoteColorSprite		m_HoldBody[NUM_HoldType][NUM_ActiveType];
@@ -346,7 +372,7 @@ struct NoteColumnRenderer : public Actor
  * @author Brian Bugh, Ben Nordstrom, Chris Danford, Steve Checkoway (c) 2001-2006
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -356,7 +382,7 @@ struct NoteColumnRenderer : public Actor
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

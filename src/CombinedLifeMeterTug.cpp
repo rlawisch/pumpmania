@@ -32,7 +32,7 @@ static void TugMeterPercentChangeInit( size_t /*ScoreEvent*/ i, RString &sNameOu
 
 static Preference1D<float> g_fTugMeterPercentChange( TugMeterPercentChangeInit, NUM_ScoreEvent );
 
-CombinedLifeMeterTug::CombinedLifeMeterTug() 
+CombinedLifeMeterTug::CombinedLifeMeterTug()
 {
 	FOREACH_PlayerNumber( p )
 	{
@@ -92,7 +92,7 @@ void CombinedLifeMeterTug::ChangeLife( PlayerNumber pn, TapNoteScore score )
 
 void CombinedLifeMeterTug::HandleTapScoreNone( PlayerNumber pn )
 {
-	
+
 }
 
 void CombinedLifeMeterTug::ChangeLife( PlayerNumber pn, HoldNoteScore score, TapNoteScore tscore )
@@ -101,7 +101,7 @@ void CombinedLifeMeterTug::ChangeLife( PlayerNumber pn, HoldNoteScore score, Tap
 	switch( score )
 	{
 	case HNS_Held:			fPercentToMove = g_fTugMeterPercentChange[SE_Held];	break;
-	case HNS_LetGo:			fPercentToMove = g_fTugMeterPercentChange[SE_LetGo];	break;
+	// case HNS_LetGo:			fPercentToMove = g_fTugMeterPercentChange[SE_LetGo];	break; // xMAx
 	case HNS_Missed:			fPercentToMove = g_fTugMeterPercentChange[SE_Missed];	break;
 	default:
 		FAIL_M(ssprintf("Invalid HoldNoteScore: %i", score));
@@ -155,7 +155,7 @@ void CombinedLifeMeterTug::SetLife(PlayerNumber pn, float value)
 /*
  * (c) 2003-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -165,7 +165,7 @@ void CombinedLifeMeterTug::SetLife(PlayerNumber pn, float value)
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -10,17 +10,18 @@
 #include "Style.h"
 #include "ActorUtil.h"
 
-void GhostArrowRow::Load( const PlayerState* pPlayerState, float fYReverseOffset )
+// void GhostArrowRow::Load( const PlayerState* pPlayerState, float fYReverseOffset ) // xMAx
+void GhostArrowRow::Load( const PlayerState* pPlayerState ) // xMAx
 {
 	m_pPlayerState = pPlayerState;
-	m_fYReverseOffsetPixels = fYReverseOffset;
+	// m_fYReverseOffsetPixels = fYReverseOffset; // xMAx
 
 	const PlayerNumber pn = m_pPlayerState->m_PlayerNumber;
 	const Style* pStyle = GAMESTATE->GetCurrentStyle(pn);
 	NOTESKIN->SetPlayerNumber( pn );
 
 	// init arrows
-	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ ) 
+	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ )
 	{
 		const RString &sButton = GAMESTATE->GetCurrentStyle(pn)->ColToButtonName( c );
 
@@ -102,6 +103,7 @@ void GhostArrowRow::DidTapNote( int iCol, TapNoteScore tns, bool bBright )
 {
 	ASSERT_M( iCol >= 0  &&  iCol < (int) m_Ghost.size(), ssprintf("assert(iCol %i >= 0  && iCol %i < (int)m_Ghost.size() %i) failed",iCol,iCol,(int)m_Ghost.size()) );
 
+  /* xMAx -----------------------------------------------------------------------------------------
 	Message msg("ColumnJudgment");
 	msg.SetParam( "TapNoteScore", tns );
 	// This may be useful for popn styled judgment :) -DaisuMaster
@@ -115,13 +117,21 @@ void GhostArrowRow::DidTapNote( int iCol, TapNoteScore tns, bool bBright )
 		m_Ghost[iCol]->PlayCommand( "Bright" );
 	else
 		m_Ghost[iCol]->PlayCommand( "Dim" );
-	RString sJudge = TapNoteScoreToString( tns );
-	m_Ghost[iCol]->PlayCommand( Capitalize(sJudge) );
+  */
+
+  if( bBright || tns == TNS_HitMine ) // TNS_HitMine is used by Player.CPP m_pNoteField->DidTapNote( iter.Track(), tn.result.tns, false );
+	{
+  // ----------------------------------------------------------------------------------------------
+    RString sJudge = TapNoteScoreToString( tns );
+    m_Ghost[iCol]->PlayCommand( Capitalize(sJudge) );
+		m_Ghost[iCol]->PlayCommand( "Bright" ); // xMAx - added
+  } // xMAx
 }
 
 void GhostArrowRow::DidHoldNote( int iCol, HoldNoteScore hns, bool bBright )
 {
 	ASSERT( iCol >= 0  &&  iCol < (int) m_Ghost.size() );
+  /* xMAx -----------------------------------------------------------------------------------------
 	Message msg("ColumnJudgment");
 	msg.SetParam( "HoldNoteScore", hns );
 	msg.SetParam( "Column", iCol );
@@ -134,8 +144,15 @@ void GhostArrowRow::DidHoldNote( int iCol, HoldNoteScore hns, bool bBright )
 		m_Ghost[iCol]->PlayCommand( "Bright" );
 	else
 		m_Ghost[iCol]->PlayCommand( "Dim" );
-	RString sJudge = HoldNoteScoreToString( hns );
-	m_Ghost[iCol]->PlayCommand( Capitalize(sJudge) );
+  */
+
+  if( bBright )
+	{
+  // ----------------------------------------------------------------------------------------------
+    RString sJudge = HoldNoteScoreToString( hns );
+    m_Ghost[iCol]->PlayCommand( Capitalize(sJudge) );
+		m_Ghost[iCol]->PlayCommand( "Bright" );	// xMAx - added
+	} // xMAx
 }
 
 void GhostArrowRow::SetHoldShowing( int iCol, const TapNote &tn )
@@ -147,7 +164,7 @@ void GhostArrowRow::SetHoldShowing( int iCol, const TapNote &tn )
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -157,7 +174,7 @@ void GhostArrowRow::SetHoldShowing( int iCol, const TapNote &tn )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

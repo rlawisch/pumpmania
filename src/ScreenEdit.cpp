@@ -39,6 +39,7 @@
 #include "TimingData.h"
 #include "Game.h"
 #include "RageSoundReader.h"
+#include "StatsManager.h"
 
 static Preference<float> g_iDefaultRecordLength( "DefaultRecordLength", 4 );
 static Preference<bool> g_bEditorShowBGChangesPlay( "EditorShowBGChangesPlay", true );
@@ -1495,13 +1496,13 @@ void ScreenEdit::Init()
 	m_NoteFieldEdit.SetXY( EDIT_X, EDIT_Y );
 	m_NoteFieldEdit.SetZoom( SCREEN_HEIGHT/480*0.5 );
 	m_NoteFieldEdit.Init( &m_PlayerStateEdit, PLAYER_HEIGHT*2, false );
-	m_NoteFieldEdit.Load( &m_NoteDataEdit, -240, 850 );
+	m_NoteFieldEdit.Load( &m_NoteDataEdit, -240, 850, false ); // xMAx
 	this->AddChild( &m_NoteFieldEdit );
 
 	m_NoteDataRecord.SetNumTracks( m_NoteDataEdit.GetNumTracks() );
 	m_NoteFieldRecord.SetXY( RECORD_X, RECORD_Y );
 	m_NoteFieldRecord.Init( GAMESTATE->m_pPlayerState[PLAYER_1], PLAYER_HEIGHT );
-	m_NoteFieldRecord.Load( &m_NoteDataRecord, -120, 425 );
+	m_NoteFieldRecord.Load( &m_NoteDataRecord, -120, 425, false ); // xMAx
 	this->AddChild( &m_NoteFieldRecord );
 
 	m_EditState = EditState_Invalid;
@@ -2201,7 +2202,7 @@ bool ScreenEdit::InputEdit( const InputEventPlus &input, EditButton EditB )
 				case TapNoteType_Tap:	m_selectedTap = TAP_ORIGINAL_FAKE;	break;
 				case TapNoteType_Mine:	m_selectedTap = TAP_ORIGINAL_TAP;	break;
 				case TapNoteType_Lift:	m_selectedTap = TAP_ORIGINAL_MINE;	break;
-				case TapNoteType_Fake:	m_selectedTap = TAP_ORIGINAL_LIFT;	break;
+				// case TapNoteType_Fake:	m_selectedTap = TAP_ORIGINAL_LIFT;	break; // xMAx
 				DEFAULT_FAIL( m_selectedTap.type );
 			}
 			return true;
@@ -2213,7 +2214,7 @@ bool ScreenEdit::InputEdit( const InputEventPlus &input, EditButton EditB )
 				case TapNoteType_Tap:	m_selectedTap = TAP_ORIGINAL_MINE;	break;
 				case TapNoteType_Mine:	m_selectedTap = TAP_ORIGINAL_LIFT;	break;
 				case TapNoteType_Lift:	m_selectedTap = TAP_ORIGINAL_FAKE;	break;
-				case TapNoteType_Fake:	m_selectedTap = TAP_ORIGINAL_TAP;	break;
+				// case TapNoteType_Fake:	m_selectedTap = TAP_ORIGINAL_TAP;	break; // xMAx
 				DEFAULT_FAIL( m_selectedTap.type );
 			}
 			return true;
@@ -3226,7 +3227,7 @@ bool ScreenEdit::InputPlay( const InputEventPlus &input, EditButton EditB )
 
 	GameButtonType gbt = GAMESTATE->m_pCurGame->GetPerButtonInfo(input.GameI.button)->m_gbt;
 
-	if( GamePreferences::m_AutoPlay == PC_HUMAN && GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerOptions.GetCurrent().m_fPlayerAutoPlay == 0 )
+	if( GamePreferences::m_AutoPlayP1 == PC_HUMAN && GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerOptions.GetCurrent().m_fPlayerAutoPlay == 0 )
 	{
 		const int iCol = GAMESTATE->GetCurrentStyle(GAMESTATE->GetMasterPlayerNumber())->GameInputToColumn( input.GameI );
 		bool bRelease = input.type == IET_RELEASE;
@@ -3244,7 +3245,7 @@ bool ScreenEdit::InputPlay( const InputEventPlus &input, EditButton EditB )
 				{
 				case GameButtonType_Step:
 					if( iCol != -1 )
-						m_Player->Step( iCol, -1, input.DeviceI.ts, false, bRelease );
+						// m_Player->Step( iCol, -1, input.DeviceI.ts, false, bRelease ); // xMAx
 					return true;
 				default:
 					break;
@@ -3436,7 +3437,7 @@ void ScreenEdit::TransitionEditState( EditState em )
 		if( GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerOptions.GetCurrent().m_fPlayerAutoPlay != 0 )
 			GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerController = PC_AUTOPLAY;
 		else
-			GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerController = GamePreferences::m_AutoPlay;
+			GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerController = GamePreferences::m_AutoPlayP1;
 
 		if( g_bEditorShowBGChangesPlay )
 		{
@@ -3598,7 +3599,8 @@ void ScreenEdit::HandleMessage( const Message &msg )
 
 			bool bOn = false;
 			if( hns != HoldNoteScore_Invalid )
-				bOn = hns != HNS_LetGo;
+				// bOn = hns != HNS_LetGo; // xMAx
+				bOn = hns != HNS_Missed; // xMAx
 			else
 				bOn = tns != TNS_Miss;
 

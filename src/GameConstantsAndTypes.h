@@ -149,13 +149,51 @@ const RString& PlayModeToLocalizedString( PlayMode pm );
 PlayMode StringToPlayMode( const RString& s );
 LuaDeclareType( PlayMode );
 
-/** 
+/**
  * @brief The list of ways to sort songs and courses.
  *
  * All song sorts should be listed before course sorts.
  */
-enum SortOrder 
+enum SortOrder
 {
+	// ------- Pump it Up Sorts - StepP1 Revival - bsilver --------
+	SORT_REMIX,
+	SORT_SHORTCUT,
+	SORT_UCS,
+	SORT_RANDOM,
+	SORT_LEVEL_1,
+	SORT_LEVEL_2,
+	SORT_LEVEL_3,
+	SORT_LEVEL_4,
+	SORT_LEVEL_5,
+	SORT_LEVEL_6,
+	SORT_LEVEL_7,
+	SORT_LEVEL_8,
+	SORT_LEVEL_9,
+	SORT_LEVEL_10,
+	SORT_LEVEL_11,
+	SORT_LEVEL_12,
+	SORT_LEVEL_13,
+	SORT_LEVEL_14,
+	SORT_LEVEL_15,
+	SORT_LEVEL_16,
+	SORT_LEVEL_17,
+	SORT_LEVEL_18,
+	SORT_LEVEL_19,
+	SORT_LEVEL_20,
+	SORT_LEVEL_21,
+	SORT_LEVEL_22,
+	SORT_LEVEL_23,
+	SORT_LEVEL_24_OVER,
+	SORT_QUEST,
+	SORT_FULLSONG,
+	SORT_ORIGINAL,
+	SORT_KPOP,
+	SORT_WORLDMUSIC,
+	SORT_ALLTUNES, // SORT_NEWTUNES,
+	SORT_COOP,
+	SORT_JMUSIC,
+	// ----------------------------------------------------------------------------------------------
 	// song sorts
 	SORT_PREFERRED, /**< Sort by the user's preferred settings. */
 	SORT_GROUP, /**< Sort by the groups the Songs are in. */
@@ -216,19 +254,19 @@ LuaDeclareType( SortOrder );
 inline bool IsSongSort( SortOrder so ) { return (so >= SORT_PREFERRED && so <= SORT_DOUBLE_CHALLENGE_METER) || so == SORT_LENGTH; }
 
 /** @brief The list of tap note scores available during play. */
-enum TapNoteScore { 
-	TNS_None, /**< There is no score involved with this one. */
-	TNS_HitMine, /**< A mine was hit successfully. */
-	TNS_AvoidMine, /**< A mine was avoided successfully. */
-	TNS_CheckpointMiss, /**< A checkpoint was missed during a hold. */
-	TNS_Miss, /**< A note was missed entirely. */
-	TNS_W5, /**< A note was almost missed, but not quite. */
-	TNS_W4, /**< A note was hit either a bit early or a bit late. */
-	TNS_W3, /**< A note was hit with decent accuracy, but not the best. */
-	TNS_W2, /**< A note was hit off by just a miniscule amount. This used to be the best rating. */
-	TNS_W1, /**< A note was hit perfectly. */
-	TNS_CheckpointHit, /**< A checkpoint was held during a hold. */
-	NUM_TapNoteScore, /**< The number of Tap Note Scores available. */
+enum TapNoteScore {
+	TNS_None, /* There is no score involved with this one. */
+	TNS_HitMine, /* Catch Mine */
+	TNS_AvoidMine, /* Missed Mine */
+	TNS_CheckpointMiss, /* CheckpointMiss = HoldMissCombo (Only Miss) */
+	TNS_Miss, /* MISS */
+	TNS_W5, /* BAD */
+	TNS_W4, /* GOOD */
+	TNS_W3, /* GREAT */
+	TNS_W2, /* PERFECT */
+	TNS_W1, /* Disabled (RainbowPerfect in future? */
+	TNS_CheckpointHit, /* CheckpointHit = HoldCombo (Only Perfect) */
+	NUM_TapNoteScore, /* The number of Tap Note Scores available. */
 	TapNoteScore_Invalid,
 };
 /**
@@ -252,8 +290,8 @@ TapNoteScore StringToTapNoteScore( const RString& str );
 LuaDeclareType( TapNoteScore );
 
 /** @brief The list of hold note scores available during play. */
-enum HoldNoteScore 
-{ 
+enum HoldNoteScore
+{
 	HNS_None,		/**< The HoldNote was not scored yet. */
 	HNS_LetGo,		/**< The HoldNote has passed, but the player missed it. */
 	HNS_Held,		/**< The HoldNote has passed, and was successfully held all the way. */
@@ -350,11 +388,11 @@ LuaDeclareType( ProfileSlot );
 
 /** @brief The states of the memory card during play. */
 enum MemoryCardState
-{ 
-	MemoryCardState_Ready, 
-	MemoryCardState_Checking, 
-	MemoryCardState_TooLate, 
-	MemoryCardState_Error, 
+{
+	MemoryCardState_Ready,
+	MemoryCardState_Checking,
+	MemoryCardState_TooLate,
+	MemoryCardState_Error,
 	MemoryCardState_Removed,
 	MemoryCardState_NoCard,
 	NUM_MemoryCardState,
@@ -487,8 +525,8 @@ StageAward StringToStageAward( const RString& pma );
 LuaDeclareType( StageAward );
 
 /** @brief The various peak combo awards should such a combo be attained during play. */
-enum PeakComboAward 
-{ 
+enum PeakComboAward
+{
 	PeakComboAward_1000,
 	PeakComboAward_2000,
 	PeakComboAward_3000,
@@ -563,10 +601,10 @@ StyleType StringToStyleType( const RString& s );
 LuaDeclareType( StyleType );
 
 /** @brief The different goal types, mainly meant for fitness modes. */
-enum GoalType 
+enum GoalType
 {
-	GoalType_Calories, 
-	GoalType_Time, 
+	GoalType_Calories,
+	GoalType_Time,
 	GoalType_None,
 	NUM_GoalType,
 	GoalType_Invalid,
@@ -604,8 +642,8 @@ LuaDeclareType( EditMode );
 enum SampleMusicPreviewMode
 {
 	SampleMusicPreviewMode_Normal,		/**< Music is played as the song is highlighted. */
-	SampleMusicPreviewMode_StartToPreview,	
-	SampleMusicPreviewMode_ScreenMusic,	/**< No music plays. Select it once to preview the music, 
+	SampleMusicPreviewMode_StartToPreview,
+	SampleMusicPreviewMode_ScreenMusic,	/**< No music plays. Select it once to preview the music,
 						 * then once more to select the song. */
 	SampleMusicPreviewMode_LastSong,	/**< continue playing the last song */
 	NUM_SampleMusicPreviewMode,
@@ -628,7 +666,7 @@ enum Stage
 	Stage_4th, /**< The fourth stage. */
 	Stage_5th, /**< The fifth stage. */
 	Stage_6th, /**< The sixth stage. */
-	Stage_Next, /**< Somewhere between the sixth and final stage. 
+	Stage_Next, /**< Somewhere between the sixth and final stage.
 		     * This won't normally happen because 7 stages is the max in the UI. */
 	Stage_Final, /**< The last stage. */
 	Stage_Extra1, /**< The first bonus stage, AKA the extra stage. */
@@ -660,8 +698,8 @@ LuaDeclareType( EarnedExtraStage );
 /** @brief The different results of loading a profile. */
 enum ProfileLoadResult
 {
-	ProfileLoadResult_Success, 
-	ProfileLoadResult_FailedNoProfile, 
+	ProfileLoadResult_Success,
+	ProfileLoadResult_FailedNoProfile,
 	ProfileLoadResult_FailedTampered
 };
 
@@ -708,6 +746,22 @@ const RString& FailTypeToString( FailType cat );
 const RString& FailTypeToLocalizedString( FailType cat );
 LuaDeclareType( FailType );
 
+enum BattleMode
+{
+	BATTLE_MODE_SCORE_BATTLE,
+	BATTLE_MODE_LOW_SCORE_BATTLE,
+	BATTLE_MODE_COMBO_BATTLE,
+	BATTLE_MODE_LOW_COMBO_BATTLE,
+	BATTLE_MODE_MORE_GOOD,
+	BATTLE_MODE_BRAIN_IQ,		// StepP1 revival - bsilver - Not implemented
+	BATTLE_MODE_HYPER_POTION,	// StepP1 revival - bsilver - Not implemented
+	NUM_BattleMode,
+	BattleMode_Invalid
+};
+const RString &BattleModeToString( BattleMode bm );
+const RString &BattleModeToLocalizedString( BattleMode bm );
+LuaDeclareType( BattleMode );
+
 
 #endif
 
@@ -716,7 +770,7 @@ LuaDeclareType( FailType );
  * @author Chris Danford, Chris Gomez (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -726,7 +780,7 @@ LuaDeclareType( FailType );
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

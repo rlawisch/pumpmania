@@ -13,7 +13,18 @@ TapNote TAP_ORIGINAL_ROLL_HEAD	( TapNoteType_HoldHead,	TapNoteSubType_Roll,	TapN
 TapNote TAP_ORIGINAL_MINE	( TapNoteType_Mine,	TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1 );
 TapNote TAP_ORIGINAL_ATTACK	( TapNoteType_Attack,	TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1 );
 TapNote TAP_ORIGINAL_AUTO_KEYSOUND	( TapNoteType_AutoKeysound,TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1 );
-TapNote TAP_ORIGINAL_FAKE	( TapNoteType_Fake,	TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1 );
+
+// xMAx -------------------------------------------------------------------------------------------
+// TapNote TAP_ORIGINAL_FAKE	( TapNoteType_Fake,	TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1 );
+TapNote TAP_ORIGINAL_FAKE			( TapNoteType_Tap,			TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_Default, TapNoteJudge_Fake );
+TapNote TAP_ORIGINAL_P1				( TapNoteType_Tap,			TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_P1 );
+TapNote TAP_ORIGINAL_P1_HOLD_HEAD	( TapNoteType_HoldHead,	TapNoteSubType_Hold,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_P1 );
+TapNote TAP_ORIGINAL_P2				( TapNoteType_Tap,			TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_P2 );
+TapNote TAP_ORIGINAL_P2_HOLD_HEAD	( TapNoteType_HoldHead,	TapNoteSubType_Hold,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_P2 );
+TapNote TAP_ORIGINAL_P3				( TapNoteType_Tap,			TapNoteSubType_Invalid,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_P3 );
+TapNote TAP_ORIGINAL_P3_HOLD_HEAD	( TapNoteType_HoldHead,	TapNoteSubType_Hold,	TapNoteSource_Original, "", 0, -1, TapNotePlayerNoteSkin_P3 );
+// ------------------------------------------------------------------------------------------------
+
 //TapNote TAP_ORIGINAL_MINE_HEAD ( TapNoteType_HoldHead, TapNoteSubType_Mine, TapNoteSource_Original, "", 0, -1 );
 TapNote TAP_ADDITION_TAP	( TapNoteType_Tap,	TapNoteSubType_Invalid,	TapNoteSource_Addition, "", 0, -1 );
 TapNote TAP_ADDITION_MINE	( TapNoteType_Mine,	TapNoteSubType_Invalid,	TapNoteSource_Addition, "", 0, -1 );
@@ -28,7 +39,7 @@ static const char *TapNoteTypeNames[] = {
 	"Lift",
 	"Attack",
 	"AutoKeySound",
-	"Fake",
+	// "Fake",
 };
 XToString( TapNoteType );
 XToLocalizedString( TapNoteType );
@@ -42,6 +53,37 @@ static const char *TapNoteSubTypeNames[] = {
 XToString( TapNoteSubType );
 XToLocalizedString( TapNoteSubType );
 LuaXType( TapNoteSubType );
+
+// xMAx -------------------------------------------------------------------------------------------
+static const char *TapNoteAppearanceNames[] = {
+	"Normal",
+	"Hidden",
+	"Sudden",
+	"Vanish",
+};
+XToString( TapNoteAppearance );
+XToLocalizedString( TapNoteAppearance );
+LuaXType( TapNoteAppearance );
+
+static const char *TapNoteJudgeNames[] = {
+	"Normal",
+	"Fake",
+	"Bonus",
+};
+XToString( TapNoteJudge );
+XToLocalizedString( TapNoteJudge );
+LuaXType( TapNoteJudge );
+
+static const char *TapNotePlayerNoteSkinNames[] = {
+	"Default",
+	"Player1 NS",
+	"Player2 NS",
+	"Player3 NS",
+};
+XToString( TapNotePlayerNoteSkin );
+XToLocalizedString( TapNotePlayerNoteSkin );
+LuaXType( TapNotePlayerNoteSkin );
+// ------------------------------------------------------------------------------------------------
 
 static const char *TapNoteSourceNames[] = {
 	"Original",
@@ -126,7 +168,7 @@ static const int ROWS_PER_MEASURE = ROWS_PER_BEAT * BEATS_PER_MEASURE;
  * @param row The row to check for.
  * @return the quantized NoteType. */
 NoteType GetNoteType( int row )
-{ 
+{
 	if(	  row % (ROWS_PER_MEASURE/4) == 0)	return NOTE_TYPE_4TH;
 	else if( row % (ROWS_PER_MEASURE/8) == 0)	return NOTE_TYPE_8TH;
 	else if( row % (ROWS_PER_MEASURE/12) == 0)	return NOTE_TYPE_12TH;
@@ -139,7 +181,7 @@ NoteType GetNoteType( int row )
 };
 
 NoteType BeatToNoteType( float fBeat )
-{ 
+{
 	return GetNoteType( BeatToNoteRow(fBeat) );
 }
 /**
@@ -149,7 +191,7 @@ NoteType BeatToNoteType( float fBeat )
  * @return true if the NoteType is t, false otherwise.
  */
 bool IsNoteOfType( int row, NoteType t )
-{ 
+{
 	return GetNoteType(row) == t;
 }
 
@@ -281,7 +323,7 @@ LUA_REGISTER_CLASS( TapNote )
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -291,7 +333,7 @@ LUA_REGISTER_CLASS( TapNote )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

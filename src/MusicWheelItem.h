@@ -10,6 +10,7 @@
 #include "WheelItemBase.h"
 #include "AutoActor.h"
 #include "ThemeMetric.h"
+#include "Banner.h"
 
 class Course;
 class Song;
@@ -44,28 +45,37 @@ public:
 	virtual void LoadFromWheelItemData( const WheelItemBaseData* pWID, int iIndex, bool bHasFocus, int iDrawIndex );
 	virtual void HandleMessage( const Message &msg );
 	void RefreshGrades();
+	Banner m_Banner; // StepP1 Revival - bSilver
 
 private:
 	ThemeMetric<bool>	GRADES_SHOW_MACHINE;
 
+  /* StepP1 Revival - bSilver
 	AutoActor		m_sprColorPart[NUM_MusicWheelItemType];
 	AutoActor		m_sprNormalPart[NUM_MusicWheelItemType];
 	AutoActor		m_sprOverPart[NUM_MusicWheelItemType];
+  */
+
+  // StepP1 Revival - bSilver
+	AutoActor		m_sprNormalPart;
+	AutoActor		m_sprOverPart;
 
 	TextBanner		m_TextBanner;	// used by Type_Song instead of m_pText
 	BitmapText		*m_pText[NUM_MusicWheelItemType];
 	BitmapText		*m_pTextSectionCount;
 
+  /* StepP1 Revival - bSilver
 	WheelNotifyIcon		m_WheelNotifyIcon;
 	AutoActor		m_pGradeDisplay[NUM_PLAYERS];
+  */
 };
 
 struct MusicWheelItemData : public WheelItemBaseData
 {
 	MusicWheelItemData() : m_pCourse(nullptr), m_pSong(nullptr), m_Flags(),
 		m_iSectionCount(0), m_sLabel(""), m_pAction() { }
-	MusicWheelItemData( WheelItemDataType type, Song* pSong, 
-			   RString sSectionName, Course* pCourse, 
+	MusicWheelItemData( WheelItemDataType type, Song* pSong,
+			   RString sSectionName, Course* pCourse,
 			   RageColor color, int iSectionCount );
 
 	Course*			m_pCourse;
@@ -87,7 +97,7 @@ struct MusicWheelItemData : public WheelItemBaseData
  * @author Chris Danford, Chris Gomez, Glenn Maynard (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -97,7 +107,7 @@ struct MusicWheelItemData : public WheelItemBaseData
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

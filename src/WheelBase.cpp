@@ -14,6 +14,7 @@
 #include "Style.h"
 #include "ThemeMetric.h"
 #include "ScreenDimensions.h"
+#include "MusicWheelItem.h" // xMAx
 
 const int MAX_WHEEL_SOUND_SPEED = 15;
 AutoScreenMessage( SM_SongChanged ); // TODO: Replace this with a Message and MESSAGEMAN
@@ -38,10 +39,34 @@ WheelBase::~WheelBase()
 		SAFE_DELETE( i );
 	}
 	m_WheelBaseItems.clear();
+
+  // xMAx -----------------------------------------------------------------------------------------
+	m_CurWheelItemData.clear();
+	wheel_positions.clear();
+	wheel_init_positions.clear();
+  // ----------------------------------------------------------------------------------------------
+
 	m_LastSelection = nullptr;
 }
 
-void WheelBase::Load( RString sType ) 
+// xMAx -------------------------------------------------------------------------------------------
+Actor::TweenState MadeWheelTweenState( float x_pos, float y_pos, float z_pos, float y_rotation, float zoom )
+{
+	Actor::TweenState m_TS;
+
+	m_TS.Init();
+	m_TS.pos.x = x_pos;
+	m_TS.pos.y = y_pos;
+	m_TS.pos.z = z_pos;
+	m_TS.rotation.y = y_rotation;
+	m_TS.scale.x = zoom;
+	m_TS.scale.y = zoom;
+
+	return m_TS;
+}
+// ------------------------------------------------------------------------------------------------
+
+void WheelBase::Load( RString sType )
 {
 	LOG->Trace( "WheelBase::Load('%s')", sType.c_str() );
 	ASSERT( this->GetNumChildren() == 0 ); // only load once
@@ -53,10 +78,11 @@ void WheelBase::Load( RString sType )
 	m_fPositionOffsetFromSelection = 0;
 	m_iSwitchesLeftInSpinDown = 0;
 	m_Moving = 0;
+	m_iTimesBeforeStartSpin = 1;	//xMAx
 
 	SWITCH_SECONDS.Load(sType,"SwitchSeconds");
 	LOCKED_INITIAL_VELOCITY.Load(sType,"LockedInitialVelocity");
-	SCROLL_BAR_HEIGHT.Load(sType,"ScrollBarHeight");
+	// SCROLL_BAR_HEIGHT.Load(sType,"ScrollBarHeight"); // xMAx
 	m_exprItemTransformFunction.SetFromReference( THEME->GetMetricR(sType,"ItemTransformFunction") );
 	NUM_WHEEL_ITEMS_TO_DRAW.Load(sType,"NumWheelItems");
 	WHEEL_ITEM_LOCKED_COLOR.Load(sType,"WheelItemLockedColor");
@@ -75,21 +101,57 @@ void WheelBase::Load( RString sType )
 	}
 	SAFE_DELETE( pTempl );
 
+  // xMAx - Prime 1 Style -------------------------------------------------------------------------
+	float fXFactor = 0.55f;
+	if( (float)PREFSMAN->m_fDisplayAspectRatio >= 1.5f )
+		fXFactor = 2/3.0f;
+
+	wheel_positions.push_back(MadeWheelTweenState(floor(-720.0f * fXFactor), 0, -6, -60.0f, 0.18f)); // 0 - Out of the Wheel (Zoom 0)
+	wheel_positions.push_back(MadeWheelTweenState(floor(-610.0f * fXFactor), 0, -5, -55.0f, 0.18f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(-500.0f * fXFactor), 0, -4, -45.0f, 0.20f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(-390.0f * fXFactor), 0, -3, -40.0f, 0.22f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(-260.0f * fXFactor), 0, -2, -40.0f, 0.24f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(-150.0f * fXFactor), 0, -1, -35.0f, 0.24f));
+	wheel_positions.push_back(MadeWheelTweenState(0.0f, 0, 0.0f, 0.0f, 0.25f)); // 6
+	wheel_positions.push_back(MadeWheelTweenState(floor(150.0f * fXFactor), 0, -1, 35.0f, 0.24f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(260.0f * fXFactor), 0, -2, 40.0f, 0.24f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(390.0f * fXFactor), 0, -3, 40.0f, 0.22f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(500.0f * fXFactor), 0, -4, 45.0f, 0.20f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(610.0f * fXFactor), 0, -5, 55.0f, 0.18f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(720.0f * fXFactor), 0, -6, 60.0f, 0.18f)); // 12 - Out of the Wheel (Zoom 0)
+
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -6, -130.0f, 0)); // 0
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -5, -125.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -4, -120.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -3, -110.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -2, -100.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -1, -95.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(0.0f, 0, 0.0f, 0.0f, 0.0f)); // 6
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -1, 95.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -2, 100.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -3, 110.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -4, 115.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -5, 120.0f, 0));
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -6, 130.0f, 0)); // 12
+  // ----------------------------------------------------------------------------------------------
+
 	// draw outside->inside
 	for( int i=0; i<NUM_WHEEL_ITEMS/2; i++ )
 		this->AddChild( m_WheelBaseItems[i] );
 	for( int i=NUM_WHEEL_ITEMS-1; i>=NUM_WHEEL_ITEMS/2; i-- )
 		this->AddChild( m_WheelBaseItems[i] );
 
+  /* xMAx
 	m_sprHighlight.Load( THEME->GetPathG(sType,"highlight") );
 	m_sprHighlight->SetName( "Highlight" );
 	this->AddChild( m_sprHighlight );
 	ActorUtil::LoadAllCommands( *m_sprHighlight, m_sName );
 
 	m_ScrollBar.SetName( "ScrollBar" );
-	m_ScrollBar.SetBarHeight( SCROLL_BAR_HEIGHT ); 
+	m_ScrollBar.SetBarHeight( SCROLL_BAR_HEIGHT );
 	this->AddChild( &m_ScrollBar );
 	ActorUtil::LoadAllCommands( m_ScrollBar, m_sName );
+  */
 
 	SetPositions();
 }
@@ -99,12 +161,104 @@ void WheelBase::BeginScreen()
 	m_WheelState = STATE_SELECTING;
 }
 
+// xMAx - Prime -----------------------------------------------------------------------------------
+void WheelBase::OpenUpWheel( bool bOpenCenter )
+{
+	RebuildWheelItems(0);
+	for( int i=0; i<NUM_WHEEL_ITEMS; i++ )
+	{
+		WheelItemBase *pDisplay = m_WheelBaseItems[i];
+
+		if ( i >= 13 || i < 0 )
+			return;
+
+		pDisplay->FinishTweening();
+		pDisplay->DestTweenState() = wheel_positions[i];
+
+		if( i==6 && !bOpenCenter )
+			continue;
+
+		switch( i )
+		{
+			case 1: pDisplay->Sleep(0); break;
+			case 2: pDisplay->Sleep(.1f); break;
+			case 3: pDisplay->Sleep(.2f); break;
+			case 4: pDisplay->Sleep(.25f); break;
+			case 5: pDisplay->Sleep(.275f); break;
+			case 6:	pDisplay->Sleep(.3f); break;
+			case 7: pDisplay->Sleep(.275f); break;
+			case 8: pDisplay->Sleep(.25f); break;
+			case 9: pDisplay->Sleep(.2f); break;
+			case 10: pDisplay->Sleep(.1f); break;
+			case 11: pDisplay->Sleep(0); break;
+			default: break;
+		}
+
+		if( i == 6 )
+		{
+			pDisplay->BeginTweening(0.1f, TWEEN_DECELERATE);
+			pDisplay->SetY(-45.0f);
+			pDisplay->SetDiffuseAlpha(0.0f);
+		}
+		else
+		{
+			pDisplay->BeginTweening(0.2f, TWEEN_DECELERATE);
+			pDisplay->DestTweenState() = wheel_init_positions[i];
+		}
+	}
+}
+
+void WheelBase::CloseUpWheel( bool bCloseCenter )
+{
+	//return;
+
+	RebuildWheelItems(0);
+	for( int i=0; i<NUM_WHEEL_ITEMS; i++ )
+	{
+		WheelItemBase *pDisplay = m_WheelBaseItems[i];
+
+		if ( i >= 13 || i < 0 )
+			return;
+
+		pDisplay->FinishTweening();
+
+		if( i==6 && !bCloseCenter )
+		{
+			pDisplay->DestTweenState() = wheel_positions[i];
+			continue;
+		}
+
+		pDisplay->DestTweenState() = wheel_init_positions[i];
+
+		switch( i )
+		{
+			case 1: pDisplay->Sleep(.5f); break;
+			case 2: pDisplay->Sleep(.4f); break;
+			case 3: pDisplay->Sleep(.3f); break;
+			case 4: pDisplay->Sleep(.2f); break;
+			case 5: pDisplay->Sleep(.1f); break;
+			case 6: pDisplay->Sleep(0); break;
+			case 7: pDisplay->Sleep(.1f); break;
+			case 8: pDisplay->Sleep(.2f); break;
+			case 9: pDisplay->Sleep(.3f); break;
+			case 10: pDisplay->Sleep(.4f); break;
+			case 11: pDisplay->Sleep(.5f); break;
+			default: break;
+		}
+
+		pDisplay->BeginTweening(0.2f, TWEEN_DECELERATE);
+		pDisplay->DestTweenState() = wheel_positions[i];
+	}
+}
+// ------------------------------------------------------------------------------------------------
+
 void WheelBase::SetItemPosition(Actor &item, int item_index, float offset_from_middle)
 {
 	Actor::TweenState ts = m_exprItemTransformFunction.GetTransformCached(offset_from_middle, item_index, NUM_WHEEL_ITEMS);
 	item.DestTweenState() = ts;
 }
 
+/* xMAx
 void WheelBase::UpdateScrollbar()
 {
 	int iTotalNumItems = m_CurWheelItemData.size();
@@ -118,6 +272,7 @@ void WheelBase::UpdateScrollbar()
 		m_ScrollBar.SetPercentage( fCenter, fSize );
 	}
 }
+*/
 
 bool WheelBase::IsSettled() const
 {
@@ -131,11 +286,14 @@ bool WheelBase::IsSettled() const
 	return true;
 }
 
-void WheelBase::SetPositions()
+// void WheelBase::SetPositions() // xMAx
+void WheelBase::SetPositions(int dir) // xMAx
 {
 	for( int i=0; i<NUM_WHEEL_ITEMS; i++ )
 	{
 		WheelItemBase *pDisplay = m_WheelBaseItems[i];
+
+    /* xMAx
 		const float fOffsetFromSelection = i - NUM_WHEEL_ITEMS/2 + m_fPositionOffsetFromSelection;
 		if( fabsf(fOffsetFromSelection) > NUM_WHEEL_ITEMS_TO_DRAW/2 )
 			pDisplay->SetVisible( false );
@@ -143,8 +301,84 @@ void WheelBase::SetPositions()
 			pDisplay->SetVisible( true );
 
 		SetItemPosition(*pDisplay, i, fOffsetFromSelection);
+    */
+
+    // xMAx ---------------------------------------------------------------------------------------
+		if ( i >= 12 || i < 0 )
+			return;
+
+		pDisplay->StopTweening();
+
+		if ( dir == 1 )
+		{
+			pDisplay->DestTweenState() = wheel_positions[i+1];
+
+			if ( i==(NUM_WHEEL_ITEMS-1) )
+			{
+				pDisplay->Sleep(.1f);
+				pDisplay->BeginTweening(0.2f, TWEEN_LINEAR);
+			}
+			else
+				pDisplay->BeginTweening(0.3f, TWEEN_LINEAR);
+
+			pDisplay->DestTweenState() = wheel_positions[i];
+		}
+		else if ( dir == -1 )
+		{
+			pDisplay->DestTweenState() = wheel_positions[i];
+
+			if ( i==0 )
+			{
+				pDisplay->Sleep(.1f);
+				pDisplay->BeginTweening(0.2f, TWEEN_LINEAR);
+
+			}
+			else
+				pDisplay->BeginTweening(0.3f, TWEEN_LINEAR);
+
+			pDisplay->DestTweenState() = wheel_positions[i+1];
+		}
+		else
+			pDisplay->DestTweenState() = wheel_positions[i];
+    // --------------------------------------------------------------------------------------------
 	}
 }
+
+// xMAx -------------------------------------------------------------------------------------------
+void WheelBase::StopWheel( void )
+{
+	m_Moving = 0;
+	m_fPositionOffsetFromSelection = 0;
+
+	for( int i=0; i<NUM_WHEEL_ITEMS; i++ )
+	{
+		WheelItemBase *pDisplay = m_WheelBaseItems[i];
+		pDisplay->StopTweening();
+	}
+}
+
+void WheelBase::HandleMessageOver( const Message &msg )	//test - (see ScreenSelectMusic.cpp: 2083 )
+{
+	if( msg == "GoBackSelectingGroup" )
+	{
+		StopWheel();	// Set banners in their places
+
+		for( int i=0; i<NUM_WHEEL_ITEMS; i++ )
+		{
+			WheelItemBase *pDisplay = m_WheelBaseItems[i];
+			Message msg( msg.GetName() + "Animation" );
+			msg.SetParam( "NumItem", i );
+
+			pDisplay->HandleMessage( msg );
+		}
+	}
+	else if ( msg == "CurrentCategoryChanged" && IsMoving() )
+	{
+		m_iTimesBeforeStartSpin = 0;
+		m_SpinSpeed = float(3);
+	}
+}
+// ------------------------------------------------------------------------------------------------
 
 void WheelBase::Update( float fDeltaTime )
 {
@@ -154,6 +388,7 @@ void WheelBase::Update( float fDeltaTime )
 	if( !GetTweenTimeLeft() )
 		SetPositions();
 
+  /* xMAx
 	for( int i=0; i<NUM_WHEEL_ITEMS; i++ )
 	{
 		WheelItemBase *pDisplay = m_WheelBaseItems[i];
@@ -166,6 +401,7 @@ void WheelBase::Update( float fDeltaTime )
 	// Moved to CommonUpdateProcedure, seems to work fine. Revert if it happens
 	// to break something.
 	UpdateScrollbar();
+  */
 
 	if( m_Moving )
 	{
@@ -208,30 +444,88 @@ void WheelBase::Update( float fDeltaTime )
 
 	if( IsMoving() )
 	{
+		// xMAx - SpinSpeed ---------------------------------------------------------------------------
+		switch( m_iTimesBeforeStartSpin )
+		{
+			case -1:
+				m_SpinSpeed = float(3 * 1.06f);
+				break;
+			case -2:
+				m_SpinSpeed = float(3 * 1.25f);
+				break;
+			case -3:
+				m_SpinSpeed = float(3 * 1.56f);
+				break;
+			case -4:
+				m_SpinSpeed = float(3 * 2.0f);
+				break;
+			case -5:
+				m_SpinSpeed = float(3 * 2.56f);
+				break;
+			case -6:
+				m_SpinSpeed = float(3 * 3.25f);
+				break;
+			case -7:
+				m_SpinSpeed = float(3 * 4.06f);
+				break;
+			case -8:
+				m_SpinSpeed = float(3 * 6.0f);
+				break;
+			case -9:
+				m_SpinSpeed = float(3 * 7.6f);
+				break;
+			case -10:
+				m_SpinSpeed = float(3 * 9.0f);
+				break;
+			case -11:
+				m_SpinSpeed = float(3 * 10.4f);
+				break;
+			case -12:
+				m_SpinSpeed=float(3 * 12.2f);
+				break;
+			default:
+				break;
+		}
+    // --------------------------------------------------------------------------------------------
+
 		// We're automatically moving. Move linearly, and don't clamp to the selection.
-		float fSpinSpeed = m_SpinSpeed*m_Moving;
+		// float fSpinSpeed = m_SpinSpeed*m_Moving; // xMAx
+		float fSpinSpeed = float(3)*m_Moving; // xMAx
 		m_fPositionOffsetFromSelection -= fSpinSpeed*fDeltaTime;
+		temp -= m_SpinSpeed*m_Moving*fDeltaTime; // xMAx
 
 		/* Make sure that we don't go further than 1 away, in case the speed is
 		 * very high or we miss a lot of frames. */
 		m_fPositionOffsetFromSelection  = clamp(m_fPositionOffsetFromSelection, -1.0f, 1.0f);
+		temp = clamp(temp, -1.0f, 1.0f); // xMAx
 
 		// If it passed the selection, move again.
-		if((m_Moving == -1 && m_fPositionOffsetFromSelection >= 0) ||
-		   (m_Moving == 1 && m_fPositionOffsetFromSelection <= 0))
+		// if((m_Moving == -1 && m_fPositionOffsetFromSelection >= 0) || // xMAx
+    //  (m_Moving == 1 && m_fPositionOffsetFromSelection <= 0)) // xMAx
+		if((m_Moving == -1 && temp >= 0) || // xMAx
+		   (m_Moving == 1 && temp <= 0)) // xMAx
 		{
 			ChangeMusic( m_Moving );
+			temp = m_Moving; // xMAx
 
+			// xMAx - Stop subtracting if the count is less than -7 (bSilver: -13 to PhoenixWheel)
+			if( m_iTimesBeforeStartSpin > -13 )
+				m_iTimesBeforeStartSpin -= 1;
+
+      /* xMAx
 			if( PREFSMAN->m_iMusicWheelSwitchSpeed < MAX_WHEEL_SOUND_SPEED )
 				m_soundChangeMusic.Play(true);
+      */
 		}
 
+    /* xMAx
 		if( PREFSMAN->m_iMusicWheelSwitchSpeed >= MAX_WHEEL_SOUND_SPEED &&
 			m_MovingSoundTimer.PeekDeltaTime() >= 1.0f / MAX_WHEEL_SOUND_SPEED )
 		{
 			m_MovingSoundTimer.GetDeltaTime();
 			m_soundChangeMusic.Play(true);
 		}
+    */
 	}
 	else
 	{
@@ -250,6 +544,8 @@ void WheelBase::Update( float fDeltaTime )
 			if( m_fPositionOffsetFromSelection > 0 )
 				m_fPositionOffsetFromSelection = 0;
 		}
+
+		temp = m_fPositionOffsetFromSelection; // xMAx
 	}
 }
 
@@ -269,7 +565,7 @@ void WheelBase::UpdateSwitch()
 
 bool WheelBase::Select()	// return true if this selection can end the screen
 {
-	LOG->Trace( "WheelBase::Select()" );
+	// LOG->Trace( "WheelBase::Select()" ); // xMAx
 
 	m_Moving = 0;
 
@@ -312,7 +608,8 @@ WheelItemBaseData* WheelBase::GetItem( unsigned int iIndex )
 
 int WheelBase::IsMoving() const
 {
-	return m_Moving && m_TimeBeforeMovingBegins == 0;
+	// return m_Moving && m_TimeBeforeMovingBegins == 0; // xMAx
+	return (m_Moving) & (m_TimeBeforeMovingBegins == 0); // xMAx
 }
 
 void WheelBase::TweenOnScreenForSort()
@@ -336,7 +633,8 @@ void WheelBase::TweenOffScreenForSort()
 
 	this->PlayCommand( "SortOff" );
 
-	m_fTimeLeftInState = GetTweenTimeLeft();
+	// m_fTimeLeftInState = GetTweenTimeLeft(); // xMAx
+	m_fTimeLeftInState = 0; // xMAx
 }
 
 void WheelBase::ChangeMusicUnlessLocked( int n )
@@ -374,8 +672,11 @@ void WheelBase::Move(int n)
 	if (!MoveSpecific(n))
 		return;
 
-	m_TimeBeforeMovingBegins = 1/4.0f;
-	m_SpinSpeed = float(PREFSMAN->m_iMusicWheelSwitchSpeed);
+	m_iTimesBeforeStartSpin = 1; // xMAx
+	// m_TimeBeforeMovingBegins = 1/4.0f; // xMAx
+	m_TimeBeforeMovingBegins = 0.6f; // xMAx
+	// m_SpinSpeed = float(PREFSMAN->m_iMusicWheelSwitchSpeed); // xMAx
+	m_SpinSpeed = float(3); // xMAx
 	m_Moving = n;
 
 	if( m_Moving )
@@ -386,8 +687,8 @@ bool WheelBase::MoveSpecific( int n )
 {
 	/* If we're not selecting, discard this.  We won't ignore it; we'll
 	 * get called again every time the key is repeated. */
-	/* Still process Move(0) so we sometimes continue moving immediate 
-	 * after the sort change finished and before the repeat event causes a 
+	/* Still process Move(0) so we sometimes continue moving immediate
+	 * after the sort change finished and before the repeat event causes a
 	 * Move(0). -Chris */
 	switch( m_WheelState )
 	{
@@ -500,7 +801,7 @@ int WheelBase::FirstVisibleIndex()
 	int iFirstVisibleIndex = m_iSelection;
 	if( m_iSelection >= int(m_CurWheelItemData.size()) )
 		m_iSelection = 0;
-	
+
 	// find the first wheel item shown
 	iFirstVisibleIndex -= NUM_WHEEL_ITEMS/2;
 
@@ -511,7 +812,7 @@ int WheelBase::FirstVisibleIndex()
 // lua start
 #include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the WheelBase. */ 
+/** @brief Allow Lua to have access to the WheelBase. */
 class LunaWheelBase: public Luna<WheelBase>
 {
 public:
@@ -562,7 +863,7 @@ LUA_REGISTER_DERIVED_CLASS( WheelBase, ActorFrame )
 /*
  * (c) 2001-2004 Chris Danford, Chris Gomez, Glenn Maynard, Josh Allen
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -572,7 +873,7 @@ LUA_REGISTER_DERIVED_CLASS( WheelBase, ActorFrame )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

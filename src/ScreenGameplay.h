@@ -7,7 +7,7 @@
 #include "BitmapText.h"
 #include "RageSound.h"
 #include "LocalizedString.h"
-#include "BeginnerHelper.h"
+// #include "BeginnerHelper.h" // xMAx
 #include "LyricDisplay.h"
 #include "Attack.h"
 #include "NetworkSyncManager.h"
@@ -18,6 +18,7 @@
 #include "InputEventPlus.h"
 #include "SoundEffectControl.h"
 #include "GameplayAssist.h"
+#include "Quad.h"	//xMAx - added for mines flash
 
 class LyricsLoader;
 class ActiveAttackList;
@@ -34,6 +35,20 @@ class Foreground;
 AutoScreenMessage( SM_NotesEnded );
 AutoScreenMessage( SM_BeginFailed );
 AutoScreenMessage( SM_LeaveGameplay );
+
+// xMAx
+class BGAOff
+{
+public:
+	BGAOff();
+	~BGAOff();
+	void InitStar( int no );
+	void InitBGAOff();
+	void DrawStars();
+
+	bool m_bUpdatePositions;
+	float m_fTimeCounter;
+};
 
 class PlayerInfo
 {
@@ -57,7 +72,7 @@ public:
 	/**
 	 * @brief Determine if the player information is enabled.
 	 * @return its success or failure. */
-	bool IsEnabled();
+	bool IsEnabled() const; // xMAx
 	/**
 	 * @brief Determine if we're in MultiPlayer.
 	 * @return true if it is MultiPlayer, false otherwise. */
@@ -69,7 +84,7 @@ public:
 	{
 		if( m_bIsDummy )
 			return ssprintf("Dummy%d",m_iDummyIndex);
-		if( IsMultiPlayer() ) 
+		if( IsMultiPlayer() )
 			return MultiPlayerToString( m_mp );
 		else
 			return PlayerNumberToString( m_pn );
@@ -172,7 +187,7 @@ public:
 	PlayerInfo *GetDummyPlayerInfo( int iDummyIndex );
 	void Pause(bool bPause) { PauseGame(bPause); }
 	bool IsPaused() const { return m_bPaused; }
-	float GetHasteRate();
+	float GetHasteRate() const; // xMAx
 
 	void FailFadeRemovePlayer(PlayerInfo* pi);
 	void FailFadeRemovePlayer(PlayerNumber pn);
@@ -182,6 +197,13 @@ public:
 	vector<float> m_HasteAddAmounts; // Amounts that are added to speed depending on what turning point has been passed.
 	float m_fHasteTimeBetweenUpdates; // Seconds between haste updates.
 	float m_fHasteLifeSwitchPoint; // Life amount below which GAMESTATE->m_fHasteRate is based on the life amount.
+
+	// xMAx
+	float	m_fLastSecondForCurrentSong;
+	float   GetLastSecondForCurrentSong(void);
+	Quad	m_WhiteFlashForMineExplosion;
+	BGAOff*	m_BGAOff;
+	Quad	m_FadeBGA;
 
 protected:
 	virtual void UpdateStageStats( MultiPlayer /* mp */ ) {};	// overridden for multiplayer
@@ -219,10 +241,11 @@ protected:
 	void ReloadCurrentSong();
 	virtual void LoadNextSong();
 	void StartPlayingSong( float fMinTimeToNotes, float fMinTimeToMusic );
-	void GetMusicEndTiming( float &fSecondsToStartFadingOutMusic, float &fSecondsToStartTransitioningOut );
+	// void GetMusicEndTiming( float &fSecondsToStartFadingOutMusic, float &fSecondsToStartTransitioningOut ); // xMAx
+	void GetMusicEndTiming( float &fSecondsToStartFadingOutMusic ); // xMAx
 	void LoadLights();
 	void PauseGame( bool bPause, GameController gc = GameController_Invalid );
-	void PlayAnnouncer( const RString &type, float fSeconds, float *fDeltaSeconds );
+	void PlayAnnouncer( const RString &type, float fSeconds, float *fDeltaSeconds ) const; // xMAx
 	void PlayAnnouncer( const RString &type, float fSeconds ) { PlayAnnouncer(type, fSeconds, &m_fTimeSinceLastDancingComment); }
 	void UpdateLights();
 	void SendCrossedMessages();
@@ -244,7 +267,7 @@ protected:
 	// These exist so that the haste rate isn't recalculated every time GetHasteRate is called, which is at least once per frame. -Kyz
 
 	/** @brief The different game states of ScreenGameplay. */
-	enum DancingState { 
+	enum DancingState {
 		STATE_INTRO = 0, /**< The starting state, pressing Back isn't allowed here. */
 		STATE_DANCING,	 /**< The main state where notes have to be pressed. */
 		STATE_OUTRO,	 /**< The ending state, pressing Back isn't allowed here. */
@@ -267,7 +290,7 @@ protected:
 
 	float			m_fTimeSinceLastDancingComment;	// this counter is only running while STATE_DANCING
 
-	LyricDisplay		m_LyricDisplay;
+	// LyricDisplay		m_LyricDisplay; // xMAx
 
 	Background		*m_pSongBackground;
 	Foreground		*m_pSongForeground;
@@ -318,7 +341,7 @@ protected:
 	GameplayAssist		m_GameplayAssist;
 	RageSound		*m_pSoundMusic;
 
-	BeginnerHelper		m_BeginnerHelper;
+	// BeginnerHelper		m_BeginnerHelper; // xMAx
 
 	/** @brief The NoteData that controls the lights on an arcade cabinet. */
 	NoteData		m_CabinetLightsNoteData;
@@ -333,7 +356,7 @@ protected:
 	// announcer sound needs to be delayed.  See HandleScreenMessage for more.
 	// -Kyz
 	bool m_delaying_ready_announce;
-	
+
 	// HACK: We have no idea whether we're actually using SMOnline or not.
 	// No, seriously, NOWHERE is it stored what room we're in or whether we're in a room at all.
 	// Apparently we just hope the server is keeping track.
@@ -366,7 +389,7 @@ vector<PlayerInfo>::iterator GetNextVisiblePlayerInfo		( vector<PlayerInfo>::ite
  * @author Chris Danford, Glenn Maynard (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -376,7 +399,7 @@ vector<PlayerInfo>::iterator GetNextVisiblePlayerInfo		( vector<PlayerInfo>::ite
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

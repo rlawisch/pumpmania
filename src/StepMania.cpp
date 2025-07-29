@@ -505,7 +505,7 @@ struct VideoCardDefaults
 	),
 	VideoCardDefaults(
 		"GeForce|Radeon|Wonder 9|Quadro",
-		"opengl,d3d",
+		"d3d,opengl",	// changed just for 'frozen screen' when we access the Graphics menu - StepP1 Revival - bSilver
 		640,480,
 		32,32,32,	// 32 bit textures are faster to load
 		2048,
@@ -864,7 +864,7 @@ void StepMania::InitializeCurrentGame( const Game* g )
 			GAMESTATE->SetCurGame(new_game);
 		}
 	}
-	
+
 	// It doesn't matter if sTheme is blank or invalid, THEME->STAL will set
 	// a selectable theme for us. -Kyz
 
@@ -1285,7 +1285,7 @@ void StepMania::InsertCoin( int iNum, bool bCountInBookkeeping )
 	{
 		GAMESTATE->m_iCoins.Set( GAMESTATE->m_iCoins + iNum );
 	}
-	
+
 	int iCredits = GAMESTATE->m_iCoins / PREFSMAN->m_iCoinsPerCredit;
 	bool bMaxCredits = iCredits >= MAX_NUM_CREDITS;
 	if( bMaxCredits )

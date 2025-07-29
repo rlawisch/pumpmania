@@ -55,7 +55,7 @@ void StepsUtil::GetAllMatching( Song *pSong, const StepsCriteria &stc, vector<So
 {
 	const vector<Steps*> &vSteps = ( stc.m_st == StepsType_Invalid ?  pSong->GetAllSteps() :
 					 pSong->GetStepsByStepsType(stc.m_st) );
-	
+
 	for (Steps *st : vSteps)
 		if( stc.Matches(pSong, st) )
 			out.push_back( SongAndSteps(pSong, st) );
@@ -194,19 +194,82 @@ void StepsUtil::SortNotesArrayByDifficulty( vector<Steps*> &arraySteps )
 {
 	/* Sort in reverse order of priority. Sort by description first, to get
 	 * a predictable order for songs with no radar values (edits). */
-	stable_sort( arraySteps.begin(), arraySteps.end(), CompareStepsPointersByDescription );
-	stable_sort( arraySteps.begin(), arraySteps.end(), CompareNotesPointersByRadarValues );
+	// stable_sort( arraySteps.begin(), arraySteps.end(), CompareStepsPointersByDescription ); // xMAx
+	// stable_sort( arraySteps.begin(), arraySteps.end(), CompareNotesPointersByRadarValues ); // xMAx
 	stable_sort( arraySteps.begin(), arraySteps.end(), CompareNotesPointersByMeter );
-	stable_sort( arraySteps.begin(), arraySteps.end(), CompareNotesPointersByDifficulty );
+	// stable_sort( arraySteps.begin(), arraySteps.end(), CompareNotesPointersByDifficulty ); // xMAx
 }
 
 bool StepsUtil::CompareStepsPointersByTypeAndDifficulty(const Steps *pStep1, const Steps *pStep2)
 {
+  /* xMAx
 	if( pStep1->m_StepsType < pStep2->m_StepsType )
 		return true;
 	if( pStep1->m_StepsType > pStep2->m_StepsType )
 		return false;
 	return pStep1->GetDifficulty() < pStep2->GetDifficulty();
+  */
+
+  // xMAx -----------------------------------------------------------------------------------------
+  StepsType StepType1 = pStep1->m_StepsType;
+	StepsType StepType2 = pStep2->m_StepsType;
+
+	if( StepType1 == StepsType_pump_halfdouble )
+		StepType1 = StepsType_pump_double;
+
+	if( StepType2 == StepsType_pump_halfdouble )
+		StepType2 = StepsType_pump_double;
+
+	if( (StepType1 == StepsType_pump_single) && (StepType2 == StepsType_pump_double) )
+		if ( pStep1->GetDescription().find("SP") != std::string::npos )
+			if( pStep2->GetDescription().find("DP") != std::string::npos )
+				return true;
+			else
+				return false;
+		else
+			return true;
+
+	if( (StepType1 == StepsType_pump_double) && (StepType2 == StepsType_pump_single) )
+		if ( pStep1->GetDescription().find("DP") != std::string::npos )
+			return false;
+		else
+			if( pStep2->GetDescription().find("SP") != std::string::npos )
+				return true;
+			else
+				return false;
+
+	if( (StepType1 == StepsType_pump_single) && (StepType2 == StepsType_pump_single) )
+	{
+		if ( pStep1->GetDescription().find("SP") != std::string::npos )
+			if ( pStep2->GetDescription().find("SP") != std::string::npos )
+				return pStep1->GetMeter() < pStep2->GetMeter();
+			else
+				return false;
+
+			else
+
+		if ( pStep2->GetDescription().find("SP") != std::string::npos )	// xMAx - We know Step1 is not SP
+			return true;
+	}
+
+	if( (StepType1 == StepsType_pump_double) && (StepType2 == StepsType_pump_double) )
+	{
+		if ( pStep1->GetDescription().find("DP") != std::string::npos )
+			if ( pStep2->GetDescription().find("DP") != std::string::npos )
+				return pStep1->GetMeter() < pStep2->GetMeter();
+			else
+				return false;
+
+		if ( pStep2->GetDescription().find("DP") != std::string::npos )
+				return true;
+	}
+
+
+	if( StepType1 != StepType2 )
+		return StepType1 < StepType2;
+
+	return pStep1->GetMeter() < pStep2->GetMeter();
+  // ----------------------------------------------------------------------------------------------
 }
 
 void StepsUtil::SortStepsByTypeAndDifficulty( vector<Steps*> &arraySongPointers )
@@ -271,7 +334,7 @@ void StepsID::FromSteps( const Steps *p )
  *
  * XXX: Unless two memcards are inserted and there's overlap in the names.  In that
  * case, maybe both edits should be renamed to "Pn: foo"; as long as we don't write
- * them back out (which we don't do except in the editor), it won't be permanent. 
+ * them back out (which we don't do except in the editor), it won't be permanent.
  * We could do this during the actual Steps::GetID() call, instead, but then it'd have
  * to have access to Song::m_LoadedFromProfile. */
 
@@ -292,12 +355,12 @@ Steps *StepsID::ToSteps( const Song *p, bool bAllowNull ) const
 	{
 		pRet = SongUtil::GetOneSteps( p, st, dc, -1, -1, "", "", 0, true );
 	}
-	
+
 	if( !bAllowNull && pRet == nullptr )
 		FAIL_M( ssprintf("%i, %i, \"%s\"", st, dc, sDescription.c_str()) );
 
 	m_Cache.Set( pRet );
-	
+
 	return pRet;
 }
 
@@ -316,7 +379,7 @@ XNode* StepsID::CreateNode() const
 	return pNode;
 }
 
-void StepsID::LoadFromNode( const XNode* pNode ) 
+void StepsID::LoadFromNode( const XNode* pNode )
 {
 	ASSERT( pNode->GetName() == "Steps" );
 
@@ -392,7 +455,7 @@ bool StepsID::operator==(const StepsID &rhs) const
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -402,7 +465,7 @@ bool StepsID::operator==(const StepsID &rhs) const
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -82,11 +82,22 @@ void NoteSkinManager::RefreshNoteSkinData( const Game* pGame )
 	StripCvsAndSvn( asNoteSkinNames );
 	StripMacResourceForks( asNoteSkinNames );
 
+	// StepP1 Revival - bSilver - Clear vector before including data
+	m_vNoteSkinsInfo.clear();
+
 	g_mapNameToData.clear();
 	for( unsigned j=0; j<asNoteSkinNames.size(); j++ )
 	{
 		RString sName = asNoteSkinNames[j];
 		sName.MakeLower();
+
+		// StepP1 Revival - bSilver - Including Noteskins data to vector ------------------------------
+		NoteSkinInfo info;
+		info.m_name = sName;
+		info.m_path = sBaseSkinFolder + sName;
+		m_vNoteSkinsInfo.push_back( info );
+    // --------------------------------------------------------------------------------------------
+
 		// Don't feel like changing the structure of this code to load the skin
 		// into a temp variable and move it, so if the load fails, then just
 		// delete it from the map. -Kyz
@@ -280,7 +291,7 @@ void NoteSkinManager::GetAllNoteSkinNamesForGame( const Game *pGame, vector<RStr
 		StripCvsAndSvn( AddTo );
 		StripMacResourceForks( AddTo );
 	}
-}	
+}
 
 RString NoteSkinManager::GetMetric( const RString &sButtonName, const RString &sValue )
 {
@@ -383,8 +394,8 @@ RString NoteSkinManager::GetPath( const RString &sButtonName, const RString &sEl
 		}
 
 		RString message = ssprintf(
-			"The NoteSkin element \"%s %s\" could not be found in any of the following directories:\n%s", 
-			sButtonName.c_str(), sElement.c_str(), 
+			"The NoteSkin element \"%s %s\" could not be found in any of the following directories:\n%s",
+			sButtonName.c_str(), sElement.c_str(),
 			sPaths.c_str() );
 
 		switch(LuaHelpers::ReportScriptError(message, "NOTESKIN_ERROR", true))
@@ -446,7 +457,7 @@ RString NoteSkinManager::GetPath( const RString &sButtonName, const RString &sEl
 					break;
 			}
 		}
-		
+
 		sPath = sRealPath;
 	}
 
@@ -535,14 +546,14 @@ RString NoteSkinManager::GetPathFromDirAndFile( const RString &sDir, const RStri
 		sError+= join(", ", matches);
 		LuaHelpers::ReportScriptError(sError, "NOTESKIN_ERROR");
 	}
-	
+
 	return matches[0];
 }
 
 // lua start
 #include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the NoteSkinManager. */ 
+/** @brief Allow Lua to have access to the NoteSkinManager. */
 class LunaNoteSkinManager: public Luna<NoteSkinManager>
 {
 public:
@@ -629,7 +640,7 @@ LUA_REGISTER_CLASS( NoteSkinManager )
 /*
  * (c) 2003-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -639,7 +650,7 @@ LUA_REGISTER_CLASS( NoteSkinManager )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

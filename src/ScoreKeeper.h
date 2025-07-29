@@ -14,7 +14,7 @@ struct AttackArray;
 
 /**
  * @brief Abstract class to handle scorekeeping, stat-taking, etc.
- * 
+ *
  * Stat handling is in here because that can differ between games, too; for
  * example, some games count double taps as a single note in scoring and some
  * count per-tap. Results are injected directly into the PlayerStageStats. */
@@ -50,12 +50,14 @@ public:
 	// HandleTap* is called before HandleTapRow*
 	virtual void HandleTapScore( const TapNote & ) { }
 	virtual void HandleTapRowScore( const NoteData & /* nd */, int /* iRow */ ) { }
+	virtual void HandleTapRowScore( const NoteData & /* nd */, int /* iRow */, TapNoteScore ) { } // xMAx
+	virtual void HandleTapRowScore( const NoteData & /* nd */, int /* iRow */, TapNoteScore, bool, int ) { } // xMAx
 	virtual void HandleHoldScore( const TapNote & ) { }
 	virtual void HandleHoldActiveSeconds( float /* fMusicSecondsHeld */ ) { }
 	virtual void HandleHoldCheckpointScore(
 		const NoteData & /*nd */,
 		int /* iRow */,
-		int /* iNumHoldsHeldThisRow */, 
+		int /* iNumHoldsHeldThisRow */,
 		int /* iNumHoldsMissedThisRow */ ) { }
 	virtual void HandleTapScoreNone() { }
 
@@ -70,7 +72,7 @@ protected:
  * @author Chris Danford, Glenn Maynard, Steve Checkoway (c) 2001-2006
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -80,7 +82,7 @@ protected:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

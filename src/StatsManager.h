@@ -35,9 +35,11 @@ public:
     // Lua
     void PushSelf( lua_State *L );
 
+    vector<int>	 m_iStagesPlayed; // StepP1 Revival -- bSilver
+
 protected:
     static void SaveUploadFile( const StageStats *pSS );
-    static void SavePadmissScore( const StageStats *pSS, PlayerNumber pn );
+    // static void SavePadmissScore( const StageStats *pSS, PlayerNumber pn ); // StepP1 Revival - Thequila
 
 private:
     StageStats m_AccumPlayedStageStats;

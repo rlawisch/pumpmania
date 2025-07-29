@@ -31,10 +31,15 @@
 #include "RageInput.h"
 #include "OptionsList.h"
 #include "RageFileManager.h"
+#include "WheelBase.h"
+#include "ScreenMessage.h" // StepP1 Revival - bSilver
 
 static const char *SelectionStateNames[] = {
+	"SelectingSubGroups", // StepP1 Revival - bSilver
+	"SelectinGroups", // StepP1 Revival - bSilver
 	"SelectingSong",
 	"SelectingSteps",
+	"IsPlayerReady", // StepP1 Revival - bSilver
 	"Finalized"
 };
 XToString( SelectionState );
@@ -52,6 +57,7 @@ AutoScreenMessage( SM_SortOrderChanging );
 AutoScreenMessage( SM_SortOrderChanged );
 AutoScreenMessage( SM_BackFromPlayerOptions );
 AutoScreenMessage( SM_ConfirmDeleteSong );
+AutoScreenMessage( SM_ShowOptionList ); // StepP1 Revival - bSilver
 
 static RString g_sCDTitlePath;
 static bool g_bWantFallbackCdTitle;
@@ -68,6 +74,8 @@ static LocalizedString PERMANENTLY_DELETE("ScreenSelectMusic", "PermanentlyDelet
 REGISTER_SCREEN_CLASS( ScreenSelectMusic );
 void ScreenSelectMusic::Init()
 {
+	MESSAGEMAN->Broadcast("StartSelectingSong"); // StepP1 Revival - bSilver
+
 	g_ScreenStartedLoadingAt.Touch();
 	if( PREFSMAN->m_sTestInitialScreen.Get() == m_sName )
 	{
@@ -168,6 +176,7 @@ void ScreenSelectMusic::Init()
 	LOAD_ALL_COMMANDS_AND_SET_XY( m_MusicWheel );
 	this->AddChild( &m_MusicWheel );
 
+  /* StepP1 Revival - bSilver
 	if( USE_OPTIONS_LIST )
 	{
 		FOREACH_PlayerNumber(p)
@@ -181,6 +190,7 @@ void ScreenSelectMusic::Init()
 		m_OptionsList[PLAYER_1].Link( &m_OptionsList[PLAYER_2] );
 		m_OptionsList[PLAYER_2].Link( &m_OptionsList[PLAYER_1] );
 	}
+  */
 
 	// this is loaded SetSong and TweenToSong
 	m_Banner.SetName( "Banner" );
@@ -215,13 +225,53 @@ void ScreenSelectMusic::Init()
 	RageSoundLoadParams SoundParams;
 	SoundParams.m_bSupportPan = true;
 
+  /* StepP1 Revival - bSilver
 	m_soundStart.Load( THEME->GetPathS(m_sName,"start") );
 	m_soundDifficultyEasier.Load( THEME->GetPathS(m_sName,"difficulty easier"), false, &SoundParams );
 	m_soundDifficultyHarder.Load( THEME->GetPathS(m_sName,"difficulty harder"), false, &SoundParams );
 	m_soundOptionsChange.Load( THEME->GetPathS(m_sName,"options") );
 	m_soundLocked.Load( THEME->GetPathS(m_sName,"locked") );
+  */
+
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+	// ScreenSelectMusic Sounds
+	m_soundStart.Load(THEME->GetPathS("", "Sounds/CENTER"));
+	m_soundBackFromSteps.Load( THEME->GetPathS("", "Sounds/MOVE"));
+	m_soundEnterGroupSelect.Load(THEME->GetPathS("", "Sounds/S_BACK"));
+	m_soundGroupMoving.Load(THEME->GetPathS("","Sounds/MOVE"));
+	m_soundSongMoving.Load(THEME->GetPathS("","Sounds/MOVE"));
+	m_soundStepsMoving.Load(THEME->GetPathS("", "Sounds/D_MOVE"));
+	m_soundEndSelect.Load(THEME->GetPathS("", "Sounds/OUT"));
+
+	// Misc Sounds
+	m_soundNewPlayer.Load(THEME->GetPathS("","Sounds/JOIN"));
+	m_soundOldCodeEntered.Load(THEME->GetPathS("","Sounds/CHEAT"));
+	m_soundUnlockCommand.Load(THEME->GetPathS("","Sounds/N_TO_M"));
+	m_soundLockedAction.Load(THEME->GetPathS("","Sounds/BAD"));
+
+	// CommandWindow Sounds
+	m_commandWindowInOut.Load(THEME->GetPathS("","CW/S_CMD_INOUT"));
+	m_commandWindowBack.Load(THEME->GetPathS("","CW/S_CMD_CHG"));
+	m_commandWindowMove.Load(THEME->GetPathS("","CW/S_CMD_MOVE"));
+	m_commandWindowSet.Load(THEME->GetPathS("","CW/S_CMD_SET"));
+
+
+	// OptionList Things
+	m_OptionList.Load(THEME->GetPathG("","OptionList/bg.png"));
+	this->AddChild( m_OptionList );
+
+	m_OptionListMenu.Load(THEME->GetPathG("","OptionList/MenuIcons 1x9.png"));
+	this->AddChild( m_OptionListMenu);
+
+	m_OptionListTexts.Load(THEME->GetPathG("","OptionList/Texts 8x16.png"));
+	this->AddChild( m_OptionListTexts);
+  // ----------------------------------------------------------------------------------------------
 
 	this->SortByDrawOrder();
+
+  // StepP1 Revival - bSilver
+	m_bInOptionList = false;
+	LOG->Trace("ScreenSelectMusic Init finished");
 }
 
 void ScreenSelectMusic::BeginScreen()
@@ -284,6 +334,13 @@ void ScreenSelectMusic::BeginScreen()
 	SOUND->PlayOnceFromAnnouncer( "select music intro" );
 
 	ScreenWithMenuElements::BeginScreen();
+
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	FOREACH_PlayerNumber(pn)
+	{
+		b_PlayerIsReady[pn] = false; // Player is not ready. This is for "READY" in SelectMusic
+	};
+	//-----------------------------------------------------------------------------------------------
 }
 
 ScreenSelectMusic::~ScreenSelectMusic()
@@ -405,6 +462,7 @@ void ScreenSelectMusic::Update( float fDeltaTime )
 
 bool ScreenSelectMusic::Input( const InputEventPlus &input )
 {
+  /* StepP1 Revival - bSilver
 	// HACK: This screen eats mouse inputs if we don't check for them first.
 	bool mouse_evt = false;
 	for (int i = MOUSE_LEFT; i <= MOUSE_WHEELDOWN; i++)
@@ -412,20 +470,22 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 		if (input.DeviceI == DeviceInput( DEVICE_MOUSE, (DeviceButton)i ))
 			mouse_evt = true;
 	}
-	if (mouse_evt)	
+	if (mouse_evt)
 	{
 		return ScreenWithMenuElements::Input(input);
 	}
-//	LOG->Trace( "ScreenSelectMusic::Input()" );
+	LOG->Trace( "ScreenSelectMusic::Input()" ); // StepP1 Revival - bSilver
+  */
 
 	// reset announcer timer
 	m_timerIdleComment.GetDeltaTime();
 
+  /* StepP1 Revival - bSilver
 	// debugging?
 	// I just like being able to see untransliterated titles occasionally.
 	if( input.DeviceI.device == DEVICE_KEYBOARD && input.DeviceI.button == KEY_F9 )
 	{
-		if( input.type != IET_FIRST_PRESS ) 
+		if( input.type != IET_FIRST_PRESS )
 			return false;
 		PREFSMAN->m_bShowNativeLanguage.Set( !PREFSMAN->m_bShowNativeLanguage );
 		MESSAGEMAN->Broadcast( "DisplayLanguageChanged" );
@@ -435,7 +495,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 
 	if( !IsTransitioning() && m_SelectionState != SelectionState_Finalized )
 	{
-		bool bHoldingCtrl = 
+		bool bHoldingCtrl =
 		INPUTFILTER->IsBeingPressed(DeviceInput(DEVICE_KEYBOARD, KEY_LCTRL)) ||
 		INPUTFILTER->IsBeingPressed(DeviceInput(DEVICE_KEYBOARD, KEY_RCTRL));
 
@@ -487,7 +547,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 		{
 			// Keyboard shortcut to delete a song from disk (ctrl + backspace)
 			Song* songToDelete = m_MusicWheel.GetSelectedSong();
-			if ( songToDelete && PREFSMAN->m_bAllowSongDeletion.Get() ) 
+			if ( songToDelete && PREFSMAN->m_bAllowSongDeletion.Get() )
 			{
 				m_pSongAwaitingDeletionConfirmation = songToDelete;
 				ScreenPrompt::Prompt(SM_ConfirmDeleteSong, ssprintf(PERMANENTLY_DELETE.GetValue(), songToDelete->m_sMainTitle.c_str(), songToDelete->GetSongDir().c_str()), PROMPT_YES_NO);
@@ -495,6 +555,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 			}
 		}
 	}
+  */
 
 	if( !input.GameI.IsValid() )
 		return false; // don't care
@@ -512,6 +573,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 	if( !GAMESTATE->IsHumanPlayer(input.pn) )
 		return false;
 
+  /* StepP1 Revival - bSilver
 	// Check for "Press START again for options" button press
 	if( m_SelectionState == SelectionState_Finalized  &&
 	    input.MenuI == GAME_BUTTON_START  &&
@@ -540,6 +602,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 
 		return true;
 	}
+  */
 
 	if( IsTransitioning() )
 		return false; // ignore
@@ -549,11 +612,23 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 	if( m_SelectionState == SelectionState_SelectingSteps && m_bStepsChosen[input.pn]
 		&& input.MenuI == GAME_BUTTON_SELECT && input.type == IET_FIRST_PRESS )
 	{
+    // StepP1 Revival - bSilver
+		LOG->Trace("StepsUnchosen, start SelectingMusicReturn?");
+		MESSAGEMAN->Broadcast("StartSelectingSong");
+
 		Message msg("StepsUnchosen");
 		msg.SetParam( "Player", input.pn );
 		MESSAGEMAN->Broadcast( msg );
 		m_bStepsChosen[input.pn] = false;
 		return true;
+	}
+
+	// StepP1 Revival - bSilver
+	// Here we active the "PRESS CENTER BUTTON" and "READY?" on Screen
+	if( m_SelectionState == SelectionState_IsPlayerReady )
+	{
+		MESSAGEMAN->Broadcast("StepsChosen");
+		m_SelectionState = SelectionState_Finalized;
 	}
 
 	if( m_SelectionState == SelectionState_Finalized  ||
@@ -611,7 +686,8 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 					if( MODE_MENU_AVAILABLE )
 						m_MusicWheel.NextSort();
 					else
-						m_soundLocked.Play(true);
+						// m_soundLocked.Play(true); // StepP1 Revival - bSilver
+						m_soundLockedAction.Play(true); // StepP1 Revival - bSilver
 					break;
 				default: break;
 			}
@@ -694,7 +770,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 			}
 
 			// Reset the repeat timer when the button is released.
-			// This fixes jumping when you release Left and Right after entering the sort 
+			// This fixes jumping when you release Left and Right after entering the sort
 			// code at the same if L & R aren't released at the exact same time.
 			if( input.type == IET_RELEASE )
 			{
@@ -716,16 +792,20 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 		{
 			if (input.MenuI == m_GameButtonPreviousDifficulty )
 			{
+        /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 					ChangeSteps( input.pn, -1 );
 			}
 			else if( input.MenuI == m_GameButtonNextDifficulty )
 			{
+        /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 					ChangeSteps( input.pn, +1 );
 			}
 		}
@@ -742,9 +822,11 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 		{
 			if(input.MenuI == m_GameButtonPreviousGroup )
 			{
+        /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 				{
 					RString sNewGroup = m_MusicWheel.JumpToPrevGroup();
 					m_MusicWheel.SelectSection(sNewGroup);
@@ -755,9 +837,11 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 			}
 			else if(input.MenuI == m_GameButtonNextGroup )
 			{
+        /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 				{
 					RString sNewGroup = m_MusicWheel.JumpToNextGroup();
 					m_MusicWheel.SelectSection(sNewGroup);
@@ -777,9 +861,11 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 		{
 			if( input.MenuI == m_GameButtonPreviousSong )
 			{
+        /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 				{
 					m_SelectionState = SelectionState_SelectingSong;
 					MESSAGEMAN->Broadcast("TwoPartConfirmCanceled");
@@ -789,9 +875,11 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 			}
 			else if( input.MenuI == m_GameButtonNextSong )
 			{
+        /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 				{
 					m_SelectionState = SelectionState_SelectingSong;
 					MESSAGEMAN->Broadcast("TwoPartConfirmCanceled");
@@ -799,6 +887,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 					m_MusicWheel.ChangeMusicUnlessLocked( +1 );
 				}
 			}
+      /* StepP1 Revival - bSilver
 			// added an entry for difficulty change with gamebuttons -DaisuMaster
 			else if( input.MenuI == m_GameButtonPreviousDifficulty )
 			{
@@ -851,6 +940,7 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 					AfterMusicChange();
 				}
 			}
+      */
 		}
 	}
 	else
@@ -861,40 +951,69 @@ bool ScreenSelectMusic::Input( const InputEventPlus &input )
 			{
 				if( input.MenuI == m_GameButtonPreviousDifficulty )
 				{
+          /* StepP1 Revival - bSilver
 					if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 						m_soundLocked.Play(true);
 					else
+          */
 						ChangeSteps( input.pn, -1 );
 				}
 				else if( input.MenuI == m_GameButtonNextDifficulty )
 				{
+          /* StepP1 Revival - bSilver
 					if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 						m_soundLocked.Play(true);
 					else
+          */
 						ChangeSteps( input.pn, +1 );
 				}
+				m_soundStepsMoving.Play(true); // StepP1 Revival - bSilver
 			}
 			//This should not be MENUP or MENUDOWN, different games use different buttons to cancel.
 			else if( input.MenuI == m_GameButtonCancelTwoPart1 || input.MenuI == m_GameButtonCancelTwoPart2 ) // && TWO_PART_DESELECTS_WITH_MENUUPDOWN
 			{
+          /* StepP1 Revival - bSilver
 				if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 					m_soundLocked.Play(true);
 				else
+        */
 				{
 					// XXX: should this be called "TwoPartCancelled"?
-                    float fSeconds = m_MenuTimer->GetSeconds();
-                    if( fSeconds > 10 ) {
-                        Message msg("SongUnchosen");
-                        msg.SetParam( "Player", input.pn );
-                        MESSAGEMAN->Broadcast( msg );
-                        // unset all steps
-                        FOREACH_ENUM( PlayerNumber , p )
-                            m_bStepsChosen[p] = false;
-                        m_SelectionState = SelectionState_SelectingSong;
-                    }
+          float fSeconds = m_MenuTimer->GetSeconds();
+          if( fSeconds > 10 ) {
+              // Message msg("SongUnchosen"); // StepP1 Revival - bSilver
+              Message msg("GoBackSelectingSong"); // StepP1 Revival - bSilver
+              msg.SetParam( "Player", input.pn );
+              MESSAGEMAN->Broadcast( msg );
+					    m_soundBackFromSteps.Play(true); // StepP1 Revival - bSilver
+              // unset all steps
+              FOREACH_ENUM( PlayerNumber , p )
+                  m_bStepsChosen[p] = false;
+              m_SelectionState = SelectionState_SelectingSong;
+          }
 				}
 			}
 		}
+    // StepP1 Revival - bSilver -------------------------------------------------------------------
+		else if( m_SelectionState == SelectionState_IsPlayerReady && input.MenuI != GAME_BUTTON_START )
+		{
+			Message msg("StepsPreselectedCancelled");
+			msg.SetParam( "Player", input.pn );
+			MESSAGEMAN->Broadcast(msg);
+			m_SelectionState = SelectionState_SelectingSteps;
+		}
+		else if( m_SelectionState == SelectionState_SelectingSong && input.type == IET_FIRST_PRESS )
+		{
+			if( input.MenuI == GAME_BUTTON_MENUUP || input.MenuI == GAME_BUTTON_MENUDOWN )
+			{
+				m_soundEnterGroupSelect.Play(true);
+				LOG->Trace("Entering Groups");
+				Message msg("GoBackSelectingGroup");
+				MESSAGEMAN->Broadcast(msg);
+				return true;
+			}
+    }
+    // --------------------------------------------------------------------------------------------
 	}
 
 	if( input.type == IET_FIRST_PRESS && DetectCodes(input) )
@@ -907,36 +1026,44 @@ bool ScreenSelectMusic::DetectCodes( const InputEventPlus &input )
 {
 	if( CodeDetector::EnteredPrevSteps(input.GameI.controller) && !CHANGE_STEPS_WITH_GAME_BUTTONS )
 	{
+    /* StepP1 Revival - bSilver
 		if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 			m_soundLocked.Play(true);
 		else
+    */
 			ChangeSteps( input.pn, -1 );
 	}
 	else if( CodeDetector::EnteredNextSteps(input.GameI.controller) && !CHANGE_STEPS_WITH_GAME_BUTTONS )
 	{
+    /* StepP1 Revival - bSilver
 		if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 			m_soundLocked.Play(true);
 		else
+    */
 			ChangeSteps( input.pn, +1 );
 	}
 	else if( CodeDetector::EnteredModeMenu(input.GameI.controller) )
 	{
-		if( MODE_MENU_AVAILABLE )
+		// if( MODE_MENU_AVAILABLE ) // StepP1 Revival - bSilver
 			m_MusicWheel.ChangeSort( SORT_MODE_MENU );
+    /* StepP1 Revival - bSilver
 		else
 			m_soundLocked.Play(true);
+    */
 	}
 	else if( CodeDetector::EnteredNextSort(input.GameI.controller) )
 	{
+    /* StepP1 Revival - bSilver
 		if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 			m_soundLocked.Play(true);
 		else if( !GAMESTATE->IsCourseMode() )
+    */
 			// Only change sorts in non-course mode
 			m_MusicWheel.NextSort();
 	}
 	else if( !GAMESTATE->IsAnExtraStageAndSelectionLocked() && CodeDetector::DetectAndAdjustMusicOptions(input.GameI.controller) )
 	{
-		m_soundOptionsChange.Play(true);
+		// m_soundOptionsChange.Play(true); // StepP1 Revival - bSilver
 
 		Message msg( "PlayerOptionsChanged" );
 		msg.SetParam( "PlayerNumber", input.pn );
@@ -946,9 +1073,11 @@ bool ScreenSelectMusic::DetectCodes( const InputEventPlus &input )
 	}
 	else if( CodeDetector::EnteredNextGroup(input.GameI.controller) && !CHANGE_GROUPS_WITH_GAME_BUTTONS )
 	{
+    /* StepP1 Revival - bSilver
 		if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 			m_soundLocked.Play(true);
 		else
+    */
 		{
 			RString sNewGroup = m_MusicWheel.JumpToNextGroup();
 			m_MusicWheel.SelectSection(sNewGroup);
@@ -959,9 +1088,11 @@ bool ScreenSelectMusic::DetectCodes( const InputEventPlus &input )
 	}
 	else if( CodeDetector::EnteredPrevGroup(input.GameI.controller) && !CHANGE_GROUPS_WITH_GAME_BUTTONS )
 	{
+    /* StepP1 Revival - bSilver
 		if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 			m_soundLocked.Play(true);
 		else
+    */
 		{
 			RString sNewGroup = m_MusicWheel.JumpToPrevGroup();
 			m_MusicWheel.SelectSection(sNewGroup);
@@ -972,9 +1103,11 @@ bool ScreenSelectMusic::DetectCodes( const InputEventPlus &input )
 	}
 	else if( CodeDetector::EnteredCloseFolder(input.GameI.controller) )
 	{
+    /* StepP1 Revival - bSilver
 		if( GAMESTATE->IsAnExtraStageAndSelectionLocked() )
 			m_soundLocked.Play(true);
 		else
+    */
 		{
 			RString sCurSection = m_MusicWheel.GetSelectedSection();
 			m_MusicWheel.SelectSection(sCurSection);
@@ -1068,6 +1201,8 @@ void ScreenSelectMusic::ChangeSteps( PlayerNumber pn, int dir )
 	AfterStepsOrTrailChange( vpns );
 
 	float fBalance = GameSoundManager::GetPlayerBalance( pn );
+
+  /* StepP1 Revival - bSilver
 	if( dir < 0 )
 	{
 		m_soundDifficultyEasier.SetProperty( "Pan", fBalance );
@@ -1078,6 +1213,7 @@ void ScreenSelectMusic::ChangeSteps( PlayerNumber pn, int dir )
 		m_soundDifficultyHarder.SetProperty( "Pan", fBalance );
 		m_soundDifficultyHarder.PlayCopy(true);
 	}
+  */
 	GAMESTATE->ForceOtherPlayersToCompatibleSteps(pn);
 
 	Message msg( "ChangeSteps" );
@@ -1221,6 +1357,20 @@ void ScreenSelectMusic::HandleScreenMessage( const ScreenMessage SM )
 		}
 	}
 
+  // StepP1 Revival - bSilver ---------------------------------------------------------------------
+	if( SM == SM_ShowOptionList )
+	{
+		Actor* pOptionList = ActorUtil::MakeActor( THEME->GetPathG("OptionList", "bg") );
+		if (pOptionList)
+		{
+			pOptionList->SetName("OptionListWindow");
+			this->AddChild(pOptionList);
+			pOptionList->PlayCommand("Show");
+		}
+		return;
+	}
+  // ----------------------------------------------------------------------------------------------
+
 	ScreenWithMenuElements::HandleScreenMessage( SM );
 }
 
@@ -1289,7 +1439,7 @@ bool ScreenSelectMusic::MenuStart( const InputEventPlus &input )
 			else
 				SOUND->PlayOnceFromAnnouncer( "select music comment general" );
 
-			/* If we're in event mode, we may have just played a course (putting 
+			/* If we're in event mode, we may have just played a course (putting
 			 * us in course mode). Make sure we're in a single song mode. */
 			if( GAMESTATE->IsCourseMode() )
 				GAMESTATE->m_PlayMode.Set( PLAY_MODE_REGULAR );
@@ -1308,7 +1458,7 @@ bool ScreenSelectMusic::MenuStart( const InputEventPlus &input )
 				FOREACH_EnabledPlayer(pn)
 				{
 					PO_GROUP_ASSIGN(GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions, ModsLevel_Stage, m_LifeType, LifeType_Battery);
-					PO_GROUP_ASSIGN(GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions, ModsLevel_Stage, m_BatteryLives, pCourse->m_iLives);
+					// PO_GROUP_ASSIGN(GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions, ModsLevel_Stage, m_BatteryLives, pCourse->m_iLives); // StepP1 Revival - bSilver
 				}
 			}
 			if( pCourse->GetCourseType() == COURSE_TYPE_SURVIVAL)
@@ -1319,6 +1469,9 @@ bool ScreenSelectMusic::MenuStart( const InputEventPlus &input )
 				}
 			}
 		}
+    // StepP1 Revival - bSilver
+    // Here should probably be a code block to check if current group folder is SO_QUEST or 04-SKILLUP ZONE to send
+    // "ShowGreenStuffs"or "HideGreenStuffs" by Messageman
 		else
 		{
 			// We haven't made a selection yet.
@@ -1451,11 +1604,13 @@ bool ScreenSelectMusic::MenuStart( const InputEventPlus &input )
 		UpdateSelectButton( p, false );
 	}
 
+	m_soundStart.Play(true); // StepP1 Revival - bSilver
+
 	m_SelectionState = GetNextSelectionState();
 	Message msg( "Start" + SelectionStateToString(m_SelectionState) );
 	MESSAGEMAN->Broadcast( msg );
 
-	m_soundStart.Play(true);
+	// m_soundStart.Play(true); // StepP1 Revival - bSilver
 
 	// If the MenuTimer has forced us to move on && TWO_PART_CONFIRMS_ONLY,
 	// set Selection State to finalized and move on.
@@ -1497,6 +1652,7 @@ bool ScreenSelectMusic::MenuStart( const InputEventPlus &input )
 		m_BackgroundLoader.Abort();
 		CheckBackgroundRequests( true );
 
+    /* StepP1 Revival - bSilver
 		if( OPTIONS_MENU_AVAILABLE )
 		{
 			// show "hold START for options"
@@ -1504,23 +1660,26 @@ bool ScreenSelectMusic::MenuStart( const InputEventPlus &input )
 
 			m_bAllowOptionsMenu = true;
 
-			/* Don't accept a held START for a little while, so it's not
-			 * hit accidentally.  Accept an initial START right away, though,
-			 * so we don't ignore deliberate fast presses (which would be
-			 * annoying). */
+			// Don't accept a held START for a little while, so it's not
+			// hit accidentally.  Accept an initial START right away, though,
+			// so we don't ignore deliberate fast presses (which would be
+			// annoying).
 			if(PREFSMAN->m_AllowHoldForOptions.Get())
 			{
 				this->PostScreenMessage( SM_AllowOptionsMenuRepeat, 0.5f );
 			}
 
 			StartTransitioningScreen( SM_None );
+      */
 			float fTime = max( SHOW_OPTIONS_MESSAGE_SECONDS, this->GetTweenTimeLeft() );
+      /* StepP1 Revival - bSilver
 			this->PostScreenMessage( SM_BeginFadingOut, fTime );
 		}
 		else
 		{
 			StartTransitioningScreen( SM_BeginFadingOut );
 		}
+    */
 	}
 	else // !finalized.  Set the timer for selecting difficulty and mods.
 	{
@@ -1871,6 +2030,8 @@ void ScreenSelectMusic::AfterMusicChange()
 			//LuaHelpers::ReportScriptError("GetPlayableSteps returned nothing.");
 		}
 
+    MESSAGEMAN->Broadcast("PlayableStepsChanged");  // StepP1 Revival - bSilver
+
 		if ( PREFSMAN->m_bShowBanners )
 			g_sBannerPath = pSong->GetBannerPath();
 
@@ -1884,6 +2045,8 @@ void ScreenSelectMusic::AfterMusicChange()
 	{
 		const Course *lCourse = m_MusicWheel.GetSelectedCourse();
 		const Style *pStyle = nullptr;
+
+    /* StepP1 Revival - Thequila ------------------------------------------------------------------
 		if(CommonMetrics::AUTO_SET_STYLE)
 		{
 			pStyle = pCourse->GetCourseStyle(GAMESTATE->m_pCurGame, GAMESTATE->GetNumPlayersEnabled());
@@ -1912,10 +2075,11 @@ void ScreenSelectMusic::AfterMusicChange()
 			}
 		}
 		else
-		{
+		{ */
 			pStyle = GAMESTATE->GetCurrentStyle(PLAYER_INVALID);
 			lCourse->GetTrails(m_vpTrails, pStyle->m_StepsType);
-		}
+		// }
+    // --------------------------------------------------------------------------------------------
 
 		m_sSampleMusicToPlay = m_sCourseMusicPath;
 		m_fSampleStartSeconds = 0;
@@ -1993,6 +2157,23 @@ void ScreenSelectMusic::OpenOptionsList(PlayerNumber pn)
 	}
 }
 
+// StepP1 Revival - bSilver -----------------------------------------------------------------------
+void ScreenSelectMusic::CodeMessageReceived( const Message &msg )
+{
+    RString sName;
+    msg.GetParam("Name", sName);
+
+    if (sName == "OptionList")
+    {
+        m_bInOptionList = true;
+
+        // Can't stop MusicWheel directly, but can ignore input if m_bInOptionList is true
+        PostScreenMessage(SM_ShowOptionList, 0);
+        return;
+    }
+}
+// ------------------------------------------------------------------------------------------------
+
 void ScreenSelectMusic::OnConfirmSongDeletion()
 {
 	Song* deletedSong = m_pSongAwaitingDeletionConfirmation;
@@ -2041,7 +2222,7 @@ bool ScreenSelectMusic::can_open_options_list(PlayerNumber pn)
 // lua start
 #include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the ScreenSelectMusic. */ 
+/** @brief Allow Lua to have access to the ScreenSelectMusic. */
 class LunaScreenSelectMusic: public Luna<ScreenSelectMusic>
 {
 public:
@@ -2066,12 +2247,145 @@ public:
 		return 1;
 	}
 
+	// StepP1 Revival - bSilver (With GPT Help) -----------------------------------------------------
+	static int GetWheelCurrentIndex( T* p, lua_State *L )
+	{
+		lua_pushnumber(L, static_cast<double>(p->GetMusicWheel()->GetCurrentIndex()));
+		return 1;
+	}
+	static int GetWheelNumItems(T *p, lua_State *L)
+	{
+		lua_pushnumber(L, static_cast<double>(p->GetMusicWheel()->GetNumItems()));
+		return 1;
+	}
+	static int GetSongGroupNamesAvailables(T *p, lua_State *L)
+	{
+		lua_newtable(L);
+		vector<RString> groups;
+		SONGMAN->GetSongGroupNames(groups);
+
+		for( size_t i = 0; i < groups.size(); ++i )
+		{
+			lua_pushnumber(L, i + 1);
+			lua_pushstring(L, groups[i]);
+			lua_settable(L, -3);
+		}
+
+		return 1;
+	}
+
+	static int IsPlayerReady(T *p, lua_State *L)
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>(L, 1);	// Receive lua PLAYER_1 or PLAYER_2
+
+		bool ready = p->b_PlayerIsReady[pn] && GAMESTATE->IsPlayerEnabled(pn);	// Checks if player is active and ready
+
+		lua_pushboolean(L, ready);	// Return true or false to lua
+		return 1;
+	}
+
+	static int GetCurrentGroup(T *p, lua_State *L)
+	{
+		RString group = p->GetMusicWheel()->GetSelectedSection();
+		lua_pushstring(L, group);
+		return 1;
+	}
+
+	static int GetPlayableSteps(T *p, lua_State *L)
+	{
+		Song* pSong = p->GetMusicWheel()->GetSelectedSong();
+		if( pSong == nullptr )
+		{
+			LOG->Trace("GetPlayableSteps: Nenhuma música selecionada.");
+
+			lua_newtable(L);
+			return 1;
+		}
+
+		vector<Steps*> vSteps;
+		SongUtil::GetPlayableSteps(pSong, vSteps, GAMESTATE->m_SortOrder);
+
+		lua_newtable(L);
+		for( size_t i = 0; i < vSteps.size(); ++i )
+		{
+			lua_pushnumber(L, i + 1);
+			LuaHelpers::Push(L, vSteps[i]);
+			lua_settable(L, -3);
+		}
+
+		return 1;
+	}
+
+	static int GetPlayableTrails(T *p, lua_State *L)
+	{
+		Course* pCourse = GAMESTATE->m_pCurCourse;
+		if( pCourse == nullptr )
+		{
+			lua_newtable(L);
+			return 1;
+		}
+
+		vector<Trail*> vTrails;
+		pCourse->GetAllTrails(vTrails);
+
+		lua_newtable(L);
+		for( size_t i = 0; i < vTrails.size(); ++i )
+		{
+			lua_pushnumber(L, i + 1);
+			LuaHelpers::Push(L, vTrails[i]);
+			lua_settable(L, -3);
+		}
+
+		return 1;
+	}
+
+	static int GetSelection(T *p, lua_State *L)
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>(L, 1);
+
+		int selection = p->m_iSelection[pn];
+
+		lua_pushnumber(L, selection);
+		return 1;
+	}
+
+	static int GetCurrentGroupIndex(T *p, lua_State *L)
+	{
+		RString currentGroup = p->GetMusicWheel()->GetSelectedSection();
+
+		vector<RString> groups;
+		SONGMAN->GetSongGroupNames(groups);
+
+		int index = -1;
+		for( size_t i = 0; i < groups.size(); i++ )
+		{
+			index = static_cast<int>(i);
+			break;
+		}
+
+		lua_pushnumber(L, static_cast<double>(index + 1));
+		return 1;
+	}
+	// ----------------------------------------------------------------------------------------------
+
 	LunaScreenSelectMusic()
 	{
-  		ADD_METHOD( GetGoToOptions );
+    ADD_METHOD( GetGoToOptions );
 		ADD_METHOD( GetMusicWheel );
 		ADD_METHOD( OpenOptionsList );
 		ADD_METHOD( CanOpenOptionsList );
+
+		// StepP1 Revival - bSilver -------------------------------------------------------------------
+		ADD_METHOD( GetWheelCurrentIndex );		// LAB_00423b33
+		ADD_METHOD( GetWheelNumItems );			// FUN_00423b52
+		ADD_METHOD( GetSongGroupNamesAvailables );	// LAB_004247b1
+		ADD_METHOD( IsPlayerReady );			// LAB_0042417e
+		ADD_METHOD( GetCurrentGroup );			// FUN_004241aa
+		ADD_METHOD( GetPlayableSteps );			// LAB_004247ca
+		ADD_METHOD( GetPlayableTrails );		// LAB_004247e3
+		ADD_METHOD( GetSelection );			// LAB_004241dd
+		ADD_METHOD( GetCurrentGroupIndex );		// FUN_00424b0b
+		// --------------------------------------------------------------------------------------------
 	}
 };
 
@@ -2081,7 +2395,7 @@ LUA_REGISTER_DERIVED_CLASS( ScreenSelectMusic, ScreenWithMenuElements )
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -2091,7 +2405,7 @@ LUA_REGISTER_DERIVED_CLASS( ScreenSelectMusic, ScreenWithMenuElements )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

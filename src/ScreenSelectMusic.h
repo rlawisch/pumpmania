@@ -15,11 +15,15 @@
 #include "TimingData.h"
 #include "GameInput.h"
 #include "OptionsList.h"
+#include "ModIcon.h" // StepP1 Revival - bSilver
 
 enum SelectionState
 {
+	SelectionState_SelectingSubGroup, // StepP1 Revival - bSilver
+	SelectionState_SelectingGroup, // StepP1 Revival - bSilver
 	SelectionState_SelectingSong,
 	SelectionState_SelectingSteps,
+	SelectionState_IsPlayerReady, // StepP1 Revival - bSilver
 	SelectionState_Finalized,
 	NUM_SelectionState,
 };
@@ -55,6 +59,14 @@ public:
 	// Lua
 	virtual void PushSelf( lua_State *L );
 
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	bool	b_PlayerIsReady[NUM_PLAYERS];
+	int	m_iSelection[NUM_PLAYERS];
+	bool	m_bInOptionList;
+
+	virtual void CodeMessageReceived( const Message &msg );
+  // ----------------------------------------------------------------------------------------------
+
 protected:
 	virtual bool GenericTweenOn() const { return true; }
 	virtual bool GenericTweenOff() const { return true; }
@@ -65,12 +77,12 @@ protected:
 	void SwitchToPreferredDifficulty();
 	void AfterMusicChange();
 
-	void CheckBackgroundRequests( bool bForce );	
+	void CheckBackgroundRequests( bool bForce );
 	bool DetectCodes( const InputEventPlus &input );
 
 	vector<Steps*>		m_vpSteps;
 	vector<Trail*>		m_vpTrails;
-	int					m_iSelection[NUM_PLAYERS];
+	// int					m_iSelection[NUM_PLAYERS]; // StepP1 Revival - bSilver - Moved to public
 
 	RageTimer		m_timerIdleComment;
 	ThemeMetric<float> IDLE_COMMENT_SECONDS;
@@ -104,14 +116,22 @@ protected:
 	ThemeMetric<bool>		PLAY_SOUND_ON_ENTERING_OPTIONS_MENU;
 
 	bool CanChangeSong() const { return m_SelectionState == SelectionState_SelectingSong; }
-	bool CanChangeSteps() const { return TWO_PART_SELECTION ? m_SelectionState == SelectionState_SelectingSteps : m_SelectionState == SelectionState_SelectingSong; }
+	// bool CanChangeSteps() const { return TWO_PART_SELECTION ? m_SelectionState == SelectionState_SelectingSteps : m_SelectionState == SelectionState_SelectingSong; } // StepP1 Revival - bSilver
+	bool CanChangeSteps() const { return m_SelectionState == SelectionState_SelectingSteps; } // StepP1 Revival - bSilver
+  bool CanChangeGroup() const { return m_SelectionState == SelectionState_SelectingGroup; } // StepP1 Revival - bSilver
 	SelectionState GetNextSelectionState() const
 	{
 		switch( m_SelectionState )
 		{
+			case SelectionState_SelectingGroup: // StepP1 Revival - bSilver
+				return SelectionState_SelectingSong;
 		case SelectionState_SelectingSong:
-			return TWO_PART_SELECTION ? SelectionState_SelectingSteps : SelectionState_Finalized;
+			// return TWO_PART_SELECTION ? SelectionState_SelectingSteps : SelectionState_Finalized; // StepP1 Revival - bSilver
+			return SelectionState_SelectingSteps; // StepP1 Revival - bSilver
 		case SelectionState_SelectingSteps:
+			// return SelectionState_Finalized; // StepP1 Revival - bSilver
+      return SelectionState_IsPlayerReady; // StepP1 Revival - bSilver
+    case SelectionState_IsPlayerReady: // StepP1 Revival - bSilver
 			return SelectionState_Finalized;
 		DEFAULT_FAIL( m_SelectionState );
 		}
@@ -151,11 +171,38 @@ protected:
 	bool			m_bSelectIsDown[NUM_PLAYERS];
 	bool			m_bAcceptSelectRelease[NUM_PLAYERS];
 
+
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	RageSound		m_soundEndSelect; 	/* Sounds/OUT */
+	RageSound		m_soundSongMoving;	/* Sounds/MOVE */
+	RageSound		m_soundUnlockCommand;	/* Sounds/N_TO_M */
+	RageSound		m_soundNewPlayer;	/* Sounds/JOIN */
+	RageSound		m_commandWindowInOut;	/* CW/S_CMD_INOUT */
+	RageSound		m_commandWindowBack;	/* CW/S_CMD_CHG */
+	RageSound		m_commandWindowMove;	/* CW/S_CMD_MOVE */
+	RageSound		m_commandWindowSet;	/* CW/S_CMD_SET */
+	RageSound		m_soundOldCodeEntered;	/* Sounds/CHEAT */
+	RageSound		m_soundGroupMoving;	/* Sounds/MOVE */
+	RageSound		m_soundEnterGroupSelect;/* Sounds/S_BACK */
+	RageSound		m_soundStepsMoving;	/* Sounds/D_MOVE */
+	RageSound		m_soundLockedAction;	/* Sounds/BAD */
+	RageSound		m_soundBackFromSteps;
+
+  // OptionList Things
+	AutoActor		m_OptionList;
+	AutoActor		m_OptionListMenu;
+	AutoActor		m_OptionListTexts;
+	ModIcon			m_OptionListIcons;
+  // ----------------------------------------------------------------------------------------------
+
 	RageSound		m_soundStart;
+
+  /* StepP1 Revival - bSilver
 	RageSound		m_soundDifficultyEasier;
 	RageSound		m_soundDifficultyHarder;
 	RageSound		m_soundOptionsChange;
 	RageSound		m_soundLocked;
+  */
 
 	BackgroundLoader	m_BackgroundLoader;
 	RageTexturePreloader	m_TexturePreload;
@@ -168,7 +215,7 @@ protected:
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -178,7 +225,7 @@ protected:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

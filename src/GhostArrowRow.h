@@ -15,7 +15,8 @@ public:
 	virtual void Update( float fDeltaTime );
 	virtual void DrawPrimitives();
 
-	void Load( const PlayerState* pPlayerState, float fYReverseOffset );
+	// void Load( const PlayerState* pPlayerState, float fYReverseOffset ); // xMAx
+	void Load( const PlayerState* pPlayerState ); // xMAx
 	void SetColumnRenderers(vector<NoteColumnRenderer>& renderers);
 
 	void DidTapNote( int iCol, TapNoteScore tns, bool bBright );
@@ -23,7 +24,7 @@ public:
 	void SetHoldShowing( int iCol, const TapNote &tn );
 
 protected:
-	float m_fYReverseOffsetPixels;
+	// float m_fYReverseOffsetPixels; // xMAx
 	const PlayerState* m_pPlayerState;
 
 	vector<NoteColumnRenderer> const* m_renderers;
@@ -40,7 +41,7 @@ protected:
  * @author Chris Danford (c) 2001-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -50,7 +51,7 @@ protected:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

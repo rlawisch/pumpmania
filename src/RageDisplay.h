@@ -12,7 +12,7 @@ typedef std::set<DisplaySpec> DisplaySpecs;
 
 const int REFRESH_DEFAULT = 0;
 struct RageSurface;
-enum TextureUnit 
+enum TextureUnit
 {
 	TextureUnit_1,
 	TextureUnit_2,
@@ -21,7 +21,7 @@ enum TextureUnit
 	NUM_TextureUnit
 };
 
-// RageCompiledGeometry holds vertex data in a format that is most efficient 
+// RageCompiledGeometry holds vertex data in a format that is most efficient
 // for the graphics API.
 class RageCompiledGeometry
 {
@@ -77,7 +77,7 @@ class VideoModeParams
 public:
 	// Initialize with a constructor so to guarantee all paramters
 	// are filled (in case new params are added).
-	VideoModeParams( 
+	VideoModeParams(
 		bool windowed_,
 		RString sDisplayId_,
 		int width_,
@@ -259,17 +259,17 @@ public:
 	virtual void BeginConcurrentRendering();
 	virtual void EndConcurrentRendering() { }
 
-	/* return 0 if failed or internal texture resource handle 
+	/* return 0 if failed or internal texture resource handle
 	 * (unsigned in OpenGL, texture pointer in D3D) */
-	virtual uintptr_t CreateTexture( 
+	virtual uintptr_t CreateTexture(
 		RagePixelFormat pixfmt,		// format of img and of texture in video mem
 		RageSurface* img,		// must be in pixfmt
 		bool bGenerateMipMaps
 		) = 0;
-	virtual void UpdateTexture( 
-		uintptr_t iTexHandle, 
+	virtual void UpdateTexture(
+		uintptr_t iTexHandle,
 		RageSurface* img,
-		int xoffset, int yoffset, int width, int height 
+		int xoffset, int yoffset, int width, int height
 		) = 0;
 	virtual void DeleteTexture( uintptr_t iTexHandle ) = 0;
 	/* Return an object to lock pixels for streaming. If not supported, returns nullptr.
@@ -316,7 +316,7 @@ public:
 
 	virtual void SetAlphaTest( bool b ) = 0;
 
-	virtual void SetMaterial( 
+	virtual void SetMaterial(
 		const RageColor &emissive,
 		const RageColor &ambient,
 		const RageColor &diffuse,
@@ -326,11 +326,11 @@ public:
 
 	virtual void SetLighting( bool b ) = 0;
 	virtual void SetLightOff( int index ) = 0;
-	virtual void SetLightDirectional( 
-		int index, 
-		const RageColor &ambient, 
-		const RageColor &diffuse, 
-		const RageColor &specular, 
+	virtual void SetLightDirectional(
+		int index,
+		const RageColor &ambient,
+		const RageColor &diffuse,
+		const RageColor &specular,
 		const RageVector3 &dir ) = 0;
 
 	virtual void SetSphereEnvironmentMapping( TextureUnit tu, bool b ) = 0;
@@ -348,6 +348,8 @@ public:
 	void DrawLineStrip( const RageSpriteVertex v[], int iNumVerts, float LineWidth );
 	void DrawSymmetricQuadStrip( const RageSpriteVertex v[], int iNumVerts );
 	void DrawCircle( const RageSpriteVertex &v, float radius );
+
+	void DrawPoint( const RageSpriteVertex v [], int iNumVerts ) ; // StepP1 Revival - bSilver
 
 	void DrawQuad( const RageSpriteVertex v[] ) { DrawQuads(v,4); } /* alias. upper-left, upper-right, lower-left, lower-right */
 
@@ -419,7 +421,7 @@ public:
 	void TexturePushMatrix();
 	void TexturePopMatrix();
 	void TextureTranslate( float x, float y );
-	void TextureTranslate( const RageVector2 &v ) { this->TextureTranslate( v.x, v.y ); }	
+	void TextureTranslate( const RageVector2 &v ) { this->TextureTranslate( v.x, v.y ); }
 
 	// Projection and View matrix stack functions.
 	void CameraPushMatrix();
@@ -442,8 +444,8 @@ protected:
 	RageMatrix GetPerspectiveMatrix( float fovy, float aspect, float zNear, float zFar );
 
 	// Different for D3D and OpenGL. Not sure why they're not compatible. -Chris
-	virtual RageMatrix GetOrthoMatrix( float l, float r, float b, float t, float zn, float zf ); 
-	virtual RageMatrix GetFrustumMatrix( float l, float r, float b, float t, float zn, float zf ); 
+	virtual RageMatrix GetOrthoMatrix( float l, float r, float b, float t, float zn, float zf );
+	virtual RageMatrix GetFrustumMatrix( float l, float r, float b, float t, float zn, float zf );
 
 	// Matrix that adjusts position and scale of image on the screen
 	RageMatrix GetCenteringMatrix( float fTranslateX, float fTranslateY, float fAddWidth, float fAddHeight ) const;

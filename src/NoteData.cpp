@@ -290,7 +290,7 @@ int NoteData::GetFirstTrackWithTapOrHoldHead( int row ) const
 	for( int t=0; t<GetNumTracks(); t++ )
 	{
 		const TapNote &tn = GetTapNote( t, row );
-		if( tn.type == TapNoteType_Tap || tn.type == TapNoteType_Lift || tn.type == TapNoteType_HoldHead )
+		if( ( tn.type == TapNoteType_Tap || tn.type == TapNoteType_Lift || tn.type == TapNoteType_HoldHead ) && !(tn.judge == TapNoteJudge_Fake) )
 			return t;
 	}
 	return -1;
@@ -388,11 +388,12 @@ bool NoteData::IsHoldNoteAtRow( int iTrack, int iRow, int *pHeadRow ) const
 			*pHeadRow = r;
 			return true;
 
+		case TapNoteType_HoldTail:	// xMAx - Not sure if used in SM-pump
 		case TapNoteType_Tap:
 		case TapNoteType_Mine:
 		case TapNoteType_Attack:
 		case TapNoteType_Lift:
-		case TapNoteType_Fake:
+		// case TapNoteType_Fake: // xMAx
 			return false;
 
 		case TapNoteType_Empty:
@@ -407,7 +408,7 @@ bool NoteData::IsHoldNoteAtRow( int iTrack, int iRow, int *pHeadRow ) const
 }
 
 bool NoteData::IsEmpty() const
-{ 
+{
 	for( int t=0; t < GetNumTracks(); t++ )
 	{
 		int iRow = -1;
@@ -421,7 +422,7 @@ bool NoteData::IsEmpty() const
 }
 
 int NoteData::GetFirstRow() const
-{ 
+{
 	int iEarliestRowFoundSoFar = -1;
 
 	for( int t=0; t < GetNumTracks(); t++ )
@@ -443,7 +444,7 @@ int NoteData::GetFirstRow() const
 }
 
 int NoteData::GetLastRow() const
-{ 
+{
 	int iOldestRowFoundSoFar = 0;
 
 	for( int t=0; t < GetNumTracks(); t++ )
@@ -467,9 +468,12 @@ int NoteData::GetLastRow() const
 bool NoteData::IsTap(const TapNote &tn, const int row) const
 {
 	return (tn.type != TapNoteType_Empty && tn.type != TapNoteType_Mine
-			&& tn.type != TapNoteType_Lift && tn.type != TapNoteType_Fake
+			&& tn.type != TapNoteType_Lift
+      // && tn.type != TapNoteType_Fake
+      && IsFake(tn,row)
 			&& tn.type != TapNoteType_AutoKeysound
-			&& GAMESTATE->GetProcessedTimingData()->IsJudgableAtRow(row));
+			// && GAMESTATE->GetProcessedTimingData()->IsJudgableAtRow(row)
+    );
 }
 
 bool NoteData::IsMine(const TapNote &tn, const int row) const
@@ -486,8 +490,11 @@ bool NoteData::IsLift(const TapNote &tn, const int row) const
 
 bool NoteData::IsFake(const TapNote &tn, const int row) const
 {
-	return (tn.type == TapNoteType_Fake
-			|| !GAMESTATE->GetProcessedTimingData()->IsJudgableAtRow(row));
+	return (
+    // tn.type == TapNoteType_Fake
+    tn.judge == TapNoteJudge_Fake
+			|| !GAMESTATE->GetProcessedTimingData()->IsJudgableAtRow(row)
+    );
 }
 
 int NoteData::GetNumTapNotes( int iStartIndex, int iEndIndex ) const
@@ -571,11 +578,15 @@ bool NoteData::RowNeedsAtLeastSimultaneousPresses( int iMinSimultaneousPresses, 
 	for( int t=0; t<GetNumTracks(); t++ )
 	{
 		const TapNote &tn = GetTapNote(t, row);
+
+		if( tn.judge == TapNoteJudge_Fake )
+			continue;
+
 		switch( tn.type )
 		{
 			case TapNoteType_Mine:
 			case TapNoteType_Empty:
-			case TapNoteType_Fake:
+			// case TapNoteType_Fake:
 			case TapNoteType_Lift: // you don't "press" on a lift.
 			case TapNoteType_AutoKeysound:
 				continue;	// skip these types - they don't count
@@ -634,7 +645,8 @@ int NoteData::GetNumRowsWithSimultaneousTaps( int iMinTaps, int iStartIndex, int
 			const TapNote &tn = GetTapNote(t, r);
 			if (tn.type != TapNoteType_Mine &&     // mines don't count.
 				tn.type != TapNoteType_Empty &&
-				tn.type != TapNoteType_Fake &&
+				// tn.type != TapNoteType_Fake &&
+        tn.judge != TapNoteJudge_Fake &&
 				tn.type != TapNoteType_AutoKeysound)
 				iNumNotesThisIndex++;
 		}
@@ -702,14 +714,14 @@ int NoteData::GetNumLifts( int iStartIndex, int iEndIndex ) const
 int NoteData::GetNumFakes( int iStartIndex, int iEndIndex ) const
 {
 	int iNumFakes = 0;
-	
+
 	for( int t=0; t<GetNumTracks(); t++ )
 	{
 		FOREACH_NONEMPTY_ROW_IN_TRACK_RANGE( *this, t, r, iStartIndex, iEndIndex )
 			if( this->IsFake(GetTapNote(t, r), r))
 				iNumFakes++;
 	}
-	
+
 	return iNumFakes;
 }
 
@@ -922,7 +934,7 @@ void NoteData::LoadTransformed( const NoteData& in, int iNewNumTracks, const int
 	for( int t=0; t<GetNumTracks(); t++ )
 	{
 		const int iOriginalTrack = iOriginalTrackToTakeFrom[t];
-		ASSERT_M( iOriginalTrack < in.GetNumTracks(), ssprintf("from OriginalTrack %i >= %i (#tracks) (taking from %i)", 
+		ASSERT_M( iOriginalTrack < in.GetNumTracks(), ssprintf("from OriginalTrack %i >= %i (#tracks) (taking from %i)",
 			iOriginalTrack, in.GetNumTracks(), iOriginalTrackToTakeFrom[t]));
 
 		if( iOriginalTrack == -1 )
@@ -981,7 +993,7 @@ bool NoteData::GetNextTapNoteRowForTrack( int track, int &rowInOut, bool ignoreA
 {
 	const TrackMap &mapTrack = m_TapNotes[track];
 
-	// lower_bound and upper_bound have the same effect here because duplicate 
+	// lower_bound and upper_bound have the same effect here because duplicate
 	// keys aren't allowed.
 
 	// lower_bound "finds the first element whose key is not less than k" (>=);
@@ -1016,7 +1028,7 @@ bool NoteData::GetPrevTapNoteRowForTrack( int track, int &rowInOut ) const
 		return false;
 
 	// Move back by one.
-	--iter;	
+	--iter;
 	ASSERT( iter->first < rowInOut );
 	rowInOut = iter->first;
 	return true;
@@ -1060,6 +1072,10 @@ void NoteData::GetTapNoteRangeInclusive( int iTrack, int iStartRow, int iEndRow,
 	{
 		iterator prev = Decrement(lBegin);
 
+		// xMAx
+		if( prev->second.type == TapNoteType_HoldTail )
+			--prev;
+
 		const TapNote &tn = prev->second;
 		if( tn.type == TapNoteType_HoldHead )
 		{
@@ -1094,6 +1110,11 @@ void NoteData::GetTapNoteRangeExclusive( int iTrack, int iStartRow, int iEndRow,
 	{
 		iterator prev = lEnd;
 		--prev;
+
+		// xMAx
+		if( prev->second.type == TapNoteType_HoldTail )
+			--prev;
+
 		if( prev->second.type == TapNoteType_HoldHead )
 		{
 			int localStartRow = prev->first;
@@ -1181,6 +1202,24 @@ bool NoteData::GetPrevTapNoteRowForAllTracks( int &rowInOut ) const
 		return false;
 	}
 }
+
+// xMAx -------------------------------------------------------------------------------------------
+bool NoteData::HasNoteSkinPlayer() const
+{
+	FOREACH_NONEMPTY_ROW_ALL_TRACKS_RANGE( *this, r, 0, MAX_NOTE_ROW )
+		for( int t=0; t<GetNumTracks(); t++ )
+		{
+			const TapNote &tn = GetTapNote(t, r);
+			if ( tn.playerNoteSkin != TapNotePlayerNoteSkin_Default )
+			{
+				LOG->Trace("NoteData::Steps have NoteSkinPlayers" );
+				return true;
+			}
+		}
+
+	return false;
+}
+//-------------------------------------------------------------------------------------------------
 
 XNode* NoteData::CreateNode() const
 {
@@ -1475,7 +1514,7 @@ template class NoteData::_all_tracks_iterator<const NoteData, NoteData::const_it
 /*
  * (c) 2001-2004 Chris Danford, Glenn Maynard
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -1485,7 +1524,7 @@ template class NoteData::_all_tracks_iterator<const NoteData, NoteData::const_it
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

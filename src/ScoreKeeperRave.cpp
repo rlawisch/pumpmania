@@ -36,7 +36,7 @@ static void SuperMeterPercentChangeInit( size_t /*ScoreEvent*/ i, RString &sName
 
 static Preference1D<float> g_fSuperMeterPercentChange( SuperMeterPercentChangeInit, NUM_ScoreEvent );
 
-ScoreKeeperRave::ScoreKeeperRave( PlayerState *pPlayerState, PlayerStageStats *pPlayerStageStats ) : 
+ScoreKeeperRave::ScoreKeeperRave( PlayerState *pPlayerState, PlayerStageStats *pPlayerStageStats ) :
 	ScoreKeeper(pPlayerState, pPlayerStageStats)
 {
 }
@@ -102,6 +102,7 @@ void ScoreKeeperRave::HandleHoldScore( const TapNote &tn )
 	AddSuperMeterDelta( fPercentToMove );
 }
 
+/* xMAx
 extern ThemeMetric<bool> PENALIZE_TAP_SCORE_NONE;
 void ScoreKeeperRave::HandleTapScoreNone()
 {
@@ -111,6 +112,7 @@ void ScoreKeeperRave::HandleTapScoreNone()
 		AddSuperMeterDelta( fPercentToMove );
 	}
 }
+*/
 
 void ScoreKeeperRave::AddSuperMeterDelta( float fUnscaledPercentChange )
 {
@@ -181,7 +183,7 @@ void ScoreKeeperRave::LaunchAttack( AttackLevel al )
 	RString* asAttacks = GAMESTATE->m_pCurCharacters[pn]->m_sAttacks[al];	// [NUM_ATTACKS_PER_LEVEL]
 	RString sAttackToGive;
 
-	if (GAMESTATE->m_pCurCharacters[pn] != nullptr)		
+	if (GAMESTATE->m_pCurCharacters[pn] != nullptr)
 		sAttackToGive = asAttacks[ RandomInt(NUM_ATTACKS_PER_LEVEL) ];
 	else
 	{
@@ -211,7 +213,7 @@ void ScoreKeeperRave::LaunchAttack( AttackLevel al )
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -221,7 +223,7 @@ void ScoreKeeperRave::LaunchAttack( AttackLevel al )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

@@ -35,6 +35,7 @@ static const char *MessageIDNames[] = {
 	"PreferredCourseDifficultyP2Changed",
 	"EditCourseEntryIndexChanged",
 	"EditLocalProfileIDChanged",
+	"BattleModeChanged",
 	"GoalCompleteP1",
 	"GoalCompleteP2",
 	"NoteCrossed",
@@ -240,7 +241,7 @@ bool MessageManager::IsSubscribedToMessage( IMessageSubscriber* pSubscriber, con
 {
 	SubscribersSet& subs = g_MessageToSubscribers[sMessage];
 	return subs.find( pSubscriber ) != subs.end();
-}	
+}
 
 void IMessageSubscriber::ClearMessages( const RString sMessage )
 {
@@ -289,7 +290,7 @@ void MessageSubscriber::UnsubscribeAll()
 // lua start
 #include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the MessageManager. */ 
+/** @brief Allow Lua to have access to the MessageManager. */
 class LunaMessageManager: public Luna<MessageManager>
 {
 public:
@@ -325,7 +326,7 @@ LUA_REGISTER_CLASS( MessageManager )
 /*
  * (c) 2003-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -335,7 +336,7 @@ LUA_REGISTER_CLASS( MessageManager )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

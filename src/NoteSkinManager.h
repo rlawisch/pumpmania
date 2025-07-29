@@ -10,6 +10,13 @@
 struct Game;
 struct NoteSkinData;
 
+// StepP1 Revival - bSilver
+struct NoteSkinInfo
+{
+	RString m_name;
+	RString m_path;
+};
+
 /** @brief Loads note skins. */
 class NoteSkinManager
 {
@@ -44,6 +51,8 @@ public:
 	// Lua
 	void PushSelf( lua_State *L );
 
+	vector<NoteSkinInfo>	m_vNoteSkinsInfo; // StepP1 Revival - bSilver
+
 protected:
 	RString GetPathFromDirAndFile( const RString &sDir, const RString &sFileName );
 	void GetAllNoteSkinNamesForGame( const Game *pGame, vector<RString> &AddTo );
@@ -75,7 +84,7 @@ public:
  * @author Chris Danford (c) 2003-2004
  * @section LICENSE
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -85,7 +94,7 @@ public:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

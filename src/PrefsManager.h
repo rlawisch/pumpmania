@@ -111,6 +111,18 @@ enum BackgroundFitMode
 	NUM_BackgroundFitMode,
 	BackgroundFitMode_Invalid
 };
+enum RandomExclude
+{
+	RN_EXCLUDE_NONE,
+	RN_EXCLUDE_PRO,
+	RN_EXCLUDE_FAN,
+	RN_EXCLUDE_PRO_AND_FAN,
+	NUM_RandomExclude,
+	RandomExclude_Invalid
+};
+const RString& RandomExcludeToString( RandomExclude re );
+const RString& RandomExcludeToLocalizedString( RandomExclude re );
+LuaDeclareType( RandomExclude );
 
 /** @brief Holds user-chosen preferences that are saved between sessions. */
 class PrefsManager
@@ -179,6 +191,17 @@ public:
 
 	Preference<bool>	m_bOnlyDedicatedMenuButtons;
 	Preference<bool>	m_bMenuTimer;
+
+	// StepP1 Revival -- bSilver --------------------------------------------------------------------
+	Preference<bool>	m_bShowUCSCharts;
+	Preference<bool>	m_bShowQUESTCharts;
+	Preference<RandomExclude>	m_RandomExclude;
+	Preference<bool>	m_bShowSpecialSongsInLevelChannels;
+	Preference<bool>	m_bShowLevelChannels;
+	Preference<bool>	m_bShowCategoryChannels;
+	Preference<bool>	m_bShowSpecialSongsInCategoryChannels;
+	Preference<bool>	m_bLockWheelAfterRoulette;
+	// ----------------------------------------------------------------------------------------------
 
 	Preference<float>	m_fLifeDifficultyScale;
 
@@ -349,6 +372,8 @@ public:
 
 	// Lua
 	void PushSelf( lua_State *L );
+
+	bool				bAllowBossPower;
 
 protected:
 	void ReadPrefsFromFile( const RString &sIni, const RString &sSection, bool bIsStatic );

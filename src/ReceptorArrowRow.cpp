@@ -10,19 +10,20 @@
 ReceptorArrowRow::ReceptorArrowRow()
 {
 	m_pPlayerState = nullptr;
-	m_fYReverseOffsetPixels = 0;
+	// m_fYReverseOffsetPixels = 0; // xMAx
 	m_fFadeToFailPercent = 0;
 	m_renderers= nullptr;
 }
 
-void ReceptorArrowRow::Load( const PlayerState* pPlayerState, float fYReverseOffset )
+// void ReceptorArrowRow::Load( const PlayerState* pPlayerState, float fYReverseOffset ) // xMAx
+void ReceptorArrowRow::Load( const PlayerState* pPlayerState ) // xMAx
 {
 	m_pPlayerState = pPlayerState;
-	m_fYReverseOffsetPixels = fYReverseOffset;
+	// m_fYReverseOffsetPixels = fYReverseOffset; // xMAx
 
 	const Style* pStyle = GAMESTATE->GetCurrentStyle(pPlayerState->m_PlayerNumber);
 
-	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ ) 
+	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ )
 	{
 		m_ReceptorArrow.push_back( new ReceptorArrow );
 		m_ReceptorArrow[c]->SetName( "ReceptorArrow" );
@@ -50,6 +51,8 @@ ReceptorArrowRow::~ReceptorArrowRow()
 void ReceptorArrowRow::Update( float fDeltaTime )
 {
 	ActorFrame::Update( fDeltaTime );
+
+  /* xMAx - This must be on Player::Update
 	// If we're on gameplay, then the notefield will take care of updating
 	// ArrowEffects.  But if we're on ScreenNameEntry, there is no notefield,
 	// Checking whether m_renderers is null is a proxy for checking whether
@@ -58,6 +61,7 @@ void ReceptorArrowRow::Update( float fDeltaTime )
 	{
 		ArrowEffects::Update();
 	}
+  */
 
 	for( unsigned c=0; c<m_ReceptorArrow.size(); c++ )
 	{
@@ -70,7 +74,8 @@ void ReceptorArrowRow::Update( float fDeltaTime )
 			fBaseAlpha *= (1 - m_fFadeToFailPercent);
 		}
 		CLAMP( fBaseAlpha, 0.0f, 1.0f );
-		m_ReceptorArrow[c]->SetBaseAlpha( fBaseAlpha );
+		// m_ReceptorArrow[c]->SetBaseAlpha( fBaseAlpha ); // xMAx - Hide only the receptor of the press, not the effector
+		m_ReceptorArrow[c]->SetReceptorAlpha( fBaseAlpha ); // xMAx
 
 		if(m_renderers != nullptr)
 		{
@@ -119,7 +124,7 @@ void ReceptorArrowRow::SetNoteUpcoming( int iCol, bool b )
 /*
  * (c) 2001-2003 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -129,7 +134,7 @@ void ReceptorArrowRow::SetNoteUpcoming( int iCol, bool b )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

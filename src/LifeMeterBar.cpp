@@ -49,6 +49,7 @@ LifeMeterBar::LifeMeterBar()
 	bool bExtra = GAMESTATE->IsAnExtraStage();
 	RString sExtra = bExtra ? "extra " : "";
 
+  /* StepP1 Revival - bSilver
 	m_sprUnder.Load( THEME->GetPathG(sType,sExtra+"Under") );
 	m_sprUnder->SetName( "Under" );
 	ActorUtil::LoadAllCommandsAndSetXY( m_sprUnder, sType );
@@ -69,11 +70,44 @@ LifeMeterBar::LifeMeterBar()
 	m_sprOver->SetName( "Over" );
 	ActorUtil::LoadAllCommandsAndSetXY( m_sprOver, sType );
 	this->AddChild( m_sprOver );
+  */
+
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	RString sFolder = "LifeMeterBar";
+	RString sOver = "Over/";
+	RString sPrefix = GAMESTATE->IsDouble() ? "double_" : "";
+
+	// Load sprites directly based on file names
+	m_sprFallback		.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "fallback.png"));
+	m_sprFallbackRed	.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "fallback_red.png"));
+	m_sprBarBlue		.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "bar_blue.png"));
+	m_sprBarGrey		.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "bar_grey.png"));
+	m_sprGlowColor		.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "glow_color.png"));
+	m_sprGlowRed		.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "glow_red.png"));
+	m_sprFrame		.Load(THEME->GetPathG(sFolder, sOver + sPrefix + "frame.png"));
+	m_sprTipBlue		.Load(THEME->GetPathG(sFolder, sOver + "tip_blue.png"));
+	m_sprTipRed		.Load(THEME->GetPathG(sFolder, sOver + "tip_red.png"));
+
+	this->AddChild( m_sprFallback );
+	this->AddChild( m_sprFallbackRed);
+	this->AddChild( m_sprBarBlue );
+	this->AddChild( m_sprBarGrey );
+	this->AddChild( m_sprGlowColor );
+	this->AddChild( m_sprGlowRed );
+	this->AddChild( m_sprFrame );
+	this->AddChild( m_sprTipBlue );
+	this->AddChild( m_sprTipRed );
+
+	m_sprFallbackRed->SetVisible(false);
+	m_sprGlowRed->SetVisible(false);
+	m_sprGlowColor->SetVisible(false);
+	m_sprTipRed->SetVisible(false);
+	// ----------------------------------------------------------------------------------------------
 }
 
 LifeMeterBar::~LifeMeterBar()
 {
-	SAFE_DELETE( m_pStream );
+	// SAFE_DELETE( m_pStream ); // StepP1 Revival - bSilver
 }
 
 void LifeMeterBar::Load( const PlayerState *pPlayerState, PlayerStageStats *pPlayerStageStats )
@@ -97,11 +131,20 @@ void LifeMeterBar::Load( const PlayerState *pPlayerState, PlayerStageStats *pPla
 	}
 
 	// Change life difficulty to really easy if merciful beginner on
-	m_bMercifulBeginnerInEffect = 
-		GAMESTATE->m_PlayMode == PLAY_MODE_REGULAR  &&  
+	m_bMercifulBeginnerInEffect =
+		GAMESTATE->m_PlayMode == PLAY_MODE_REGULAR  &&
 		GAMESTATE->IsPlayerEnabled( pPlayerState )  &&
 		GAMESTATE->m_pCurSteps[pn]->GetDifficulty() == Difficulty_Beginner  &&
 		PREFSMAN->m_bMercifulBeginner;
+
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	m_fLifePercentage = 0.5f;
+	m_fTipPosition = 0.5f;
+	m_fBarBlueProgress = m_fTipPosition - 0.150f; // starts behind tip
+	m_bGlowColorVisible = false;
+	m_bGlowRedVisible = false;
+	m_bUsingTipRed = false;
+	// ----------------------------------------------------------------------------------------------
 
 	AfterLifeChanged();
 }
@@ -157,19 +200,20 @@ void LifeMeterBar::ChangeLife( HoldNoteScore score, TapNoteScore tscore )
 		switch( score )
 		{
 		case HNS_Held:		fDeltaLife = m_fLifePercentChange.GetValue(SE_Held);	break;
-		case HNS_LetGo:	fDeltaLife = m_fLifePercentChange.GetValue(SE_LetGo);	break;
+		// case HNS_LetGo:	fDeltaLife = m_fLifePercentChange.GetValue(SE_LetGo);	break; // xMAx
 		case HNS_Missed:	fDeltaLife = m_fLifePercentChange.GetValue(SE_Missed);	break;
 		default:
 			FAIL_M(ssprintf("Invalid HoldNoteScore: %i", score));
 		}
-		if(PREFSMAN->m_HarshHotLifePenalty && IsHot()  &&  score == HNS_LetGo)
+		// if(PREFSMAN->m_HarshHotLifePenalty && IsHot()  &&  score == HNS_LetGo) // xMAx
+		if(PREFSMAN->m_HarshHotLifePenalty && IsHot()  &&  score == HNS_Missed) // xMAx
 			fDeltaLife = -0.10f;		// make it take a while to get back to "hot"
 		break;
 	case DrainType_NoRecover:
 		switch( score )
 		{
 		case HNS_Held:		fDeltaLife = +0.000f;	break;
-		case HNS_LetGo:	fDeltaLife = m_fLifePercentChange.GetValue(SE_LetGo);	break;
+		// case HNS_LetGo:	fDeltaLife = m_fLifePercentChange.GetValue(SE_LetGo);	break; // xMAx
 		case HNS_Missed:		fDeltaLife = +0.000f;	break;
 		default:
 			FAIL_M(ssprintf("Invalid HoldNoteScore: %i", score));
@@ -179,7 +223,7 @@ void LifeMeterBar::ChangeLife( HoldNoteScore score, TapNoteScore tscore )
 		switch( score )
 		{
 		case HNS_Held:		fDeltaLife = +0;	break;
-		case HNS_LetGo:	fDeltaLife = -1.0f;	break;
+		// case HNS_LetGo:	fDeltaLife = -1.0f;	break; // xMAx
 		case HNS_Missed:	fDeltaLife = +0;	break;
 		default:
 			FAIL_M(ssprintf("Invalid HoldNoteScore: %i", score));
@@ -256,16 +300,18 @@ void LifeMeterBar::SetLife(float value)
 	AfterLifeChanged();
 }
 
+/* xMAx
 extern ThemeMetric<bool> PENALIZE_TAP_SCORE_NONE;
 void LifeMeterBar::HandleTapScoreNone()
 {
 	if( PENALIZE_TAP_SCORE_NONE )
 		ChangeLife( TNS_None );
 }
+*/
 
 void LifeMeterBar::AfterLifeChanged()
 {
-	m_pStream->SetPercent( m_fLifePercentage );
+	// m_pStream->SetPercent( m_fLifePercentage ); // StepP1 Revival - bSilver
 
 	Message msg( "LifeChanged" );
 	msg.SetParam( "Player", m_pPlayerState->m_PlayerNumber );
@@ -274,17 +320,17 @@ void LifeMeterBar::AfterLifeChanged()
 }
 
 bool LifeMeterBar::IsHot() const
-{ 
-	return m_fLifePercentage >= HOT_VALUE; 
+{
+	return m_fLifePercentage >= HOT_VALUE;
 }
 
 bool LifeMeterBar::IsInDanger() const
-{ 
-	return m_fLifePercentage < DANGER_THRESHOLD; 
+{
+	return m_fLifePercentage < DANGER_THRESHOLD;
 }
 
 bool LifeMeterBar::IsFailing() const
-{ 
+{
 	return m_fLifePercentage <= m_pPlayerState->m_PlayerOptions.GetCurrent().m_fPassmark;
 }
 
@@ -293,6 +339,7 @@ void LifeMeterBar::Update( float fDeltaTime )
 {
 	LifeMeter::Update( fDeltaTime );
 
+  /* StepP1 Revival - bSilver
 	m_fPassingAlpha += !IsFailing() ? +fDeltaTime*2 : -fDeltaTime*2;
 	CLAMP( m_fPassingAlpha, 0, 1 );
 
@@ -306,8 +353,103 @@ void LifeMeterBar::Update( float fDeltaTime )
 		m_sprDanger->SetVisible( true );
 	else
 		m_sprDanger->SetVisible( false );
-}
+  */
 
+	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+
+	// Initialize fBeat before all
+	float fBeat = GAMESTATE->m_Position.m_fSongBeat;
+
+	// Update tip position based on current life
+	m_fTipPosition = m_fLifePercentage;
+	CLAMP(m_fTipPosition, 0.0f, 1.0f);
+
+	// GLOW COLOR only visible if life is 100%
+	bool bGlowColor = (m_fLifePercentage >= 1.0f);
+	if( bGlowColor != m_bGlowColorVisible )
+	{
+		m_bGlowColorVisible = bGlowColor;
+		m_sprGlowColor->SetVisible(bGlowColor);
+	}
+
+	// GLOW RED only visible if life is <= 30%
+	bool bGlowRed = (m_fLifePercentage <= 0.3f);
+	if( bGlowRed != m_bGlowRedVisible )
+	{
+		m_bGlowRedVisible = bGlowRed;
+		m_sprGlowRed->SetVisible(bGlowRed);
+	}
+
+	// Switch between Tip Blue and Red
+	bool bUseRedTip = (m_fLifePercentage <= 0.3f);
+	if( bUseRedTip != m_bUsingTipRed )
+	{
+		m_bUsingTipRed = bUseRedTip;
+		m_sprFallbackRed->SetVisible(bUseRedTip);
+		m_sprTipBlue->SetVisible(!bUseRedTip);
+		m_sprTipRed->SetVisible(bUseRedTip);
+	}
+
+	// Tip Blue/Red blink effect
+	static float fTipBlinkTimer = 0.0f;
+	static bool bFlashToggle = false;
+
+	fTipBlinkTimer += fDeltaTime;
+
+	if (fTipBlinkTimer >= 0.017f)
+	{
+		bFlashToggle = !bFlashToggle;
+		fTipBlinkTimer = 0.0f;
+	}
+
+	float fAlpha = bFlashToggle ? 1.0f : 0.0f;
+
+	if( m_bUsingTipRed )
+	{
+		m_sprTipRed->SetDiffuseAlpha(fAlpha);
+	}
+	else
+	{
+		m_sprTipBlue->SetDiffuseAlpha(fAlpha);
+	}
+
+	if( m_bGlowRedVisible )
+	{
+		m_sprGlowRed->SetDiffuseAlpha(fAlpha);
+	}
+
+	if( m_bGlowColorVisible )
+	{
+		m_sprGlowColor->SetDiffuseAlpha(fAlpha);
+	}
+
+	// Update position of visual elements
+	const float fTipX = SCALE(m_fTipPosition, 0.0f, 1.0f, -185.0f, +185.0f);
+
+	m_sprTipBlue->SetX(fTipX);
+	m_sprTipRed->SetX(fTipX);
+
+	// BarGrey = 15% behind tip
+	float fGreyPercent = m_fTipPosition - 0.15f;
+	CLAMP(fGreyPercent, 0.0, 1.0f);
+	m_sprBarGrey->SetCropRight(1.0f - fGreyPercent);
+
+	// BarBlue pulsating at BPM between [start] and [tip]
+	float fTip = m_fTipPosition;
+	float fStart = fTip - 0.150f;
+	CLAMP(fStart, 0.0f, 1.0f);
+
+	// Oscilate between 0 and 1 at BPM tempo
+	float fPhase = fmodf(fBeat, 1.0f); // 0.0 -> 1.0 in each beat
+	float fPulse = (fPhase < 0.5f ) ? (fPhase * 2.0f) : (2.0f - fPhase * 2.0f);
+	// fPulse: 0 -> 1 -> 0
+
+	// Bar interpolation
+	m_fBarBlueProgress = fStart + fPulse * (fTip - fStart);
+	CLAMP(m_fBarBlueProgress, 0.0f, 1.0f);
+	m_sprBarBlue->SetCropRight(1.0f - m_fBarBlueProgress);
+	// ----------------------------------------------------------------------------------------------
+}
 
 void LifeMeterBar::UpdateNonstopLifebar()
 {
@@ -384,7 +526,7 @@ void LifeMeterBar::UpdateNonstopLifebar()
 	int iLifeDifficulty = int( (1.8f - m_fLifeDifficulty)/0.2f );
 
 	// first eight values don't matter
-	float fDifficultyValues[16] = {0,0,0,0,0,0,0,0, 
+	float fDifficultyValues[16] = {0,0,0,0,0,0,0,0,
 		0.3f, 0.25f, 0.2f, 0.16f, 0.14f, 0.12f, 0.10f, 0.08f};
 
 	if( iLifeDifficulty >= 16 )
@@ -413,7 +555,7 @@ void LifeMeterBar::FillForHowToPlay( int NumW2s, int NumMisses )
 /*
  * (c) 2001-2004 Chris Danford
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -423,7 +565,7 @@ void LifeMeterBar::FillForHowToPlay( int NumW2s, int NumMisses )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
