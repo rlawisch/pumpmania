@@ -36,7 +36,7 @@
 
 static const char *SelectionStateNames[] = {
 	"SelectingSubGroups", // StepP1 Revival - bSilver
-	"SelectinGroups", // StepP1 Revival - bSilver
+	"SelectingGroups", // StepP1 Revival - bSilver
 	"SelectingSong",
 	"SelectingSteps",
 	"IsPlayerReady", // StepP1 Revival - bSilver
