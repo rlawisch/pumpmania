@@ -17,10 +17,10 @@ local function GetStageNumberActor()
 			InitCommand=cmd(FromTop,28);
 		};
 		LoadActor( THEME:GetPathG("","ScreenGameplay/N_FM") ).. {
-			InitCommand=cmd(x,-12;FromTop,34;pause;setstate,first_digit);
+			InitCommand=cmd(zoom, .5;x,-12;FromTop,34;pause;setstate,first_digit);
 		};
 		LoadActor( THEME:GetPathG("","ScreenGameplay/N_FM") ).. {
-			InitCommand=cmd(x,12;FromTop,34;pause;setstate,second_digit);
+			InitCommand=cmd(zoom, .5;x,12;FromTop,34;pause;setstate,second_digit);
 		};
 	};
 end;
@@ -124,8 +124,8 @@ if GAMESTATE:IsSideJoined(PLAYER_1) then
 			self:horizalign(left);
 			self:x(SCREEN_LEFT+4);
 			self:y(SCREEN_BOTTOM-18);
-			self:SetWidth(21);
-			self:SetHeight(21);
+			self:SetWidth(19.5);
+			self:SetHeight(19.5);
 		end;
 	};
 
@@ -142,7 +142,7 @@ if GAMESTATE:IsSideJoined(PLAYER_1) then
 			PersonalBest = PersonalBest - 1000000;
 		end;
 	end;
-
+	
 	t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSystemLayer/PlayerName background empty") )..{
 		InitCommand=cmd(horizalign,left;x,SCREEN_LEFT;y,SCREEN_BOTTOM-18;basezoom,.54);
 	};
@@ -151,10 +151,10 @@ if GAMESTATE:IsSideJoined(PLAYER_1) then
 		InitCommand=cmd(settext,string.upper(string.sub(profilename,1,8));horizalign,left;zoom,.51;maxwidth,82;x,SCREEN_LEFT+28;y,SCREEN_BOTTOM-23);
 	};
 	
-	local maxcomboP1 = 0; 
 	local pscoreP1 = 0;
-	t[#t+1] = LoadFont("_karnivore lite white") .. {
+	t[#t+1] = LoadFont("","_myriad pro 20px") .. {
 		InitCommand=cmd(settext,"00.00%";horizalign,right;zoom,.62;x,SCREEN_LEFT+128;y,SCREEN_BOTTOM-16,maxwidth,85);
+
 		JudgmentMessageCommand=function(self,param)
 			self:sleep(0.1);
 			self:queuecommand('PostLifeChange');
@@ -166,8 +166,7 @@ if GAMESTATE:IsSideJoined(PLAYER_1) then
 			local goods = curstats:GetTapNoteScores('TapNoteScore_W4');
 			local bads = curstats:GetTapNoteScores('TapNoteScore_W5');
 			local misses = curstats:GetTapNoteScores('TapNoteScore_Miss') + curstats:GetTapNoteScores('TapNoteScore_CheckpointMiss');
-			local currentcombo = curstats:GetCurrentCombo();
-			if currentcombo > maxcomboP1 then maxcomboP1 = currentcombo end;
+			local maxcomboP1 = curstats:MaxCombo();
 			local stagebreak = curstats:GetReachedLifeZero();
 			pscoreP1 = CalcPScore(perfects, greats, goods, bads, misses, maxcomboP1);
 			local grade_bonus = 300000;
@@ -190,34 +189,33 @@ if GAMESTATE:IsSideJoined(PLAYER_1) then
 				self:diffusecolor(1,1,1,1)
 			end;
 			self:settext(formatted_pscoreP1);
-		end;
-	};
-
-	t[#t+1] = LoadActor( THEME:GetPathG("","ScreenGameplay/new_record") )..{
-		InitCommand=cmd(horizalign,right;zoom,.22;x,SCREEN_LEFT+80;y,SCREEN_BOTTOM-15,maxwidth,85;visible,false);
-		JudgmentMessageCommand=function(self,param)
-			self:sleep(0.1);
-			self:queuecommand('PostLifeChange');
-		end;
-		PostLifeChangeMessageCommand=function(self)
-			if pscoreP1 >= 1000000 then self:x(SCREEN_LEFT+80) else self:x(SCREEN_LEFT+85) end;
-			if pscoreP1 > PersonalBest then
-				self:visible(true)
-				self:glowshift()
-			else
-				self:visible(false)
+				end;
+		};
+		t[#t+1] = LoadActor( THEME:GetPathG("","ScreenGameplay/new_record") )..{
+			InitCommand=cmd(horizalign,right;zoom,.22;x,SCREEN_LEFT+80;y,SCREEN_BOTTOM-15,maxwidth,85;visible,false);
+			JudgmentMessageCommand=function(self,param)
+				self:sleep(0.1);
+				self:queuecommand('PostLifeChange');
 			end;
+			PostLifeChangeMessageCommand=function(self)
+				if pscoreP1 >= 1000000 then self:x(SCREEN_LEFT+80) else self:x(SCREEN_LEFT+85) end;
+				if pscoreP1 > PersonalBest then
+					self:visible(true)
+					self:glowshift()
+				else
+					self:visible(false)
+				end;
 		end;
 	};
 
-	t[#t+1] = LoadFont("","_myriad pro 20px") .. {
-		InitCommand=cmd(settext,P1mods;horizalign,left;zoom,.32;x,SCREEN_LEFT+28;y,SCREEN_BOTTOM-15;diffuse,color("#00FFFF"));
-	};	
+	 t[#t+1] = LoadFont("","_myriad pro 20px") .. {
+		 InitCommand=cmd(settext,P1mods;horizalign,left;zoom,.32;x,SCREEN_LEFT+28;y,SCREEN_BOTTOM-15;diffuse,color("#00FFFF"));
+	 };	
 
-	--P1 Difficulty Ball--
-	t[#t+1] = GetSimpleBallLevel( PLAYER_1 )..{ 
-		InitCommand=cmd(horizalign,right;basezoom,.18;x,SCREEN_LEFT+145;playcommand,"ShowUp";y,SCREEN_BOTTOM-18);
-	};
+	 --P1 Difficulty Ball--
+	 t[#t+1] = GetSimpleBallLevel( PLAYER_1 )..{ 
+		 InitCommand=cmd(horizalign,right;basezoom,.18;x,SCREEN_LEFT+145;playcommand,"ShowUp";y,SCREEN_BOTTOM-18);
+	 };
 
 end;
 
@@ -293,7 +291,6 @@ if GAMESTATE:IsSideJoined(PLAYER_2) then
 			PersonalBest = PersonalBest - 1000000;
 		end;
 	end;
-
 	t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSystemLayer/PlayerName background empty") )..{
 		InitCommand=cmd(horizalign,right;x,SCREEN_RIGHT;y,SCREEN_BOTTOM-18;basezoom,.54);
 	};
@@ -304,9 +301,8 @@ if GAMESTATE:IsSideJoined(PLAYER_2) then
 
 	--P2 Real Time Score--
 	
-	local maxcomboP2 = 0;
 	local pscoreP2 = 0;
-	t[#t+1] = LoadFont("_karnivore lite white") .. {
+	t[#t+1] = LoadFont("","_myriad pro 20px") .. {
 		InitCommand=cmd(settext,"00.00%";horizalign,right;zoom,.62;x,SCREEN_RIGHT-5;y,SCREEN_BOTTOM-16;maxwidth,85);
 		JudgmentMessageCommand=function(self,param)
 			self:sleep(0.1);
@@ -319,8 +315,7 @@ if GAMESTATE:IsSideJoined(PLAYER_2) then
 			local goods = curstats:GetTapNoteScores('TapNoteScore_W4');
 			local bads = curstats:GetTapNoteScores('TapNoteScore_W5');
 			local misses = curstats:GetTapNoteScores('TapNoteScore_Miss') + curstats:GetTapNoteScores('TapNoteScore_CheckpointMiss');
-			local currentcombo = curstats:GetCurrentCombo();
-			if currentcombo > maxcomboP2 then maxcomboP2 = currentcombo end;
+			local maxcomboP2 = curstats:MaxCombo();
 			local stagebreak = curstats:GetReachedLifeZero();
 			pscoreP2 = CalcPScore(perfects,greats,goods,bads,misses,maxcomboP2);
 			local grade_bonus = 300000;
@@ -344,30 +339,30 @@ if GAMESTATE:IsSideJoined(PLAYER_2) then
 			end;
 			self:settext(formatted_pscoreP2);
 		end;
-	};
+		};
+	t[#t+1] = LoadFont("","_myriad pro 20px") .. {
+		InitCommand=cmd(settext,P2mods;horizalign,left;zoom,.32;x,SCREEN_RIGHT-105;y,SCREEN_BOTTOM-15;diffuse,color("#00FFFF"));
+		};
+		t[#t+1] = LoadActor( THEME:GetPathG("","ScreenGameplay/new_record") )..{
+			InitCommand=cmd(horizalign,right;zoom,.22;x,SCREEN_RIGHT-53;y,SCREEN_BOTTOM-15,maxwidth,85;visible,false);
+			JudgmentMessageCommand=function(self,param)
+				self:sleep(0.1);
+				self:queuecommand('PostLifeChange');
+			end;
+			PostLifeChangeMessageCommand=function(self)
+				if pscoreP2 >= 1000000 then self:x(SCREEN_RIGHT-53) else self:x(SCREEN_RIGHT-48) end;
+				if pscoreP2 > PersonalBest then
+					self:visible(true)
+					self:glowshift()
+				else
+					self:visible(false)
+				end;
+			end;
+		};	
 
 	t[#t+1] = LoadFont("","_myriad pro 20px") .. {
 		InitCommand=cmd(settext,P2mods;horizalign,left;zoom,.32;x,SCREEN_RIGHT-105;y,SCREEN_BOTTOM-15;diffuse,color("#00FFFF"));
 	};
-
-	t[#t+1] = LoadActor( THEME:GetPathG("","ScreenGameplay/new_record") )..{
-		InitCommand=cmd(horizalign,right;zoom,.22;x,SCREEN_RIGHT-53;y,SCREEN_BOTTOM-15,maxwidth,85;visible,false);
-		JudgmentMessageCommand=function(self,param)
-			self:sleep(0.1);
-			self:queuecommand('PostLifeChange');
-		end;
-		PostLifeChangeMessageCommand=function(self)
-			if pscoreP2 >= 1000000 then self:x(SCREEN_RIGHT-53) else self:x(SCREEN_RIGHT-48) end;
-			if pscoreP2 > PersonalBest then
-				self:visible(true)
-				self:glowshift()
-			else
-				self:visible(false)
-			end;
-		end;
-	};
-
-
 	-- P2 Difficulty Ball --
 
 	t[#t+1] = GetSimpleBallLevel( PLAYER_2 )..{ 
@@ -377,9 +372,11 @@ if GAMESTATE:IsSideJoined(PLAYER_2) then
 end;
 
 -- Song Title --
-
+--[[
 local songtitle = GAMESTATE:GetCurrentSong():GetDisplayMainTitle();
-songtitle = string.upper(string.sub(songtitle,1,45));
+local cur_song = GAMESTATE:GetCurrentSong();
+local cur_steps = GAMESTATE:GetCurrentSteps(PLAYER_1);
+songtitle = string.upper(songtitle);
 
 t[#t+1] = Def.BitmapText {
 	Font="_myriad pro 20px",
@@ -387,10 +384,11 @@ t[#t+1] = Def.BitmapText {
 	InitCommand=function(self)
 		self:y(SCREEN_BOTTOM-9);
 		self:x(SCREEN_CENTER_X);
-		self:zoom(.80);
+		self:zoom(.84);
 		self:maxwidth(440);
 		self:diffuse(color("#ccfffe"));
 	end;
 };
+--]]
 
 return t;

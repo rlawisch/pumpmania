@@ -1,7 +1,7 @@
 local t = Def.ActorFrame {};
 
 t[#t+1] = LoadActor( BGDirB.."/Teaser" )..{
-	InitCommand=cmd(show_background_properly);
+	InitCommand=cmd(show_background_properly;loop,true);
 	OnCommand=cmd(play);
 };
 

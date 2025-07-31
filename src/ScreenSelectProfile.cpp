@@ -15,14 +15,7 @@ void ScreenSelectProfile::Init()
 		// no selection initially
 		m_iSelectedProfiles[p]=-1;
 
-    // StepP1 Revival - bSilver -------------------------------------------------------------------
-		m_bPlayerIsSelecting[p] = false;
-
-		if (GAMESTATE->IsHumanPlayer(p))
-		{
-			m_bPlayerIsSelecting[p] = true;
-		}
-    // --------------------------------------------------------------------------------------------
+		m_bPlayerIsSelecting[p] = GAMESTATE->IsHumanPlayer(p); // StepP1 Revival - bSilver
 	}
 	m_TrackingRepeatingInput = GameButton_Invalid;
 	ScreenWithMenuElements::Init();
@@ -94,7 +87,6 @@ bool ScreenSelectProfile::MenuLeft( const InputEventPlus &input )
 			msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
 			msg.SetParam("name", pProfile->GetDisplayNameOrHighScoreName());
 			MESSAGEMAN->Broadcast(msg);
-
 		}
 	}
 	else
@@ -154,7 +146,6 @@ bool ScreenSelectProfile::MenuRight( const InputEventPlus &input )
 			msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
 			msg.SetParam("name", pProfile->GetDisplayNameOrHighScoreName());
 			MESSAGEMAN->Broadcast(msg);
-
 		}
 	}
 	else
@@ -238,7 +229,6 @@ bool ScreenSelectProfile::MenuStart(const InputEventPlus& input)
 	}
 	else
 	{
-
 		bool bFinished = Finish();
 
 		return bFinished;

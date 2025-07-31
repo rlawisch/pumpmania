@@ -26,12 +26,9 @@ function SelectMusicOrCourse()
 	end
 end
 
-function GameOverOrContinue()
-	if THEME:GetMetric("ScreenContinue", "ContinueEnabled") then
-		return "ScreenContinue"
-	else
-		return "ScreenGameOver"
-	end
+-- functions used for Routine mode
+function IsRoutine()
+	return GAMESTATE:GetCurrentStyle() and GAMESTATE:GetCurrentStyle():GetStyleType() == "StyleType_TwoPlayersSharedSides"
 end
 
 Branch = {
@@ -45,7 +42,7 @@ Branch = {
 	end,
 	NoiseTrigger = function()
 		local hour = Hour()
-		return hour > 3 and hour < 6 and "ScreenNoise" or "ScreenHighScores"
+		return hour > 3 and hour < 6 and "ScreenNoise" or "ScreenInit"
 	end,
 	TitleMenu = function()
 		-- home mode is the most assumed use of sm-ssc.
@@ -60,13 +57,6 @@ Branch = {
 			return "ScreenTitleJoin"
 		else
 			return "ScreenTitleJoin"
-		end
-	end,
-	AfterTitleMenu = function()
-		if PREFSMAN:GetPreference("ShowCaution") then
-			return "ScreenCaution"
-		else
-			return Branch.StartGame()
 		end
 	end,
 	StartGame = function()
@@ -129,13 +119,9 @@ Branch = {
 		if GAMESTATE:IsEventMode() then
 			return SelectMusicOrCourse()
 		elseif STATSMAN:GetCurStageStats():AllFailed() then
-			return GameOverOrContinue()
+			return "ScreenGameOver"
 		elseif GAMESTATE:GetSmallestNumStagesLeftForAnyHumanPlayer() == 0 then
-			if not GAMESTATE:IsCourseMode() then
-				return "ScreenEvaluationSummary"
-			else
-				return GameOverOrContinue()
-			end
+			return "ScreenEvaluationSummary"
 		else
 			return SelectMusicOrCourse()
 		end
@@ -183,34 +169,13 @@ Branch = {
 	GameplayScreen = function()
 		return IsRoutine() and "ScreenGameplayShared" or "ScreenGameplay"
 	end,
-	EvaluationScreen= function()
+	AfterGameplay= function()
 		if IsNetSMOnline() then
 			return "ScreenNetEvaluation"
 		else
 			-- todo: account for courses etc?
 			return "ScreenEvaluationNormal"
 		end
-	end,
-	AfterGameplay = function()
-		-- pick an evaluation screen based on settings.
-		if THEME:GetMetric("ScreenHeartEntry", "HeartEntryEnabled") then
-			local go_to_heart= false
-			for i, pn in ipairs(GAMESTATE:GetEnabledPlayers()) do
-				local profile= PROFILEMAN:GetProfile(pn)
-				if profile and profile:GetIgnoreStepCountCalories() then
-					go_to_heart= true
-				end
-			end
-			if go_to_heart then
-				return "ScreenHeartEntry"
-			end
-			return Branch.EvaluationScreen()
-		else
-			return Branch.EvaluationScreen()
-		end
-	end,
-	AfterHeartEntry= function()
-		return Branch.EvaluationScreen()
 	end,
 	AfterEvaluation = function()
 		if GAMESTATE:IsCourseMode() then
@@ -243,19 +208,8 @@ Branch = {
 		return IsNetConnected() and "ScreenTitleMenu" or "ScreenTitleMenu"
 	end,
  	AfterSaveSummary = function()
-		return GameOverOrContinue()
+		return "ScreenGameOver"
 --		[[ Enable when Finished ]]
 -- 		return GAMESTATE:AnyPlayerHasRankingFeats() and "ScreenNameEntryTraditional" or "ScreenGameOver"
 	end,
-	AfterContinue = function()
-		if GAMESTATE:GetNumPlayersEnabled() == 0 then
-			return "ScreenGameOver"
-		end
-
-		if STATSMAN:GetStagesPlayed() == 0 then
-			return "ScreenSelectStyle"
-		end
-
-		return "ScreenProfileLoad"
-	end
 }

@@ -81,7 +81,7 @@ t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSelectMusic/moon 1x4.png") )..{
 		(cmd(stoptweening;diffusealpha,0;sleep,.1;linear,.2;diffusealpha,1))(self);
 		local cur_group = SCREENMAN:GetTopScreen():GetCurrentGroup();
 		if not ( cur_group == "SO_QUEST" or cur_group == "04-SKILLUP ZONE" ) then
-			self:setstate(2);
+			self:setstate(1);
 		else
 			self:setstate(3);
 		end;
@@ -90,7 +90,7 @@ t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSelectMusic/moon 1x4.png") )..{
 		(cmd(stoptweening;diffusealpha,0;sleep,.1;linear,.2;diffusealpha,1))(self);
 		local cur_group = SCREENMAN:GetTopScreen():GetCurrentGroup();
 		if not ( cur_group == "SO_QUEST" or cur_group == "04-SKILLUP ZONE" ) then
-			self:setstate(2);
+			self:setstate(1);
 		else
 			self:setstate(3);
 		end;

@@ -1,3 +1,11 @@
+function error(text)
+	return;
+end;
+
+function Trace(text)
+	return;
+end;
+
 -- Override Lua's loadfile to use lua.ReadFile.
 function loadfile(file)
 	local data, err = lua.ReadFile(file)
@@ -17,12 +25,13 @@ function loadfile(file)
 	if not chunk then return nil, err end
 
 	-- Set the environment, like loadfile does.
-	setfenv(chunk, getfenv(2))
+	--setfenv(chunk, getfenv(2))
 	return chunk
 end
 
 -- Override Lua's dofile to use our loadfile.
 function dofile(file)
+	--[[
 	if not file then
 		error( "dofile(nil) unsupported", 2 )
 	end
@@ -31,6 +40,9 @@ function dofile(file)
 		error(err, 2)
 	end
         return chunk()
+	]]-- xMAx
+	
+	return;
 end
 
 -- Like ipairs(), but returns only values.

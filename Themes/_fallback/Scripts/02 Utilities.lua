@@ -241,6 +241,7 @@ Time = {
 	end
 }
 
+--[[
 -- file utilities
 File = {
 	Write = function(path,buf)
@@ -271,6 +272,7 @@ File = {
 		end
 	end
 }
+]]-- xMAx
 
 -- setenv(name,value)
 -- Sets aside an entry for <name> and puts <value> into it.

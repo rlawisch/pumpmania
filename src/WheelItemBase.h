@@ -9,7 +9,7 @@
 
 struct WheelItemBaseData;
 /** @brief The different types of Wheel Items. */
-enum WheelItemDataType 
+enum WheelItemDataType
 {
 	WheelItemDataType_Generic,	/**< A generic item on the Wheel. */
 	WheelItemDataType_Section,	/**< A general section on the Wheel. */
@@ -57,7 +57,7 @@ public:
 	bool IsLoaded(){ return m_pData != nullptr; }
 
 	// Lua
-	void PushSelf( lua_State *L );
+	// void PushSelf( lua_State *L ); // xMAx
 
 protected:
 	void SetGrayBar( Actor *pBar ) { m_pGrayBar = pBar; }
@@ -73,7 +73,7 @@ protected:
 /*
  * (c) 2001-2006 Chris Danford, Chris Gomez, Glenn Maynard, Josh Allen
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -83,7 +83,7 @@ protected:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

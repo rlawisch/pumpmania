@@ -98,16 +98,31 @@ function AddDots( score )
 		local milesimas = math.floor(score/1000) - millonesimas*1000;
 		local centesimas = score - milesimas*1000 - millonesimas*1000000;
 
-		return string.format("%01d",millonesimas).."."..string.format("%03d",milesimas).."."..string.format("%03d",centesimas);
+		return string.format("%01d",millonesimas)..","..string.format("%03d",milesimas)..","..string.format("%03d",centesimas);
 	elseif score < 1000000 and score >= 1000 then
 		local milesimas = math.floor(score/1000);
 		local centesimas = score - milesimas*1000;
 		
-		return string.format("%01d",milesimas).."."..string.format("%03d",centesimas);
+		return string.format("%01d",milesimas)..","..string.format("%03d",centesimas);
 	else
 		return string.format("%01d",score);
 	end;
 end;
+
+
+function AddCommas(number)
+    -- Converte o número para string
+    local str = tostring(number)
+    -- Adiciona vírgulas como separadores de milhares
+    local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+    -- Remove vírgula extra, se houver
+    if formatted:sub(1, 1) == "," then
+        formatted = formatted:sub(2)
+    end
+    return formatted
+end
+
+
 
 function ScoreToPercent( score )
 	local formatted_score = ""
@@ -132,7 +147,6 @@ function ScoreToPercent( score )
 	end
 	return formatted_score .. "%"
 end
-
 
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 -- P. SCORE FUNCTIONS --
@@ -333,23 +347,23 @@ end;
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-function GetHighScoresFrame( pn, appear_on_start )
+function GetHighScoresFrameP1( pn, appear_on_start )
 local t = Def.ActorFrame {
 	OnCommand=function(self)
 		if appear_on_start then self:playcommand("StartSelectingSteps"); end;
 		return;
 	end;
 	children = {
-		LoadActor( THEME:GetPathG("","ScreenSelectMusic/highscores_bg") )..{
-			InitCommand=cmd(basezoom,.66;zoomx,0);
-			ChangeStepsMessageCommand=cmd(stoptweening;zoomx,1);
-			StartSelectingStepsMessageCommand=cmd(stoptweening;zoomx,0;linear,.2;zoomx,1);
-			GoBackSelectingSongMessageCommand=cmd(stoptweening;zoomx,1;linear,.2;zoomx,0);
-			OffCommand=cmd(stoptweening;zoomx,1;linear,.2;zoomx,0);
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/my_best_P1") )..{
+			InitCommand=cmd(basezoom,.66;diffusealpha,0);
+			ChangeStepsMessageCommand=cmd(stoptweening;diffusealpha,1);
+			StartSelectingStepsMessageCommand=cmd(stoptweening;diffusealpha,1);
+			GoBackSelectingSongMessageCommand=cmd(stoptweening;sleep,.5;diffusealpha,0);
+			OffCommand=cmd(stoptweening;diffusealpha,0);
 		};
 		--personal hs
-		LoadFont("_karnivore lite white")..{
-			InitCommand=cmd(settext,"";horizalign,left;zoom,.62;x,-40;y,-14;maxwidth,85);
+		LoadFont("_myriad pro 20px")..{
+			InitCommand=cmd(settext,"";horizalign,center;zoom,.75;x,-22;y,-23;maxwidth,85);
 			RefreshTextCommand=function(self)
 				local cur_song = GAMESTATE:GetCurrentSong();
 				local cur_steps = GAMESTATE:GetCurrentSteps(pn);
@@ -381,7 +395,9 @@ local t = Def.ActorFrame {
 			GoBackSelectingSongMessageCommand=cmd(finishtweening;settext,"");
 			OffCommand=cmd(stoptweening;visible,false);
 		};
+		
 		--machine best name
+		--[[
 		LoadFont("","_myriad pro 20px") .. {
 			InitCommand=cmd(settext,"";horizalign,left;zoom,.62;x,-40;y,12);
 			RefreshTextCommand=function(self)
@@ -392,7 +408,7 @@ local t = Def.ActorFrame {
 					self:settext( string.upper( HSList[1]:GetName() ));
 				else
 					self:settext("");
-				end;
+					end;
 			end;
 			ChangeStepsMessageCommand=function(self,params)
 				if params.Player ~= pn then return; end;
@@ -402,7 +418,9 @@ local t = Def.ActorFrame {
 			GoBackSelectingSongMessageCommand=cmd(stoptweening;settext,"");
 			OffCommand=cmd(stoptweening;visible,false);
 		};
+		--]]
 		--machine best hs
+		--[[
 		LoadFont("_karnivore lite white")..{
 			InitCommand=cmd(settext,"";horizalign,left;zoom,.62;x,-40;y,21;maxwidth,85);
 			RefreshTextCommand=function(self)
@@ -449,12 +467,80 @@ local t = Def.ActorFrame {
 			end;
 			GoBackSelectingSongMessageCommand=cmd(stoptweening;zoomx,0;x,0);
 			OffCommand=cmd(stoptweening;zoomx,0;x,0);
+		--]]
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/my_best_glow_P1") )..{
+			InitCommand=cmd(basezoom,.66);
+			OnCommand=cmd(diffusealpha,0);
+			StartSelectingStepsMessageCommand=cmd(stoptweening;horizalign,center;diffusealpha,0;sleep,.2;linear,.1;diffusealpha,.8;linear,.1;diffusealpha,0;queuecommand,'Loop');
+			LoopCommand=cmd(stoptweening;x,0;horizalign,center;diffusealpha,0;linear,1;diffusealpha,.5;linear,1;diffusealpha,0;queuecommand,'Loop');
+			GoBackSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,0);
+			OffCommand=cmd(stoptweening;diffusealpha,0);
 		};
 	};
 };
 return t;
 end;
 
+function GetHighScoresFrameP2( pn, appear_on_start )
+local t = Def.ActorFrame {
+	OnCommand=function(self)
+		if appear_on_start then self:playcommand("StartSelectingSteps"); end;
+		return;
+	end;
+	children = {
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/my_best_P2") )..{
+			InitCommand=cmd(basezoom,.66;diffusealpha,0);
+			ChangeStepsMessageCommand=cmd(stoptweening;diffusealpha,1);
+			StartSelectingStepsMessageCommand=cmd(stoptweening;diffusealpha,1);
+			GoBackSelectingSongMessageCommand=cmd(stoptweening;sleep,.5;diffusealpha,0);
+			OffCommand=cmd(stoptweening;diffusealpha,0);
+		};
+		--personal hs
+		LoadFont("_myriad pro 20px")..{
+			InitCommand=cmd(settext,"";horizalign,center;zoom,.75;x,24;y,-23;maxwidth,85);
+			RefreshTextCommand=function(self)
+				local cur_song = GAMESTATE:GetCurrentSong();
+				local cur_steps = GAMESTATE:GetCurrentSteps(pn);
+				if GAMESTATE:HasProfile(pn) then
+					local HSList = PROFILEMAN:GetProfile( pn ):GetHighScoreList(cur_song,cur_steps):GetHighScores();
+					if (#HSList ~= 0) then
+						local score = math.floor(HSList[1]:GetScore() / 100);
+						if score > 2000000 then 
+							score = 0;
+							self:settext("");
+						elseif score > 1000000 then 
+							score = score - 1000000;
+							self:settext( AddDots(score) );
+						else
+							self:settext( AddDots(score) );
+						end;
+					else
+						self:settext("")
+					end;
+				else
+					self:settext("")
+				end;
+			end;
+			ChangeStepsMessageCommand=function(self,params)
+				if params.Player ~= pn then return; end;
+				(cmd(stoptweening;playcommand,'RefreshText'))(self);
+			end;
+			StartSelectingStepsMessageCommand=cmd(stoptweening;settext,"";sleep,.2;queuecommand,'RefreshText');
+			GoBackSelectingSongMessageCommand=cmd(finishtweening;settext,"");
+			OffCommand=cmd(stoptweening;visible,false);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/my_best_glow_P2") )..{
+			InitCommand=cmd(basezoom,.66);
+			OnCommand=cmd(diffusealpha,0);
+			StartSelectingStepsMessageCommand=cmd(stoptweening;horizalign,center;diffusealpha,0;sleep,.2;linear,.1;diffusealpha,.8;linear,.1;diffusealpha,0;queuecommand,'Loop');
+			LoopCommand=cmd(stoptweening;x,0;horizalign,center;diffusealpha,0;linear,1;diffusealpha,.5;linear,1;diffusealpha,0;queuecommand,'Loop');
+			GoBackSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,0);
+			OffCommand=cmd(stoptweening;diffusealpha,0);
+		};
+	};
+};
+return t;
+end;
 
 --P.Score Frame
 function GetPHighScoresFrame( pn, appear_on_start )
@@ -734,7 +820,6 @@ function GetPHighScoresFrame( pn, appear_on_start )
 	return t;
 	end;
 
-
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 --///////////////////////////////////////////////////////////////
@@ -751,11 +836,12 @@ local Labels = {
 	["JUMP"] = 8,
 	["OUCS"] = 9,
 	["NEW"] = 0,
-	["TITLE"] = 10
+	["TITLE"] = 10,
+	["LEGACY"] = 11
 };
 
 function GetLabelNumber( label )
-	if label == "" then return 11; end;
+	if label == "" then return 12; end;
 	
 	return Labels[label];
 end;
@@ -848,12 +934,21 @@ function Actor:SetLevelTextByDigit( cur_steps, digit )
 end;
 
 -- Obtiene la etiqueta superior para mostrar en la esfera
-local function GetBallLabel( cur_steps )
+local function GetBallLabel(cur_steps)
+	local official = IsGroupOfficial();
 	if string.find(cur_steps:GetDescription(),"TITLE") then
 		return 10
+	elseif string.find(cur_steps:GetChartStyle(),"ACTIVE") then
+		return 12
+	elseif GetLabelNumber(cur_steps:GetLabel() ) == 12 then
+		if not official then
+			return 5
+		else
+			return 11
+		end;
 	else
 		return GetLabelNumber( cur_steps:GetLabel() );
-	end;
+	end
 end;
 
 -- Obtiene la etiqueta inferior para mostrar en la esfera
@@ -868,9 +963,8 @@ local function GetBallUnderLabel( cur_steps )
 		return 2; --empty
 end;
 
-
 -- Funci�n para obtener la esfera de nivel
-function GetBallLevel( pn, show_dir_arrows )
+function GetBallLevelTextP1( pn, show_dir_arrows )
 	local cur_steps = GAMESTATE:GetCurrentSteps(pn);
 	local active_show = 0;
 	local chartstyle = "";
@@ -894,8 +988,8 @@ function GetBallLevel( pn, show_dir_arrows )
 			if string.find(chartstyle,"ACTIVE") then active_show = 1 end;
 			
 			-- Actualizo color esfera de nivel
-			(cmd(stoptweening;diffusealpha,1;setstate,GetDiffNumberBall(cur_steps)))( this.Bigballs );
-			
+			(cmd(stoptweening;diffusealpha,1;setstate,GetDiffNumberBall(cur_steps)))( this.Bigballstitle );			
+
 			-- Actualizo digitos de nivel
 			(cmd(stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,1))( this.LevelDigit1 );
 			(cmd(stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,2))( this.LevelDigit2 );
@@ -904,151 +998,237 @@ function GetBallLevel( pn, show_dir_arrows )
 			(cmd(stoptweening;diffusealpha,1;sleep,.03;setstate,GetBallLabel(cur_steps)))( this.Label );
 			(cmd(stoptweening;diffusealpha,1;sleep,.03;setstate,GetBallUnderLabel(cur_steps)))( this.Underlabel );
 		end;
-		children = {
-			
-			-- Frame --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs frame.png") )..{
-				InitCommand=cmd(pause);
-				UpdateInternalCommand=cmd(stoptweening;diffusealpha,1);
-			};
-
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/bigball_active.png") )..{
-				InitCommand=cmd(diffusealpha,active_show;glowshift;pause);
-				UpdateCommand=function(self,params)
-					self:diffusealpha(active_show);
-					self:glowshift();
-					self:stoptweening();
-				end;
-				UpdateInternalCommand=function(self)
-					self:diffusealpha(active_show);
-					self:glowshift();
-					self:stoptweening();
-				end;
-			};
-			
-			-- Glow Spin --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow spin.png") )..{
-				InitCommand=cmd(blend,'BlendMode_Add';diffuse,0,1,1,1);
-				OffCommand=cmd(stoptweening;diffusealpha,0);
-				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;sleep,.2;queuecommand,'Spin');
-				UpdateInternalCommand=cmd(stoptweening;queuecommand,'Spin');
-				SpinCommand=cmd(stoptweening;diffusealpha,.8;rotationz,0;linear,.2;rotationz,360;diffusealpha,0);
-			};
-			
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow spin.png") )..{
-				InitCommand=cmd(blend,'BlendMode_Add');
-				OffCommand=cmd(stoptweening;diffusealpha,0);
-				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;sleep,.4;queuecommand,'Spin');
-				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
-				SpinCommand=cmd(stoptweening;diffusealpha,.1;rotationz,0;linear,2;rotationz,360;queuecommand,'Spin');
-			};
-			
-			-- Esfera del nivel --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs 4x2.png") )..{
-				Name="Bigballs";
-				InitCommand=cmd(pause);
+		children = {						
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_BigBalls_Titles 4x2.png") )..{
+				Name="Bigballstitle";
+				InitCommand=cmd(draworder,2;pause;zoom,.75);
 			};
 			
 			-- Level (numeros) Digit 1 --
 			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs numbers 13x7.png") )..{
 				Name="LevelDigit1";
-				InitCommand=cmd(y,2;pause;x,-22);
+				InitCommand=cmd(draworder,2;y,5;pause;zoom,.75;x,-25);
 			};
 			
 			-- Level (numeros) Digit 2 --
 			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs numbers 13x7.png") )..{
 				Name="LevelDigit2";
-				InitCommand=cmd(y,2;pause;x,22);
+				InitCommand=cmd(draworder,2;y,5;pause;x,28;zoom,.75);
 			};
 			
-			-- Big glow
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs bigglow.png") )..{
-				InitCommand=cmd(blend,'BlendMode_Add';diffusealpha,0;visible,show_dir_arrows);
-				OffCommand=cmd(stoptweening;diffusealpha,0;linear,.05;diffusealpha,.5;zoom,1;linear,.2;zoomx,1.5;diffusealpha,0);
-			};
+			-- -- Big glow
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs bigglow.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add';diffusealpha,0;visible,show_dir_arrows);
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0;linear,.05;diffusealpha,.5;zoom,1;linear,.2;zoomx,1.5;diffusealpha,0);
+			-- };
 			
-			-- Glow Side to side --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow sidetoside.png") )..{
-				InitCommand=cmd(blend,'BlendMode_Add';diffuse,0,1,1,1);
-				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;zoom,1;horizalign,center;x,0;sleep,.2;diffusealpha,1;linear,.2;diffusealpha,0);
-				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
-				OffCommand=cmd(stoptweening;diffusealpha,0);
-				UpdateInternalCommand=function(self,params)
-					if params.Direction == -1 then	--der
-						(cmd(stoptweening;horizalign,left;diffusealpha,0;zoomx,0;x,-55;linear,.1;zoomx,1;diffusealpha,1))(self);
-						(cmd(horizalign,right;diffusealpha,1;zoomx,1;x,55;linear,.1;zoomx,0;diffusealpha,0))(self);
-					elseif params.Direction == 1 then	--izq
-						(cmd(stoptweening;horizalign,right;diffusealpha,0;zoomx,0;x,55;linear,.1;zoomx,1;diffusealpha,1))(self);
-						(cmd(horizalign,left;diffusealpha,1;zoomx,1;x,-55;linear,.1;zoomx,0;diffusealpha,0))(self);
-					end;
-				end;
-			};
+			-- -- Glow Side to side --
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow sidetoside.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add';diffuse,0,1,1,1);
+			-- 	ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;zoom,1;horizalign,center;x,0;sleep,.2;diffusealpha,1;linear,.2;diffusealpha,0);
+			-- 	HideInternalCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	UpdateInternalCommand=function(self,params)
+			-- 		if params.Direction == -1 then	--der
+			-- 			(cmd(stoptweening;horizalign,left;diffusealpha,0;zoomx,0;x,-55;linear,.1;zoomx,1;diffusealpha,1))(self);
+			-- 			(cmd(horizalign,right;diffusealpha,1;zoomx,1;x,55;linear,.1;zoomx,0;diffusealpha,0))(self);
+			-- 		elseif params.Direction == 1 then	--izq
+			-- 			(cmd(stoptweening;horizalign,right;diffusealpha,0;zoomx,0;x,55;linear,.1;zoomx,1;diffusealpha,1))(self);
+			-- 			(cmd(horizalign,left;diffusealpha,1;zoomx,1;x,-55;linear,.1;zoomx,0;diffusealpha,0))(self);
+			-- 		end;
+			-- 	end;
+			-- };
 			
 			-- Labels --
-			LoadActor( THEME:GetPathG("","Common Resources/B_LABELS 1x12.png") )..{
+			LoadActor( THEME:GetPathG("","Common Resources/B_LABELS 1x13.png") )..{
 				Name="Label";
-				InitCommand=cmd(y,-58;pause;setstate,9);
+				InitCommand=cmd(draworder,2;y,-45;pause;setstate,10; zoom, 0.6);
 				--OffCommand=cmd(stoptweening;diffusealpha,1;sleep,.2;linear,.05;diffusealpha,0);
 			};
 			
 			-- Under labels --
 			LoadActor( THEME:GetPathG("","Common Resources/B_UNDERLABELS 1x3.png") )..{
 				Name="Underlabel";
-				InitCommand=cmd(y,40;pause;setstate,2);
+				InitCommand=cmd(draworder,2;y,40;pause;setstate,2);
 				--OffCommand=cmd(stoptweening;diffusealpha,1;sleep,.2;linear,.05;diffusealpha,0);
 			};
 			
-			-- Right Arrow --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_BigBalls arrow.png") )..{
-				InitCommand=cmd(x,70;zoom,1;rotationy,180;diffusealpha,0;visible,show_dir_arrows);
-				UpdateInternalCommand=function(self,params)
-					if params.Direction == 1 then	--der
-						(cmd(finishtweening;zoom,1;x,80;linear,.05;x,90;sleep,.04;linear,.05;x,80;queuecommand,'Loop'))(self);
-					elseif params.Direction == -1 then	--izq
-						(cmd(finishtweening;zoom,1;x,80;sleep,.05;sleep,.04;sleep,.05;queuecommand,'Loop'))(self);
-					end;
-				end;
-				StepsChosenInternalCommand=cmd(finishtweening;queuecommand,'Loop');
-				LoopCommand=cmd(finishtweening;x,80;linear,1;x,85;linear,1;x,80;queuecommand,'Loop');
-				ShowUpInternalCommand=cmd(stoptweening;x,80;diffusealpha,0;zoom,0;sleep,.2;linear,.1;diffusealpha,1;zoom,1.1;linear,.1;zoom,1;queuecommand,'Loop');
-				HideInternalCommand=cmd(stoptweening;diffusealpha,1;zoom,1;x,80;linear,.1;zoom,1.1;linear,.1;zoom,0;diffusealpha,0);
-				OffCommand=cmd(stoptweening;diffusealpha,1;zoom,1;x,80;linear,.2;zoom,0;diffusealpha,0);	
+			-- READY? --
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/READY_P1.png") )..{
+				InitCommand=cmd(draworder,1;y,-1;basezoom,0.75;diffusealpha,0);
+				StepsChosenInternalCommand=cmd(draworder,1;stoptweening;diffusealpha,1);
+				UpdateInternalCommand=cmd(stoptweening;diffusealpha,0);
+				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0);
+				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
+				OffCommand=cmd(stoptweening;diffusealpha,0);		
+			};
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/READY_P1.png") )..{
+				InitCommand=cmd(draworder,2;y,-1;basezoom,0.75;blend,'BlendMode_Add';diffusealpha,0);
+				StepsChosenInternalCommand=cmd(draworder,1;stoptweening;diffusealpha,1;diffuseshift;effectcolor2,color("1,1,1,.3");effectcolor1,color("1,1,1,0");effectperiod,.2);
+				UpdateInternalCommand=cmd(stoptweening;diffusealpha,0);
+				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0);
+				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
+				OffCommand=cmd(stoptweening;diffusealpha,0);		
+			};
+		};
+	};
+
+	return k;
+end;
+
+function GetBallLevelTextP2( pn, show_dir_arrows )
+	local cur_steps = GAMESTATE:GetCurrentSteps(pn);
+	local active_show = 0;
+	local chartstyle = "";
+	local k = Def.ActorFrame {		
+		InitCommand=cmd(basezoom,.67);
+		ShowUpCommand=cmd(playcommand,"Update";playcommand,'ShowUpInternal');
+		HideCommand=cmd(playcommand,'HideInternal');
+		StepsChosenMessageCommand=function(self,params)
+			if params.Player == pn then self:playcommand('StepsChosenInternal'); end;
+		end;
+		ChangeStepsMessageCommand=function(self,params)
+			if params.Player ~= pn then return; end;
+			self:playcommand('Update');
+			self:playcommand('UpdateInternal',{Direction = params.Direction});
+			end;
+		UpdateCommand=function(self)
+			local this = self:GetChildren();
+			cur_steps = GAMESTATE:GetCurrentSteps(pn);
+			active_show = 0;
+			chartstyle = cur_steps:GetChartStyle();
+			if string.find(chartstyle,"ACTIVE") then active_show = 1 end;
+			
+			-- Actualizo color esfera de nivel
+			(cmd(stoptweening;diffusealpha,1;setstate,GetDiffNumberBall(cur_steps)))( this.Bigballstitle );			
+
+			-- Actualizo digitos de nivel
+			(cmd(stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,1))( this.LevelDigit1 );
+			(cmd(stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,2))( this.LevelDigit2 );
+			
+			-- Actualizo etiquetas
+			(cmd(stoptweening;diffusealpha,1;sleep,.03;setstate,GetBallLabel(cur_steps)))( this.Label );
+			(cmd(stoptweening;diffusealpha,1;sleep,.03;setstate,GetBallUnderLabel(cur_steps)))( this.Underlabel );
+		end;
+		children = {						
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_BigBalls_Titles 4x2.png") )..{
+				Name="Bigballstitle";
+				InitCommand=cmd(draworder,2;pause;zoom,.75);
 			};
 			
-			-- Left Arrow --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_BigBalls arrow.png") )..{
-				InitCommand=cmd(x,-80;diffusealpha,0;visible,show_dir_arrows);
-				UpdateInternalCommand=function(self,params)
-					if params.Direction == -1 then	--der
-						(cmd(finishtweening;x,-80;linear,.05;x,-90;sleep,.04;linear,.05;x,-80;queuecommand,'Loop'))(self);
-					elseif params.Direction == 1 then	--izq
-						(cmd(finishtweening;x,-80;sleep,.05;sleep,.04;sleep,.05;queuecommand,'Loop'))(self);
-					end;
-				end;
-				StepsChosenInternalCommand=cmd(finishtweening;queuecommand,'Loop');
-				LoopCommand=cmd(finishtweening;x,-80;linear,1;x,-85;linear,1;x,-80;queuecommand,'Loop');
-				ShowUpInternalCommand=cmd(stoptweening;x,-80;diffusealpha,0;zoom,0;sleep,.2;linear,.1;diffusealpha,1;zoom,1.1;linear,.1;zoom,1;queuecommand,'Loop');
-				HideInternalCommand=cmd(stoptweening;diffusealpha,1;zoom,1;x,-80;linear,.1;zoom,1.1;linear,.1;zoom,0;diffusealpha,0);
-				OffCommand=cmd(stoptweening;diffusealpha,1;zoom,1;x,-80;linear,.2;zoom,0;diffusealpha,0);		
+			-- Level (numeros) Digit 1 --
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs numbers 13x7.png") )..{
+				Name="LevelDigit1";
+				InitCommand=cmd(draworder,2;y,5;pause;zoom,.75;x,-25);
+			};
+			
+			-- Level (numeros) Digit 2 --
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs numbers 13x7.png") )..{
+				Name="LevelDigit2";
+				InitCommand=cmd(draworder,2;y,5;pause;x,28;zoom,.75);
+			};
+			
+			-- -- Big glow
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs bigglow.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add';diffusealpha,0;visible,show_dir_arrows);
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0;linear,.05;diffusealpha,.5;zoom,1;linear,.2;zoomx,1.5;diffusealpha,0);
+			-- };
+			
+			-- -- Glow Side to side --
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow sidetoside.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add';diffuse,0,1,1,1);
+			-- 	ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;zoom,1;horizalign,center;x,0;sleep,.2;diffusealpha,1;linear,.2;diffusealpha,0);
+			-- 	HideInternalCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	UpdateInternalCommand=function(self,params)
+			-- 		if params.Direction == -1 then	--der
+			-- 			(cmd(stoptweening;horizalign,left;diffusealpha,0;zoomx,0;x,-55;linear,.1;zoomx,1;diffusealpha,1))(self);
+			-- 			(cmd(horizalign,right;diffusealpha,1;zoomx,1;x,55;linear,.1;zoomx,0;diffusealpha,0))(self);
+			-- 		elseif params.Direction == 1 then	--izq
+			-- 			(cmd(stoptweening;horizalign,right;diffusealpha,0;zoomx,0;x,55;linear,.1;zoomx,1;diffusealpha,1))(self);
+			-- 			(cmd(horizalign,left;diffusealpha,1;zoomx,1;x,-55;linear,.1;zoomx,0;diffusealpha,0))(self);
+			-- 		end;
+			-- 	end;
+			-- };
+			
+			-- Labels --
+			LoadActor( THEME:GetPathG("","Common Resources/B_LABELS 1x13.png") )..{
+				Name="Label";
+				InitCommand=cmd(draworder,2;y,-45;pause;setstate,10; zoom, 0.6);
+				--OffCommand=cmd(stoptweening;diffusealpha,1;sleep,.2;linear,.05;diffusealpha,0);
+			};
+			
+			-- Under labels --
+			LoadActor( THEME:GetPathG("","Common Resources/B_UNDERLABELS 1x3.png") )..{
+				Name="Underlabel";
+				InitCommand=cmd(draworder,2;y,40;pause;setstate,2);
+				--OffCommand=cmd(stoptweening;diffusealpha,1;sleep,.2;linear,.05;diffusealpha,0);
 			};
 			
 			-- READY? --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/READY.png") )..{
-				InitCommand=cmd(y,60;diffusealpha,0);
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/READY_P2.png") )..{
+				InitCommand=cmd(draworder,1;y,-1;basezoom,0.75;diffusealpha,0);
 				StepsChosenInternalCommand=cmd(stoptweening;diffusealpha,1);
 				UpdateInternalCommand=cmd(stoptweening;diffusealpha,0);
 				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0);
 				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
 				OffCommand=cmd(stoptweening;diffusealpha,0);		
 			};
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/READY.png") )..{
-				InitCommand=cmd(y,60;blend,'BlendMode_Add';diffusealpha,0);
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/READY_P2.png") )..{
+				InitCommand=cmd(draworder,1;y,-1;basezoom,0.75;blend,'BlendMode_Add';diffusealpha,0);
 				StepsChosenInternalCommand=cmd(stoptweening;diffusealpha,1;diffuseshift;effectcolor2,color("1,1,1,.3");effectcolor1,color("1,1,1,0");effectperiod,.2);
 				UpdateInternalCommand=cmd(stoptweening;diffusealpha,0);
 				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0);
 				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
 				OffCommand=cmd(stoptweening;diffusealpha,0);		
 			};
+		};
+	};
+
+	return k;
+end;
+
+function GetBallLevelColor( pn, show_dir_arrows )
+	local cur_steps = GAMESTATE:GetCurrentSteps(pn);
+	local active_show = 0;
+	local chartstyle = "";
+	local k = Def.ActorFrame {		
+		InitCommand=cmd(basezoom,.67);
+		ShowUpCommand=cmd(playcommand,"Update";playcommand,'ShowUpInternal');
+		HideCommand=cmd(playcommand,'HideInternal');
+		StepsChosenMessageCommand=function(self,params)
+			if params.Player == pn then self:playcommand('StepsChosenInternal'); end;
+		end;
+		ChangeStepsMessageCommand=function(self,params)
+			if params.Player ~= pn then return; end;
+			self:playcommand('Update');
+			self:playcommand('UpdateInternal',{Direction = params.Direction});
+			end;
+		UpdateCommand=function(self)
+			local this = self:GetChildren();
+			cur_steps = GAMESTATE:GetCurrentSteps(pn);
+			active_show = 0;
+			chartstyle = cur_steps:GetChartStyle();
+			if string.find(chartstyle,"ACTIVE") then active_show = 1 end;
+			
+			-- Actualizo color esfera de nivel
+			(cmd(stoptweening;diffusealpha,1;setstate,GetDiffNumberBall(cur_steps)))( this.Bigballs );			
+		end;
+		children = {
+			
+
+			
+			-- Esfera del nivel --
+			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs 4x2.png") )..{
+				Name="Bigballs";
+				InitCommand=cmd(pause;basezoom,.75);
+			};	
+			
+			-- -- Big glow
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs bigglow.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add';diffusealpha,0;visible,show_dir_arrows);
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0;linear,.05;diffusealpha,.5;zoom,1;linear,.2;zoomx,1.5;diffusealpha,0);
+			-- };
 		};
 	};
 
@@ -1070,33 +1250,29 @@ function GetSimpleBallLevel( pn )
 			(cmd(stoptweening;diffusealpha,1;setstate,GetSimpleDiffNumberBall(cur_steps);basezoom,2))( this.Bigballs );
 			
 			-- Actualizo digitos de nivel
-			(cmd(stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,1))( this.LevelDigit1 );
-			(cmd(stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,2))( this.LevelDigit2 );
+			(cmd(zoom, .75;stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,1))( this.LevelDigit1 );
+			(cmd(zoom, .75;stoptweening;diffusealpha,1;SetLevelTextByDigit,cur_steps,2))( this.LevelDigit2 );
 			
 		end;
 		children = {
-			-- Frame --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs frame.png") )..{
-				InitCommand=cmd(pause);
-				UpdateInternalCommand=cmd(stoptweening;diffusealpha,1);
-			};
+
 			
-			-- Glow Spin --
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow spin.png") )..{
-				InitCommand=cmd(blend,'BlendMode_Add';diffuse,0,1,1,1);
-				OffCommand=cmd(stoptweening;diffusealpha,0);
-				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;sleep,.2;queuecommand,'Spin');
-				UpdateInternalCommand=cmd(stoptweening;queuecommand,'Spin');
-				SpinCommand=cmd(stoptweening;diffusealpha,.8;rotationz,0;linear,.2;rotationz,360;diffusealpha,0);
-			};
+			-- -- Glow Spin --
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow spin.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add';diffuse,0,1,1,1);
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;sleep,.2;queuecommand,'Spin');
+			-- 	UpdateInternalCommand=cmd(stoptweening;queuecommand,'Spin');
+			-- 	SpinCommand=cmd(stoptweening;diffusealpha,.8;rotationz,0;linear,.2;rotationz,360;diffusealpha,0);
+			-- };
 			
-			LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow spin.png") )..{
-				InitCommand=cmd(blend,'BlendMode_Add');
-				OffCommand=cmd(stoptweening;diffusealpha,0);
-				ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;sleep,.4;queuecommand,'Spin');
-				HideInternalCommand=cmd(stoptweening;diffusealpha,0);
-				SpinCommand=cmd(stoptweening;diffusealpha,.1;rotationz,0;linear,2;rotationz,360;queuecommand,'Spin');
-			};
+			-- LoadActor( THEME:GetPathG("","ScreenSelectMusic/Difficulty_Bigballs glow spin.png") )..{
+			-- 	InitCommand=cmd(blend,'BlendMode_Add');
+			-- 	OffCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	ShowUpInternalCommand=cmd(stoptweening;diffusealpha,0;sleep,.4;queuecommand,'Spin');
+			-- 	HideInternalCommand=cmd(stoptweening;diffusealpha,0);
+			-- 	SpinCommand=cmd(stoptweening;diffusealpha,.1;rotationz,0;linear,2;rotationz,360;queuecommand,'Spin');
+			-- };
 			
 			-- Esfera del nivel --
 			LoadActor( THEME:GetPathG("","ScreenSelectMusic/fullbar balls 7x1.png") )..{
@@ -1170,3 +1346,44 @@ function FormatTime(totalseconds)
 	end
 	return minutes..":"..seconds
 end
+
+--
+
+function IsGroupOfficial()
+	local current_group = GAMESTATE:GetCurrentSong():GetGroupName();
+	if current_group == "16 - PHOENIX" then
+		return true;
+	elseif current_group == "01 - 1ST~3RD" then
+		return true;
+	elseif current_group == "02 - S.E.~EXTRA" then
+		return true; 
+	elseif current_group == "03 - REBIRTH~PREX 3" then
+		return true;
+	elseif current_group == "04 - EXCEED~ZERO" then
+		return true;
+	elseif current_group == "05 - NX~NX2" then
+		return true;
+	elseif current_group == "06 - NX ABSOLUTE" then
+		return true;
+	elseif current_group == "07 - PRO~PRO2" then
+		return true;
+	elseif current_group == "08 - FIESTA" then
+		return true;
+	elseif current_group == "09 - FIESTA EX" then
+		return true;
+	elseif current_group == "10 - FIESTA 2" then
+		return true;
+	elseif current_group == "11 - INFINITY" then
+		return true;
+	elseif current_group == "12 - PRIME" then
+		return true;
+	elseif current_group == "13 - PRIME 2" then
+		return true;
+	elseif current_group == "14 - XX" then
+		return true;
+	elseif current_group == "15 - MOBILE EDITION" then
+		return true;
+	else
+		return false;
+	end
+end;

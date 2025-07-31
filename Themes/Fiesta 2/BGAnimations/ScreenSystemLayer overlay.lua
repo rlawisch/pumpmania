@@ -63,7 +63,7 @@ t[#t+1] = LoadActor(THEME:GetPathG("","Messages/goback_"..GetLanguageText()..".p
 
 -- Pantallas en las que no se muestra el nombre de los jugadores.
 local Screens = {
-	("ScreenInit"),("ScreenLogo"),("ScreenBranch"),("ScreenTitleMenu"),("ScreenOptionsService"),("ScreenGameOver"),("ScreenNextStage"),("ScreenStageBreak"),("ScreenStageInformation"),("ScreenDelay"),("ScreenDemonstration"),("ScreenUSBProfileSave"),("ScreenWarning"),("ScreenWaiting"), ("ScreenGameplayNormal"), ("ScreenGameplay"),("ScreenPrevGameplayDelay"),("ScreenAfterGameplayDelay")
+	("ScreenInit"),("ScreenLogo"),("ScreenMproject"),("ScreenBranch"),("ScreenTitleMenu"),("ScreenOptionsService"),("ScreenGameOver"),("ScreenNextStage"),("ScreenStageBreak"),("ScreenStageInformation"),("ScreenDelay"),("ScreenDemonstration"),("ScreenUSBProfileSave"),("ScreenWarning"),("ScreenWaiting"), ("ScreenGameplayNormal"), ("ScreenGameplay"),("ScreenPrevGameplayDelay"),("ScreenAfterGameplayDelay")
 };
 
 --actor para mostrar o no el nombre del jugador
@@ -83,46 +83,53 @@ function Actor:ShowPlayerName(pn)
 	end;
 end;
 
---frame que define el background y font para el nombre
+-- Frame do nome, level, avatar
 local function PlayerName( Player )
 	local t = Def.ActorFrame {};
 		t[#t+1] = Def.Sprite {
 			Name = "Avatar";
 			Texture = THEME:GetPathG("","_avatars/"..Player);
 			InitCommand=function(self)
-				self:horizalign(left);
-				self:SetWidth(38);
-				self:SetHeight(38);
-				self:x(-115);
-				self:y(-1);
+				self:SetWidth(50);
+				self:SetHeight(50);
+				self:x(SCREEN_CENTER_X-645);
+				self:y(0);
 			end;
 		};
+
+
 		t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSystemLayer/_PlayerName background") )..{
 			Name = "Back1";
+			InitCommand=cmd(basezoom,.45;z,50);
+			-- reduzir o zoom e ir testando
 		};
 		t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSystemLayer/SessionInfo") )..{
 			Name = "Back2";
-			InitCommand=cmd(basezoom,.95;x,20;y,-50);
+			InitCommand=cmd(basezoom,.95;x,20;y,55);
 		};
 		t[#t+1] = Def.Quad{
 			Name = "ProgressBarFrame";
-			InitCommand=cmd(horizalign,left;x,-73;y,20;diffuse,0.5,0.5,0.5,0.9;zoomto,190,4);
+			InitCommand=cmd(horizalign,left;x,-165;y,24;diffuse,0.5,0.5,0.5,0.9;zoomto,250,4);
 		};
 		t[#t+1] = Def.Quad{
 			Name = "ProgressBarFill";
-			InitCommand=cmd(horizalign,left;x,-73;y,20;diffuse,0,1,1,1;zoomto,0,0);
+			InitCommand=cmd(horizalign,left;x,-165;y,24;diffuse,0,1,1,1;zoomto,0,0);
 		};
 		t[#t+1] = LoadFont("","_myriad pro 20px") .. {
 			Name = "Name";
-			InitCommand=cmd(horizalign,left;y,-8;x,-70);
+			InitCommand=cmd(horizalign,center;y,15;x,-80;zoom,.85);
 		};
 		t[#t+1] = LoadFont("","_myriad pro 20px") .. {
 			Name = "SessionDataText";
-			InitCommand=cmd(y,-37;x,16;zoom,.60);
+			InitCommand=cmd(y,67;x,16;zoom,.60);
 		};
 		t[#t+1] = LoadFont("","ProfileNum") .. {
+			Name = "TextLv";
+			InitCommand=cmd(x,SCREEN_CENTER_X;y,15;zoom,.75;diffuse,0,1,1,1);
+		} 
+		t[#t+1] = LoadFont("","ProfileNum") .. {
 			Name = "PlayerLevelText";
-			InitCommand=cmd(horizalign,left;zoom,.80;y,9;x,-47);
+			InitCommand=cmd(y,15;x,SCREEN_CENTER_X;zoom,.75);
 		};
 		t[#t+1] = LoadActor(THEME:GetPathS("","Sounds/Voice")) .. {
 			Name = "StageBreakSound";
@@ -131,6 +138,7 @@ local function PlayerName( Player )
 				self:play();
 			end;
 		};
+		
 	return t;
 end;
 
@@ -156,29 +164,33 @@ local P1CurrentLevelTimeD=0;
 -- Player 1 Name
 t[#t+1] = PlayerName( PLAYER_1 )..{
 	InitCommand=function(self)
---		if IsHD() then
-			self:x(SCREEN_CENTER_X-270);
---		else
---			self:x(SCREEN_CENTER_X-170);
---		end;
-	(cmd(y,SCREEN_HEIGHT+120;basezoom,.66))(self);
+		if IsHD() then
+			self:x(SCREEN_CENTER_X-185);
+		else
+			self:x(SCREEN_CENTER_X-170);
+		end;
+	(cmd(y,SCREEN_TOP-50;basezoom,.66))(self);
 	end;
 	PlayerStartedSelectProfileMessageCommand=function( self, params )
 		local la = SCREENMAN:GetTopScreen():GetName();
 		if (params.Player == PLAYER_1) then
 			local name = self:GetChild("Name");
 			name:settext("GUEST P1");
+			local textLV = self:GetChild("TextLv");
+			textLV:settext("Lv.");
+			textLV:x(-30);
 			local player_level_text = self:GetChild("PlayerLevelText")
 			player_level_text:settext("0001".." (0%)");
+			player_level_text:horizalign(left);
+			player_level_text:x(-20)
 			local progressbar = self:GetChild("ProgressBarFill");
 			progressbar:zoomto((0),4);
 			P1CurrentProfile = "GUEST P1";
 			local avatar = self:GetChild("Avatar");
 			avatar:Load(THEME:GetPathG("","_avatars/PlayerNumber_P1.png"));
 			avatar:horizalign(left);
-			avatar:SetWidth(38);
-			avatar:SetHeight(38);
-			avatar:xy(-115,-1);
+			avatar:SetWidth(50);
+			avatar:SetHeight(50);
 			local SessionDataText = self:GetChild("SessionDataText");
 			if SessionDataTable[P1CurrentProfile] ~= nil then
 				local formattedtimeP1 = FormatTimeLong(SessionDataTable[P1CurrentProfile]["PlaytimeS"]+SessionDataTable[P1CurrentProfile]["PlaytimeD"]);
@@ -201,7 +213,7 @@ t[#t+1] = PlayerName( PLAYER_1 )..{
 				local progressbar = self:GetChild("ProgressBarFill");
 				progressbar:zoomto((0),4);
 			end;
-			(cmd(stoptweening;y,SCREEN_HEIGHT+120;linear,.2;y,SCREEN_HEIGHT-15))(self);
+			(cmd(stoptweening;y,SCREEN_TOP-50;linear,.2;y,SCREEN_TOP+20))(self);
 		end;
 	end;
 	ScreenChangedMessageCommand=function(self)
@@ -264,9 +276,8 @@ t[#t+1] = PlayerName( PLAYER_1 )..{
 			local avatar = self:GetChild("Avatar");
 			avatar:Load(THEME:GetPathG("","_avatars/PlayerNumber_P1.png"));
 			avatar:horizalign(left);
-			avatar:SetWidth(38);
-			avatar:SetHeight(38);
-			avatar:xy(-115,-1);
+			avatar:SetWidth(50);
+			avatar:SetHeight(50);
 			local player_level_text = self:GetChild("PlayerLevelText")
 			player_level_text:settext("0001".." (0%)");
 			local progressbar = self:GetChild("ProgressBarFill");
@@ -293,7 +304,7 @@ t[#t+1] = PlayerName( PLAYER_1 )..{
 				local progressbar = self:GetChild("ProgressBarFill");
 				progressbar:zoomto((0),4);
 			end;
-			self:y(SCREEN_HEIGHT-15);
+			self:y(SCREEN_TOP+20);
 		end;
 	end;
 	LocalProfileChangeMessageCommand=function(self,params)	--cambio la profile del jugador
@@ -318,9 +329,9 @@ t[#t+1] = PlayerName( PLAYER_1 )..{
 				avatar:Load(THEME:GetPathG("","_avatars/"..ProfileID..".png"));
 			end;
 			avatar:horizalign(left);
-			avatar:SetWidth(38);
-			avatar:SetHeight(38);
-			avatar:xy(-115,-1);
+			avatar:SetWidth(50);
+			avatar:SetHeight(50);
+			
 			local profile = PROFILEMAN:GetLocalProfile(ProfileID);
 			local player_level, to_next =  CalcPlayerLevel(profile:GetVoomax());
 			player_level = string.format("%04d", player_level)
@@ -347,7 +358,7 @@ t[#t+1] = PlayerName( PLAYER_1 )..{
 			else
 				SessionDataText:settext("");
 			end;
-			self:y(SCREEN_HEIGHT-15);
+			self:y(SCREEN_TOP+20);
 		end;
 	end;
 	PlayerUnjoinedMessageCommand=function(self,params)
@@ -361,7 +372,7 @@ t[#t+1] = PlayerName( PLAYER_1 )..{
 		player_level_text:settext("0001".." (0%)");
 		local progressbar = self:GetChild("ProgressBarFill");
 		progressbar:zoomto((0),4);
-		self:y(SCREEN_HEIGHT+120);
+		self:y(SCREEN_TOP-50);
 	end;
 	JudgmentMessageCommand=function(self,param)
 		if GAMESTATE:IsSideJoined(PLAYER_1) then
@@ -392,31 +403,44 @@ local P2CurrentSongTimeS=0;
 local P2CurrentSongTimeD=0;
 local P2CurrentLevelTimeS=0;
 local P2CurrentLevelTimeD=0;
-t[#t+1] = PlayerName( PLAYER_2 )..{
+t[#t+1] = PlayerName( PLAYER_2 ) .. {
 	InitCommand=function(self)
 		if IsHD() then
-			self:x(SCREEN_CENTER_X+270);
+			self:x(SCREEN_CENTER_X+184);
 		else
 			self:x(SCREEN_CENTER_X+170);
 		end;
-	(cmd(y,SCREEN_HEIGHT+120;basezoom,.66))(self);
+	(cmd(y,SCREEN_TOP-50; basezoom,.66;rotationy,180))(self);
 	end;
 	PlayerStartedSelectProfileMessageCommand=function( self, params )
 		if (params.Player == PLAYER_2) then
 			local name = self:GetChild("Name");
 			name:settext("GUEST P2");
+			name:rotationy(180)
+			name:x(0)
+			local textLV = self:GetChild("TextLv");
+			textLV:settext("Lv.");
+			textLV:x(-50);
+			textLV:rotationy(180)
 			P2CurrentProfile = "GUEST P2";
 			local player_level_text = self:GetChild("PlayerLevelText")
 			player_level_text:settext("0001".." (0%)");
+			player_level_text:horizalign(left);
+			player_level_text:x(-60);
+			player_level_text:rotationy(180)
 			local progressbar = self:GetChild("ProgressBarFill");
 			progressbar:zoomto((0),4);
+			progressbar:zoomx(-1);
 			local avatar = self:GetChild("Avatar");
 			avatar:Load(THEME:GetPathG("","_avatars/PlayerNumber_P2.png"));
-			avatar:horizalign(left);
-			avatar:SetWidth(38);
-			avatar:SetHeight(38);
-			avatar:xy(-115,-1);
+			avatar:horizalign(right);
+			avatar:SetWidth(50);
+			avatar:SetHeight(50);
+			avatar:zoomx(-1);
+			local backSessionData = self:GetChild("Back2");
+			backSessionData:zoomx(-1);
 			local SessionDataText = self:GetChild("SessionDataText");
+			SessionDataText:zoomx(-.60);
 			if SessionDataTable[P2CurrentProfile] ~= nil then
 				local formattedtimeP2 = FormatTimeLong(SessionDataTable[P2CurrentProfile]["PlaytimeS"]+SessionDataTable[P2CurrentProfile]["PlaytimeD"]);
 				local SingleLevelNum = 0;
@@ -438,7 +462,7 @@ t[#t+1] = PlayerName( PLAYER_2 )..{
 				local progressbar = self:GetChild("ProgressBarFill");
 				progressbar:zoomto((0),4);
 			end;
-			(cmd(stoptweening;y,SCREEN_HEIGHT+120;linear,.2;y,SCREEN_HEIGHT-15))(self);
+			(cmd(stoptweening;y,SCREEN_TOP-50;linear,.2;y,SCREEN_TOP+20))(self);
 		end;
 	end;
 	ScreenChangedMessageCommand=function(self)
@@ -505,9 +529,8 @@ t[#t+1] = PlayerName( PLAYER_2 )..{
 			local avatarp2 = self:GetChild("Avatar");
 			avatarp2:Load(THEME:GetPathG("","_avatars/PlayerNumber_P2.png"));
 			avatarp2:horizalign(right);
-			avatarp2:SetWidth(38);
-			avatarp2:SetHeight(38);
-			avatarp2:xy(-77,-1);
+			avatarp2:SetWidth(50);
+			avatarp2:SetHeight(50);
 			local SessionDataText = self:GetChild("SessionDataText");
 			if SessionDataTable[P2CurrentProfile] ~= nil then
 				local formattedtimeP2 = FormatTimeLong(SessionDataTable[P2CurrentProfile]["PlaytimeS"]+SessionDataTable[P2CurrentProfile]["PlaytimeD"]);
@@ -530,7 +553,7 @@ t[#t+1] = PlayerName( PLAYER_2 )..{
 				local progressbar = self:GetChild("ProgressBarFill");
 				progressbar:zoomto((0),4);
 			end;
-			self:y(SCREEN_HEIGHT-15);
+			self:y(SCREEN_TOP+20);
 		end;
 	end;
 	LocalProfileChangeMessageCommand=function(self,params)	--cambio la profile del jugador
@@ -559,9 +582,9 @@ t[#t+1] = PlayerName( PLAYER_2 )..{
 				avatarp2:Load(THEME:GetPathG("","_avatars/"..ProfileID..".png"));
 			end;
 			avatarp2:horizalign(right);
-			avatarp2:SetWidth(38);
-			avatarp2:SetHeight(38);
-			avatarp2:xy(-77,-1);
+			avatarp2:SetWidth(50);
+			avatarp2:SetHeight(50);
+			
 			local profile = PROFILEMAN:GetLocalProfile(ProfileID);
 			local player_level, to_next =  CalcPlayerLevel(profile:GetVoomax());
 			player_level = string.format("%04d", player_level)
@@ -588,7 +611,7 @@ t[#t+1] = PlayerName( PLAYER_2 )..{
 			else
 				SessionDataText:settext("");
 			end;
-			self:y(SCREEN_HEIGHT-15);
+			self:y(SCREEN_TOP+20);
 		end;
 	end;
 	PlayerUnjoinedMessageCommand=function(self,params)
@@ -602,7 +625,7 @@ t[#t+1] = PlayerName( PLAYER_2 )..{
 		player_level_text:settext("0001".." (0%)");
 		local progressbar = self:GetChild("ProgressBarFill");
 		progressbar:zoomto((0),4);
-		self:y(SCREEN_HEIGHT+120);
+		self:y(SCREEN_TOP-50);
 	end;
 	JudgmentMessageCommand=function(self,param)
 		if GAMESTATE:IsSideJoined(PLAYER_2) then 
@@ -651,6 +674,15 @@ t[#t+1] = Def.ActorFrame {
 	end;
 	HideSystemMessageMessageCommand = cmd(finishtweening);
 };
+
+
+-- t[#t+1] = LoadActor("ScreenSelectMusic decorations/_timer.lua") .. {
+--     InitCommand=function(self)
+--         self:xy(SCREEN_CENTER_X, SCREEN_TOP + 50) -- Ajuste conforme necessário
+--         self:zoom(.1) -- Reduza esse valor se estiver muito grande
+
+--     end;
+-- }
 
 
 return t;

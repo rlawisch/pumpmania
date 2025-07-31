@@ -816,6 +816,7 @@ int WheelBase::FirstVisibleIndex()
 class LunaWheelBase: public Luna<WheelBase>
 {
 public:
+  /* xMAx
 	static int Move( T* p, lua_State *L ){ p->Move( IArg(1) ); COMMON_RETURN_SELF; }
 	static int GetWheelItem( T* p, lua_State *L )
 	{
@@ -830,6 +831,7 @@ public:
 	}
 	static int IsSettled( T* p, lua_State *L ){ lua_pushboolean( L, p->IsSettled() ); return 1; }
 	static int SetOpenSection( T* p, lua_State *L ){ p->SetOpenSection( SArg(1) ); COMMON_RETURN_SELF; }
+  */
 	static int GetCurrentIndex( T* p, lua_State *L ){ lua_pushnumber( L, p->GetCurrentIndex() ); return 1; }
 	static int GetNumItems( T* p, lua_State *L ){ lua_pushnumber( L, p->GetNumItems() ); return 1; }
 	// evil shit
@@ -843,11 +845,13 @@ public:
 
 	LunaWheelBase()
 	{
+    /* xMAx
 		ADD_METHOD( Move );
 		ADD_METHOD( GetWheelItem );
 		ADD_METHOD( IsSettled );
 		ADD_METHOD( IsLocked );
 		ADD_METHOD( SetOpenSection );
+    */
 		ADD_METHOD( GetCurrentIndex );
 		ADD_METHOD( GetNumItems );
 		ADD_METHOD( GetSelectedType );
