@@ -189,3 +189,4 @@ BuildLog.htm
 *.pc
 *.d
 .vscode/
+*.bak
