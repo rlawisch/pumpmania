@@ -458,25 +458,27 @@ void NoteField::ensure_note_displays_have_skin()
 
 void NoteField::InitColumnRenderers()
 {
-	m_FieldRenderArgs.player_state= m_pPlayerState;
-	m_FieldRenderArgs.reverse_offset_pixels= m_fYReverseOffsetPixels;
-	m_FieldRenderArgs.receptor_row= &(m_pCurDisplay->m_ReceptorArrowRow);
-	m_FieldRenderArgs.ghost_row= &(m_pCurDisplay->m_GhostArrowRow);
-	m_FieldRenderArgs.note_data= m_pNoteData;
-	m_ColumnRenderers.resize(GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer);
-	for(size_t ncr= 0; ncr < m_ColumnRenderers.size(); ++ncr)
-	{
-		FOREACH_EnabledPlayer(pn)
-		{
-			m_ColumnRenderers[ncr].m_displays[pn]= &(m_pDisplays[pn]->display[ncr]);
-		}
-		m_ColumnRenderers[ncr].m_displays[PLAYER_INVALID]= &(m_pCurDisplay->display[ncr]);
-		m_ColumnRenderers[ncr].m_column= ncr;
-		m_ColumnRenderers[ncr].m_column_render_args.column= ncr;
-		m_ColumnRenderers[ncr].m_field_render_args= &m_FieldRenderArgs;
-	}
-	m_pCurDisplay->m_ReceptorArrowRow.SetColumnRenderers(m_ColumnRenderers);
-	m_pCurDisplay->m_GhostArrowRow.SetColumnRenderers(m_ColumnRenderers);
+	//m_FieldRenderArgs.player_state= m_pPlayerState;
+	//m_FieldRenderArgs.reverse_offset_pixels= m_fYReverseOffsetPixels;
+	//m_FieldRenderArgs.receptor_row= &(m_pCurDisplay->m_ReceptorArrowRow);
+	//m_FieldRenderArgs.ghost_row= &(m_pCurDisplay->m_GhostArrowRow);
+	//m_FieldRenderArgs.note_data= m_pNoteData;
+	//m_ColumnRenderers.resize(GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer);
+	//LOG->Trace("InitColumnRenderers: cols=%d", GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer);
+
+	//for(size_t ncr= 0; ncr < m_ColumnRenderers.size(); ++ncr)
+	//{
+	//	//FOREACH_EnabledPlayer(pn)
+	//	//{
+	//	//	m_ColumnRenderers[ncr].m_displays[pn]= &(m_pDisplays[pn]->display[ncr]);
+	//	//}
+	//	m_ColumnRenderers[ncr].m_displays[PLAYER_INVALID]= &(m_pCurDisplay->display[ncr]);
+	//	m_ColumnRenderers[ncr].m_column= ncr;
+	//	m_ColumnRenderers[ncr].m_column_render_args.column= ncr;
+	//	m_ColumnRenderers[ncr].m_field_render_args= &m_FieldRenderArgs;
+	//}
+	//m_pCurDisplay->m_ReceptorArrowRow.SetColumnRenderers(m_ColumnRenderers);
+	//m_pCurDisplay->m_GhostArrowRow.SetColumnRenderers(m_ColumnRenderers);
 }
 
 void NoteField::Update( float fDeltaTime )

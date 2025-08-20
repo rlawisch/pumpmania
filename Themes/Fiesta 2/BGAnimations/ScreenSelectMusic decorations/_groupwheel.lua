@@ -5,7 +5,7 @@ local t = Def.ActorFrame {
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 -- esto ayuda al movimento de la wheel cuando la cantidad de grupos disponibles es menor que 7
-local bUseLocalIndex = false;
+local bUseLocalIndex = true;
 -- usado para el indice mostrado en la selección de grupos
 local iRealNumGroups = 0;
 
@@ -13,7 +13,7 @@ local iRealNumGroups = 0;
 local function GetAllGroups()
 	local temp = SONGMAN:GetSongGroupNamesAvailables();
 	iRealNumGroups = #temp;
-	
+
 	if( #temp < 7 ) then
 		bUseLocalIndex = true;
 	end;
@@ -107,10 +107,13 @@ local Banners = {};
 local a = Def.ActorFrame {
 	InitCommand=cmd(x,cx;y,cy-17);
 	GoBackSelectingGroupMessageCommand=function(self)
+		
 		--(cmd(stoptweening;x,-20;sleep,.1;linear,.2;x,cx))(self);
 		local index = SCREENMAN:GetTopScreen():GetCurrentGroupIndex();
+
 		if (CurrentGroupNumber ~= index) then
 			CurrentGroupNumber = index;
+			Trace("[GroupWheel] CurrentGroupNumber: " .. CurrentGroupNumber .. " | Group: " .. AllGroups[CurrentGroupNumber]);
 			Banners = GetBanners( CurrentGroupNumber );
 			self:playcommand("RefreshPositions");
 		end;
@@ -118,16 +121,23 @@ local a = Def.ActorFrame {
 	end;
 	--StartSelectingSongMessageCommand=cmd(stoptweening;x,cx;linear,.3;x,-150);
 	ChangeGroupMessageCommand=function(self,params)
+				Trace("Recebido: Index="..(params.GroupIndex or "nil").." Dir="..(params.Dir or "nil"))
 		if not bUseLocalIndex then
 			CurrentGroupNumber = SCREENMAN:GetTopScreen():GetCurrentGroupIndex();
-		else
-			CurrentGroupNumber = CurrentGroupNumber + params.Dir;
-			
 			if( CurrentGroupNumber <= 0 ) then
 				CurrentGroupNumber = NumGroups;
 			elseif ( CurrentGroupNumber > NumGroups ) then
 				CurrentGroupNumber = 1;
 			end;
+						Trace("[GroupWheel] CurrentGroupNumber: " .. CurrentGroupNumber .. " | Group: " .. AllGroups[CurrentGroupNumber]);
+		else
+			CurrentGroupNumber = CurrentGroupNumber + params.Dir;
+			if( CurrentGroupNumber <= 0 ) then
+				CurrentGroupNumber = NumGroups;
+			elseif ( CurrentGroupNumber > NumGroups ) then
+				CurrentGroupNumber = 1;
+			end;
+						Trace("[GroupWheel] CurrentGroupNumber: " .. CurrentGroupNumber .. " | Group: " .. AllGroups[CurrentGroupNumber]);
 		end;
 		Banners = GetBanners( CurrentGroupNumber );
 		--self:playcommand("Move");

@@ -44,8 +44,6 @@ bool ScreenSelectProfile::Input( const InputEventPlus &input )
 bool ScreenSelectProfile::MenuLeft( const InputEventPlus &input )
 {
 	PlayerNumber pn = input.pn;
-	if( m_fLockInputSecs > 0 )
-		return false;
 	if( input.type == IET_RELEASE )
 		return false;
 	if( input.type != IET_FIRST_PRESS )
@@ -103,8 +101,6 @@ bool ScreenSelectProfile::MenuLeft( const InputEventPlus &input )
 bool ScreenSelectProfile::MenuRight( const InputEventPlus &input )
 {
 	PlayerNumber pn = input.pn;
-	if( m_fLockInputSecs > 0 )
-		return false;
 	if( input.type == IET_RELEASE )
 		return false;
 	if( input.type != IET_FIRST_PRESS )

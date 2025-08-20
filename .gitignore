@@ -190,3 +190,6 @@ BuildLog.htm
 *.d
 .vscode/
 *.bak
+.vs/pumpmania/v17/workspaceFileList.bin
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json

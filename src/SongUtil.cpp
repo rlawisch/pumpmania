@@ -1101,6 +1101,41 @@ void SongUtil::GetPlayableStepsTypes( const Song *pSong, set<StepsType> &vOut )
 	}
 }
 
+// xMAx - Filter the given steps (use this only in select music screen)
+void SongUtil::GetFilteredPlayableSteps(const Song* pSong, vector<Steps*>& vOut, SortOrder so)
+{
+	vector<Steps*> temp;
+	GetPlayableSteps(pSong, temp, so);
+
+	vOut.clear();
+	for (unsigned i = 0; i < temp.size(); i++)	// for each of the Song's Steps
+	{
+		Steps* pSteps = temp[i];
+
+		// xMAx - Apply steps filter
+		if (!GAMESTATE->m_SongOptions.GetCurrent().m_bShowSingles)
+		{
+			if (pSteps->m_StepsType == StepsType_pump_single || pSteps->m_StepsType == StepsType_pump_couple)
+				continue;
+		}
+
+		if (!GAMESTATE->m_SongOptions.GetCurrent().m_bShowHalfDoubles)
+		{
+			if (pSteps->m_StepsType == StepsType_pump_halfdouble || (pSteps->m_StepsType == StepsType_pump_double && pSteps->IsDoubleAsHalfDouble()))
+				continue;
+		}
+
+		if (!GAMESTATE->m_SongOptions.GetCurrent().m_bShowDoubles)
+		{
+			if ((pSteps->m_StepsType == StepsType_pump_double && !(pSteps->IsDoubleAsHalfDouble())) || pSteps->m_StepsType == StepsType_pump_routine)
+				continue;
+		}
+
+		vOut.push_back(pSteps);
+	}
+}
+
+
 void SongUtil::GetPlayableSteps( const Song *pSong, vector<Steps*> &vOut, SortOrder so )
 {
 	set<StepsType> vStepsType;

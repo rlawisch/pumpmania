@@ -482,17 +482,19 @@ void SongManager::LoadLevelChannelsForSong( Song* pSong )
 	{
 		case RN_EXCLUDE_NONE: break;
 		case RN_EXCLUDE_PRO:
-			if( pSong->m_sGroupName == "06-PRO~PRO2" || pSong->m_sGroupName == "07-INFINITY" )
+			if (pSong->m_sGroupName == "07 - PRO~PRO2" || pSong->m_sGroupName == "11 - INFINITY")
 				return;
 
 			break;
 		case RN_EXCLUDE_FAN:
 			{
 				bool bExclude = true;
-				if( pSong->m_sGroupName == "08-1ST~3RD" || pSong->m_sGroupName == "09-S.E.~EXTRA" || pSong->m_sGroupName == "10-REBIRTH~PREX 3" ||
-					pSong->m_sGroupName == "11-EXCEED~ZERO" || pSong->m_sGroupName == "12-NX-NX2" || pSong->m_sGroupName == "13-NX ABSOLUTE" ||
-					pSong->m_sGroupName == "14-FIESTA" || pSong->m_sGroupName == "15-FIESTA EX" || pSong->m_sGroupName == "16-FIESTA 2" ||
-					pSong->m_sGroupName == "17-PRIME" )
+				if( pSong->m_sGroupName == "01 - 1ST~3RD"		|| pSong->m_sGroupName == "02 - S.E.~EXTRA"	|| pSong->m_sGroupName == "03 - REBIRTH~PREX 3" ||
+					pSong->m_sGroupName == "04 - EXCEED~ZERO"	|| pSong->m_sGroupName == "05 - NX~NX2"		|| pSong->m_sGroupName == "06 - NX ABSOLUTE"	||
+					pSong->m_sGroupName == "07 - PRO~PRO2"		|| pSong->m_sGroupName == "08 - FIESTA"		|| pSong->m_sGroupName == "09 - FIESTA EX"		||
+					pSong->m_sGroupName == "10 - FIESTA 2"		|| pSong->m_sGroupName == "11 - INFINITY"	|| pSong->m_sGroupName == "12 - PRIME"			||
+					pSong->m_sGroupName == "13 - PRIME 2"		|| pSong->m_sGroupName == "14 - XX"			|| pSong->m_sGroupName == "15 - MOBILE EDITION"	||
+					pSong->m_sGroupName == "16 - PHOENIX")
 					bExclude = false;
 
 				if( bExclude )
@@ -501,14 +503,15 @@ void SongManager::LoadLevelChannelsForSong( Song* pSong )
 			break;
 		case RN_EXCLUDE_PRO_AND_FAN:
 			{
-				if( pSong->m_sGroupName == "06-PRO~PRO2" || pSong->m_sGroupName == "07-INFINITY" )
+				if( pSong->m_sGroupName == "07 - PRO~PRO2" || pSong->m_sGroupName == "11 - INFINITY" )
 					return;
 
 				bool bExclude = true;
-				if( pSong->m_sGroupName == "08-1ST~3RD" || pSong->m_sGroupName == "09-S.E.~EXTRA" || pSong->m_sGroupName == "10-REBIRTH~PREX 3" ||
-					pSong->m_sGroupName == "11-EXCEED~ZERO" || pSong->m_sGroupName == "12-NX-NX2" || pSong->m_sGroupName == "13-NX ABSOLUTE" ||
-					pSong->m_sGroupName == "14-FIESTA" || pSong->m_sGroupName == "15-FIESTA EX" || pSong->m_sGroupName == "16-FIESTA 2" ||
-					pSong->m_sGroupName == "17-PRIME" )
+				if (pSong->m_sGroupName == "01 - 1ST~3RD"			|| pSong->m_sGroupName == "02 - S.E.~EXTRA" || pSong->m_sGroupName == "03 - REBIRTH~PREX 3" ||
+					pSong->m_sGroupName == "04 - EXCEED~ZERO"		|| pSong->m_sGroupName == "05 - NX~NX2"		|| pSong->m_sGroupName == "06 - NX ABSOLUTE"	||
+					pSong->m_sGroupName == "08 - FIESTA"			|| pSong->m_sGroupName == "09 - FIESTA EX"	|| pSong->m_sGroupName == "10 - FIESTA 2"		||
+					pSong->m_sGroupName == "12 - PRIME"				|| pSong->m_sGroupName == "13 - PRIME 2"	|| pSong->m_sGroupName == "14 - XX"				||
+					pSong->m_sGroupName == "15 - MOBILE EDITION"	|| pSong->m_sGroupName == "16 - PHOENIX")
 					bExclude = false;
 
 				if( bExclude )
@@ -2489,13 +2492,9 @@ void SongManager::UpdateSongSortByType( SongType m_SongTypeToSort, vector<Song*>
 void SongManager::UpdateSongSortByCategory( SongCategory m_SongCategoryToSort, vector<Song*> &arraySongCategory )
 {
 	vector<Song*> aTemp;
-	RString BasicGroupName = GAMESTATE->m_sBasicModeGroupName;
 
 	for( unsigned i=0; i<m_pSongs.size(); i++ )
 	{
-		if ( m_pSongs[i]->m_sGroupName == BasicGroupName )
-			continue;
-
 		if ( m_pSongs[i]->m_SongType == SONGTYPE_SPECIAL )
 			continue;
 

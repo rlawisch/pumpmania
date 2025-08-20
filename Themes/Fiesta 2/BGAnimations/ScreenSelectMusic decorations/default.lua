@@ -63,9 +63,9 @@ t[#t+1] = LoadActor("_fire")..{
 InitCommand=cmd(draworder,5;zoom,.67;x,141;y,65);
 };
 
-t[#t+1] = LoadActor("_musicwheel")..{
-InitCommand=cmd(draworder,6);
-};
+-- t[#t+1] = LoadActor("_musicwheel")..{
+-- InitCommand=cmd(draworder,6);
+-- };
 
 
 -------------------------------------GENERAL------------------------------------------------------

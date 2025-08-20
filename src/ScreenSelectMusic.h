@@ -54,6 +54,12 @@ public:
 	void OpenOptionsList( PlayerNumber pn );
 	void OnConfirmSongDeletion();
 
+
+	void NextGroup();
+	void PrevGroup();
+	void ApplyGroupSelection(const RString& groupName, int dir);
+	vector<RString> m_GroupsAndSorts;
+
 	bool can_open_options_list(PlayerNumber pn);
 
 	// Lua
@@ -61,7 +67,7 @@ public:
 
 	// StepP1 Revival - bSilver ---------------------------------------------------------------------
 	bool	b_PlayerIsReady[NUM_PLAYERS];
-	int	m_iSelection[NUM_PLAYERS];
+	int		m_iSelection[NUM_PLAYERS];
 	bool	m_bInOptionList;
 
 	virtual void CodeMessageReceived( const Message &msg );
@@ -82,7 +88,10 @@ protected:
 
 	vector<Steps*>		m_vpSteps;
 	vector<Trail*>		m_vpTrails;
-	// int					m_iSelection[NUM_PLAYERS]; // StepP1 Revival - bSilver - Moved to public
+	 //int					m_iSelection[NUM_PLAYERS]; // StepP1 Revival - bSilver - Moved to public (Revisar depois)
+
+	 void NextChannel();
+	 void PrevChannel();
 
 	RageTimer		m_timerIdleComment;
 	ThemeMetric<float> IDLE_COMMENT_SECONDS;
@@ -208,6 +217,16 @@ protected:
 	RageTexturePreloader	m_TexturePreload;
 
 	Song* m_pSongAwaitingDeletionConfirmation;
+
+	private:
+		int m_iCurrentGroupIndex; // Índice do grupo atual
+		vector<RString> m_vAvailableGroups; // Lista de grupos (SO_ALLTUNES, SO_ORIGINAL, etc.)
+
+
+		public:
+			// Adicione métodos públicos para acessar/modificar o índice
+			int GetCurrentGroupIndex() const { return m_iCurrentGroupIndex; }
+			void SetCurrentGroupIndex(int index) { m_iCurrentGroupIndex = index; }
 };
 
 #endif

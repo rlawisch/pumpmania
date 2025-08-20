@@ -157,6 +157,12 @@ LuaDeclareType( PlayMode );
 enum SortOrder
 {
 	// ------- Pump it Up Sorts - StepP1 Revival - bsilver --------
+	SORT_ALLTUNES, // SORT_NEWTUNES,
+	SORT_ORIGINAL,
+	SORT_KPOP,
+	SORT_WORLDMUSIC,
+	SORT_JMUSIC,
+	SORT_FULLSONG,
 	SORT_REMIX,
 	SORT_SHORTCUT,
 	SORT_UCS,
@@ -186,13 +192,7 @@ enum SortOrder
 	SORT_LEVEL_23,
 	SORT_LEVEL_24_OVER,
 	SORT_QUEST,
-	SORT_FULLSONG,
-	SORT_ORIGINAL,
-	SORT_KPOP,
-	SORT_WORLDMUSIC,
-	SORT_ALLTUNES, // SORT_NEWTUNES,
 	SORT_COOP,
-	SORT_JMUSIC,
 	// ----------------------------------------------------------------------------------------------
 	// song sorts
 	SORT_PREFERRED, /**< Sort by the user's preferred settings. */
