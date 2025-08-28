@@ -2472,13 +2472,8 @@ void SongManager::CleanUpSortArrays(void)
 void SongManager::UpdateSongSortByType( SongType m_SongTypeToSort, vector<Song*> &arraySongType )
 {
 	vector<Song*> aTemp;
-	RString BasicGroupName = GAMESTATE->m_sBasicModeGroupName;
-
 	for( unsigned i=0; i<m_pSongs.size(); i++ )
 	{
-		if ( m_pSongs[i]->m_sGroupName == BasicGroupName )
-			continue;
-
 		if ( m_pSongs[i]->m_SongType == m_SongTypeToSort )
 			aTemp.push_back( m_pSongs[i] );
 	}

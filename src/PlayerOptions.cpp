@@ -1340,8 +1340,8 @@ float PlayerOptions::GetReversePercentForColumn( int iCol ) const
 {
 	float f = 0;
 	ASSERT(m_pn == PLAYER_1 || m_pn == PLAYER_2);
-	ASSERT(GAMESTATE->GetCurrentStyle(m_pn) != nullptr);
-	int iNumCols = GAMESTATE->GetCurrentStyle(m_pn)->m_iColsPerPlayer;
+	ASSERT(GAMESTATE->GetCurrentStyle() != nullptr);
+	int iNumCols = GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer;
 
 	f += m_fScrolls[SCROLL_REVERSE];
 	f += m_fReverse[iCol];
@@ -1607,7 +1607,7 @@ bool PlayerOptions::IsEasierForSongAndSteps( Song* pSong, Steps* pSteps, PlayerN
 		DisplayBpms bpms;
 		if( GAMESTATE->IsCourseMode() )
 		{
-			Trail *pTrail = GAMESTATE->m_pCurCourse->GetTrail( GAMESTATE->GetCurrentStyle(m_pn)->m_StepsType );
+			Trail *pTrail = GAMESTATE->m_pCurCourse->GetTrail( GAMESTATE->GetCurrentStyle()->m_StepsType );
 			pTrail->GetDisplayBpms( bpms );
 		}
 		else
@@ -2269,7 +2269,7 @@ public:
 	static int GetReversePercentForColumn( T *p, lua_State *L )
 	{
 		const int colNum = IArg(1);
-		const int numColumns = GAMESTATE->GetCurrentStyle(p->m_pn)->m_iColsPerPlayer;
+		const int numColumns = GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer;
 
 		// We don't want to go outside the bounds.
 		if(colNum < 0 || colNum > numColumns)

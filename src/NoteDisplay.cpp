@@ -94,78 +94,48 @@ struct NoteMetricCache_t
 	void Load( const RString &sButton );
 } *NoteMetricCache;
 
-void NoteMetricCache_t::Load( const RString &sButton )
+void NoteMetricCache_t::Load(const RString& sButton)
 {
-	m_bDrawHoldHeadForTapsOnSameRow = NOTESKIN->GetMetricB(sButton,"DrawHoldHeadForTapsOnSameRow");
-	m_bDrawRollHeadForTapsOnSameRow = NOTESKIN->GetMetricB(sButton,"DrawRollHeadForTapsOnSameRow");
-	m_bTapHoldRollOnRowMeansHold = NOTESKIN->GetMetricB(sButton,"TapHoldRollOnRowMeansHold");
-	FOREACH_NotePart( p )
+	m_bDrawHoldHeadForTapsOnSameRow = NOTESKIN->GetMetricB(sButton, "DrawHoldHeadForTapsOnSameRow");
+	m_bDrawRollHeadForTapsOnSameRow = NOTESKIN->GetMetricB(sButton, "DrawRollHeadForTapsOnSameRow");
+	m_bTapHoldRollOnRowMeansHold = NOTESKIN->GetMetricB(sButton, "TapHoldRollOnRowMeansHold");
+	m_bHoldHeadIsAboveWavyParts = NOTESKIN->GetMetricB(sButton, "HoldHeadIsAboveWavyParts");
+	m_bHoldTailIsAboveWavyParts = NOTESKIN->GetMetricB(sButton, "HoldTailIsAboveWavyParts");
+	m_bFlipHeadAndTailWhenReverse = NOTESKIN->GetMetricB(sButton, "FlipHeadAndTailWhenReverse");
+	m_bFlipHoldBodyWhenReverse = NOTESKIN->GetMetricB(sButton, "FlipHoldBodyWhenReverse");
+	m_bTopHoldAnchorWhenReverse = NOTESKIN->GetMetricB(sButton, "TopHoldAnchorWhenReverse");
+	m_bHoldActiveIsAddLayer = NOTESKIN->GetMetricB(sButton, "HoldActiveIsAddLayer");
+	m_bAnimationBasedOnBeats = NOTESKIN->GetMetricB(sButton, "AnimationIsBeatBased");
+	m_iStartDrawingHoldBodyOffsetFromHead = NOTESKIN->GetMetricI(sButton, "StartDrawingHoldBodyOffsetFromHead");
+	m_iStopDrawingHoldBodyOffsetFromTail = NOTESKIN->GetMetricI(sButton, "StopDrawingHoldBodyOffsetFromTail");
+	m_fHoldLetGoGrayPercent = NOTESKIN->GetMetricF(sButton, "HoldLetGoGrayPercent");
+
+	FOREACH_NotePart(p)
 	{
-		const RString &s = NotePartToString(p);
-		m_fAnimationLength[p] = NOTESKIN->GetMetricF(sButton,s+"AnimationLength");
-		m_bAnimationIsVivid[p] = NOTESKIN->GetMetricB(sButton,s+"AnimationIsVivid");
-		m_fAdditionTextureCoordOffset[p].x = NOTESKIN->GetMetricF(sButton,s+"AdditionTextureCoordOffsetX");
-		m_fAdditionTextureCoordOffset[p].y = NOTESKIN->GetMetricF(sButton,s+"AdditionTextureCoordOffsetY");
-		m_fNoteColorTextureCoordSpacing[p].x = NOTESKIN->GetMetricF(sButton,s+"NoteColorTextureCoordSpacingX");
-		m_fNoteColorTextureCoordSpacing[p].y = NOTESKIN->GetMetricF(sButton,s+"NoteColorTextureCoordSpacingY");
-		m_iNoteColorCount[p] = NOTESKIN->GetMetricI(sButton,s+"NoteColorCount");
-
-		RString ct = NOTESKIN->GetMetric(sButton,s+"NoteColorType");
-		m_NoteColorType[p] = StringToNoteColorType(ct);
+		const RString& s = NotePartToString(p);
+		m_fAnimationLength[p] = NOTESKIN->GetMetricF(sButton, s + "AnimationLength");
+		m_bAnimationIsVivid[p] = NOTESKIN->GetMetricB(sButton, s + "AnimationIsVivid");
+		m_fAdditionTextureCoordOffset[p].x = NOTESKIN->GetMetricF(sButton, s + "AdditionTextureCoordOffsetX");
+		m_fAdditionTextureCoordOffset[p].y = NOTESKIN->GetMetricF(sButton, s + "AdditionTextureCoordOffsetY");
+		m_fNoteColorTextureCoordSpacing[p].x = NOTESKIN->GetMetricF(sButton, s + "NoteColorTextureCoordSpacingX");
+		m_fNoteColorTextureCoordSpacing[p].y = NOTESKIN->GetMetricF(sButton, s + "NoteColorTextureCoordSpacingY");
 	}
-	//I was here -DaisuMaster
-	m_bAnimationBasedOnBeats = NOTESKIN->GetMetricB(sButton,"AnimationIsBeatBased");
-	m_bHoldHeadIsAboveWavyParts =		NOTESKIN->GetMetricB(sButton,"HoldHeadIsAboveWavyParts");
-	m_bHoldTailIsAboveWavyParts =		NOTESKIN->GetMetricB(sButton,"HoldTailIsAboveWavyParts");
-	m_iStartDrawingHoldBodyOffsetFromHead =	NOTESKIN->GetMetricI(sButton,"StartDrawingHoldBodyOffsetFromHead");
-	m_iStopDrawingHoldBodyOffsetFromTail =	NOTESKIN->GetMetricI(sButton,"StopDrawingHoldBodyOffsetFromTail");
-	m_fHoldLetGoGrayPercent =		NOTESKIN->GetMetricF(sButton,"HoldLetGoGrayPercent");
-	m_bFlipHeadAndTailWhenReverse =		NOTESKIN->GetMetricB(sButton,"FlipHeadAndTailWhenReverse");
-	m_bFlipHoldBodyWhenReverse =		NOTESKIN->GetMetricB(sButton,"FlipHoldBodyWhenReverse");
-	m_bTopHoldAnchorWhenReverse =		NOTESKIN->GetMetricB(sButton,"TopHoldAnchorWhenReverse");
-	m_bHoldActiveIsAddLayer =		NOTESKIN->GetMetricB(sButton,"HoldActiveIsAddLayer");
 }
-
 
 struct NoteSkinAndPath
 {
-	NoteSkinAndPath( const RString sNoteSkin_, const RString sPath_, const PlayerNumber pn_, const GameController gc_ ) : sNoteSkin(sNoteSkin_), sPath(sPath_), pn(pn_), gc(gc_) { }
+	NoteSkinAndPath(const RString sNoteSkin_, const RString sPath_) : sNoteSkin(sNoteSkin_), sPath(sPath_) {}
 	RString sNoteSkin;
 	RString sPath;
-	PlayerNumber pn;
-	GameController gc;
-	bool operator<( const NoteSkinAndPath &other ) const
+	bool operator<(const NoteSkinAndPath& other) const
 	{
 		int cmp = strcmp(sNoteSkin, other.sNoteSkin);
-
-		if( cmp < 0 )
-		{
+		if (cmp < 0)
 			return true;
-		}
-		else if( cmp == 0 )
-		{
-			if( sPath < other.sPath )
-			{
-				return true;
-			}
-			else if( sPath == other.sPath )
-			{
-				if ( pn < other.pn )
-					return true;
-				else if ( pn == other.pn )
-					return gc < other.gc;
-				else
-					return false;
-			}
-			else
-			{
-				return false;
-			}
-		}
+		else if (cmp == 0)
+			return sPath < other.sPath;
 		else
-		{
 			return false;
-		}
 	}
 };
 
@@ -189,18 +159,15 @@ struct NoteResource
 
 static map<NoteSkinAndPath, NoteResource *> g_NoteResource;
 
-static NoteResource *MakeNoteResource( const RString &sButton, const RString &sElement, PlayerNumber pn, GameController gc, bool bSpriteOnly )
+static NoteResource *MakeNoteResource( const RString &sButton, const RString &sElement, bool bSpriteOnly )
 {
 	RString sElementAndType = ssprintf( "%s, %s", sButton.c_str(), sElement.c_str() );
-	NoteSkinAndPath nsap( NOTESKIN->GetCurrentNoteSkin(), sElementAndType, pn, gc );
+	NoteSkinAndPath nsap( NOTESKIN->GetCurrentNoteSkin(), sElementAndType );
 
 	map<NoteSkinAndPath, NoteResource *>::iterator it = g_NoteResource.find( nsap );
 	if( it == g_NoteResource.end() )
 	{
 		NoteResource *pRes = new NoteResource( nsap );
-
-		NOTESKIN->SetPlayerNumber( pn );
-		NOTESKIN->SetGameController( gc );
 
 		pRes->m_pActor = NOTESKIN->LoadActor( sButton, sElement, nullptr, bSpriteOnly );
 		ASSERT( pRes->m_pActor != nullptr );
@@ -240,9 +207,9 @@ NoteColorActor::~NoteColorActor()
 		DeleteNoteResource( m_p );
 }
 
-void NoteColorActor::Load( const RString &sButton, const RString &sElement, PlayerNumber pn, GameController gc )
+void NoteColorActor::Load( const RString &sButton, const RString &sElement )
 {
-	m_p = MakeNoteResource( sButton, sElement, pn, gc, false );
+	m_p = MakeNoteResource( sButton, sElement, false );
 }
 
 
@@ -264,9 +231,9 @@ NoteColorSprite::~NoteColorSprite()
 		DeleteNoteResource( m_p );
 }
 
-void NoteColorSprite::Load( const RString &sButton, const RString &sElement, PlayerNumber pn, GameController gc )
+void NoteColorSprite::Load( const RString &sButton, const RString &sElement )
 {
-	m_p = MakeNoteResource( sButton, sElement, pn, gc, true );
+	m_p = MakeNoteResource( sButton, sElement, true );
 }
 
 Sprite *NoteColorSprite::Get()
@@ -371,10 +338,10 @@ void NoteColumnRenderArgs::spae_zoom_for_beat(const PlayerState* state, float be
 	switch(zoom_handler->m_spline_mode)
 	{
 		case NCSM_Disabled:
-			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(state, y_offset, col_num);
+			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(state);
 			break;
 		case NCSM_Offset:
-			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(state, y_offset, col_num);
+			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(state);
 			zoom_handler->EvalForBeat(song_beat, beat, sp_zoom);
 			break;
 		case NCSM_Position:
@@ -421,30 +388,31 @@ void NoteDisplay::Load( int iColNum, const PlayerState* pPlayerState )
 	m_fYReverseOffsetPixels = 0;
 
 	const PlayerNumber pn = m_pPlayerState->m_PlayerNumber;
-	vector<GameInput> GameI;
-	GAMESTATE->GetCurrentStyle(pPlayerState->m_PlayerNumber)->StyleInputToGameInput( iColNum, pn, GameI );
+	const GameInput GameI = GAMESTATE->GetCurrentStyle()->StyleInputToGameInput(iColNum, pn);
+	NOTESKIN->SetPlayerNumber(pn);
+	NOTESKIN->SetGameController(GameI.controller);
 
-	const RString &sButton = GAMESTATE->GetCurrentStyle(pPlayerState->m_PlayerNumber)->ColToButtonName( iColNum );
+	const RString& sButton = GAMESTATE->GetCurrentStyle()->ColToButtonName(iColNum);
 
-	cache->Load( sButton );
+	cache->Load(sButton);
 
 	// "normal" note types
-	m_TapNote.Load(		sButton, "Tap Note", pn, GameI[0].controller );
-	//m_TapAdd.Load(		sButton, "Tap Addition", pn, GameI.controller );
-	m_TapMine.Load(		sButton, "Tap Mine", pn, GameI[0].controller );
-	m_TapLift.Load(		sButton, "Tap Lift", pn, GameI[0].controller );
-	// m_TapFake.Load(		sButton, "Tap Fake", pn, GameI[0].controller ); // xMAx
+	m_TapNote.Load(sButton, "Tap Note");
+	m_TapMine.Load(sButton, "Tap Mine");
+	m_TapLift.Load(sButton, "Tap Lift");
+	//m_TapAdd	.Load( sButton, "Tap Addition" );
+	//m_TapFake	.Load( sButton, "Tap Fake" );
 
 	// hold types
-	FOREACH_HoldType( ht )
+	FOREACH_HoldType(ht)
 	{
-		FOREACH_ActiveType( at )
+		FOREACH_ActiveType(at)
 		{
-			m_HoldHead[ht][at].Load(	sButton, HoldTypeToString(ht)+" Head "+ActiveTypeToString(at), pn, GameI[0].controller );
-			m_HoldTopCap[ht][at].Load(	sButton, HoldTypeToString(ht)+" Topcap "+ActiveTypeToString(at), pn, GameI[0].controller );
-			m_HoldBody[ht][at].Load(	sButton, HoldTypeToString(ht)+" Body "+ActiveTypeToString(at), pn, GameI[0].controller );
-			m_HoldBottomCap[ht][at].Load(	sButton, HoldTypeToString(ht)+" Bottomcap "+ActiveTypeToString(at), pn, GameI[0].controller );
-			m_HoldTail[ht][at].Load(	sButton, HoldTypeToString(ht)+" Tail "+ActiveTypeToString(at), pn, GameI[0].controller );
+			m_HoldHead[ht][at].Load(sButton, HoldTypeToString(ht) + " Head " + ActiveTypeToString(at));
+			m_HoldTopCap[ht][at].Load(sButton, HoldTypeToString(ht) + " Topcap " + ActiveTypeToString(at));
+			m_HoldBody[ht][at].Load(sButton, HoldTypeToString(ht) + " Body " + ActiveTypeToString(at));
+			m_HoldBottomCap[ht][at].Load(sButton, HoldTypeToString(ht) + " Bottomcap " + ActiveTypeToString(at));
+			m_HoldTail[ht][at].Load(sButton, HoldTypeToString(ht) + " Tail " + ActiveTypeToString(at));
 		}
 	}
 }
@@ -761,7 +729,7 @@ void NoteDisplay::DrawHoldPart(vector<Sprite*> &vpSpr,
 {
 	ASSERT(!vpSpr.empty());
 
-	float ae_zoom= ArrowEffects::GetZoom(m_pPlayerState, 0, column_args.column);
+	float ae_zoom= ArrowEffects::GetZoom(m_pPlayerState);
 	Sprite *pSprite = vpSpr.front();
 
 	// draw manually in small segments
@@ -859,7 +827,7 @@ void NoteDisplay::DrawHoldPart(vector<Sprite*> &vpSpr,
 
 		const float fYOffset= ArrowEffects::GetYOffsetFromYPos(column_args.column, fY);
 
-		ae_zoom = ArrowEffects::GetZoom(m_pPlayerState, fYOffset, column_args.column);
+		ae_zoom = ArrowEffects::GetZoom(m_pPlayerState);
 
 		float cur_beat= part_args.top_beat;
 		if(part_args.top_beat != part_args.bottom_beat)
@@ -1163,7 +1131,7 @@ void NoteDisplay::DrawHoldBody(const TapNote& tn,
 		y_tail += cache->m_iStopDrawingHoldBodyOffsetFromTail;
 	}
 
-	float ae_zoom= ArrowEffects::GetZoom(m_pPlayerState, 0, column_args.column);
+	float ae_zoom= ArrowEffects::GetZoom(m_pPlayerState);
 	const float frame_height_top= pSpriteTop->GetUnzoomedHeight() * ae_zoom;
 	const float frame_height_bottom= pSpriteBottom->GetUnzoomedHeight() * ae_zoom;
 
@@ -1356,7 +1324,7 @@ void NoteDisplay::DrawActor(const TapNote& tn, Actor* pActor, NotePart part,
 	bool bIsHoldHead = tn.type == TapNoteType_HoldHead;
 	bool bIsHoldCap = bIsHoldHead || tn.type == TapNoteType_HoldTail;
 
-	fRotationZ = ArrowEffects::GetRotationZ( m_pPlayerState, fBeat, bIsHoldHead, column_args.column );
+	fRotationZ = ArrowEffects::GetRotationZ( m_pPlayerState, fBeat, bIsHoldHead );
 
 	if( !bIsHoldCap )
 	{
@@ -1379,7 +1347,7 @@ void NoteDisplay::DrawActor(const TapNote& tn, Actor* pActor, NotePart part,
 	pActor->SetRotationZ( fRotationZ );
 	pActor->SetXY( fX, fY );
 	pActor->SetZ( fZ );
-	pActor->SetZoom( ArrowEffects::GetZoom(m_pPlayerState, fYOffset, column_args.column) );
+	pActor->SetZoom( ArrowEffects::GetZoom(m_pPlayerState) );
 
   /*
 	// same logical structure as in UpdateReceptorGhostStuff, I just haven't
@@ -1594,12 +1562,12 @@ void NoteColumnRenderer::UpdateReceptorGhostStuff(Actor* receptor) const
 	switch(NCR_current.m_rot_handler.m_spline_mode)
 	{
 		case NCSM_Disabled:
-			ae_rot.z= ArrowEffects::ReceptorGetRotationZ(player_state, m_column);
+			ae_rot.z= ArrowEffects::ReceptorGetRotationZ(player_state);
 			ae_rot.x= ArrowEffects::ReceptorGetRotationX(player_state, m_column);
 			ae_rot.y= ArrowEffects::ReceptorGetRotationY(player_state, m_column);
 			break;
 		case NCSM_Offset:
-			ae_rot.z= ArrowEffects::ReceptorGetRotationZ(player_state, m_column);
+			ae_rot.z= ArrowEffects::ReceptorGetRotationZ(player_state);
 			ae_rot.x= ArrowEffects::ReceptorGetRotationX(player_state, m_column);
 			ae_rot.y= ArrowEffects::ReceptorGetRotationY(player_state, m_column);
 			NCR_current.m_rot_handler.EvalForReceptor(song_beat, sp_rot);
@@ -1613,10 +1581,10 @@ void NoteColumnRenderer::UpdateReceptorGhostStuff(Actor* receptor) const
 	switch(NCR_current.m_zoom_handler.m_spline_mode)
 	{
 		case NCSM_Disabled:
-			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(player_state, 0, m_column);
+			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(player_state);
 			break;
 		case NCSM_Offset:
-			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(player_state, 0, m_column);
+			ae_zoom.x= ae_zoom.y= ae_zoom.z= ArrowEffects::GetZoom(player_state);
 			NCR_current.m_zoom_handler.EvalForReceptor(song_beat, sp_zoom);
 			break;
 		case NCSM_Position:

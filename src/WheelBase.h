@@ -83,7 +83,23 @@ public:
 	void CloseUpWheel( bool bCloseCenter = true );
   // ----------------------------------------------------------------------------------------------
 
+	// bSilver - PhoenixWheel animations
 	WheelItemBase* m_pLastCenterItem = nullptr; // StepP1 Revival - bSilver (For PhoenixWheel)
+	bool m_bIsSelectingSteps; // If true, Wheel not reset animation. 
+	bool m_bIsBeginScreen; 
+	bool m_bIsSelectingGroups; 
+	float m_fSelectingStepsAnimTime; // i think no used
+	float m_fSelectingStepsDuration; // i think no used
+	std::vector<Actor::TweenState> m_InitialTweenStates;
+	void AnimateToEnterScreen(); // First animation when Screen load.
+	void AnimateToSelectingSteps(); // Animation when enter in State SelectingSteps
+	void AnimateFromSelectingSteps(); // Return from SelectingSteps
+	void AnimateToSelectingGroup(); // Animation when enter in State SelectingGroup
+	void AnimateFromSelectingGroup(); // Return from SelectingGroup
+	void NotResetWheelYet(); // The name xD
+
+	// The 5 animations are diferents, so we can't re-use animations.
+
 
 	// Messages
 	virtual void HandleMessageOver( const Message &msg );

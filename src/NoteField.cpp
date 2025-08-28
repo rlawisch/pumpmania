@@ -126,9 +126,9 @@ void NoteField::CacheNoteSkin( const RString &sNoteSkin_ )
 	LockNoteSkin l( sNoteSkinLower );
 
 	// LOG->Trace("NoteField::CacheNoteSkin: cache %s", sNoteSkinLower.c_str() ); // xMAx
-	NoteDisplayCols *nd = new NoteDisplayCols( GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer );
+	NoteDisplayCols *nd = new NoteDisplayCols( GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer );
 
-	for( int c=0; c<GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer; c++ )
+	for( int c=0; c<GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer; c++ )
 		// nd->display[c].Load( c, m_pPlayerState, m_fYReverseOffsetPixels ); // xMAx
 		nd->display[c].Load( c, m_pPlayerState ); // xMAx
 
@@ -383,9 +383,9 @@ void NoteField::Load(
 
 	//int i1 = m_pNoteData->GetNumTracks();
 	//int i2 = GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer;
-	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer,
+	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer,
 		 ssprintf("NumTracks %d = ColsPerPlayer %d",m_pNoteData->GetNumTracks(),
-			  GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer));
+			  GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer));
 
   /* xMAx
 	// If we're in routine mode, the noteskin is forcibly set to the routine
@@ -551,12 +551,12 @@ void NoteField::Update( float fDeltaTime )
 
 float NoteField::GetWidth() const
 {
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	float fMinX, fMaxX;
 	// TODO: Remove use of PlayerNumber.
 	pStyle->GetMinAndMaxColX( m_pPlayerState->m_PlayerNumber, fMinX, fMaxX );
 
-	const float fYZoom	= ArrowEffects::GetZoom( m_pPlayerState, 0, 0 );
+	const float fYZoom	= ArrowEffects::GetZoom( m_pPlayerState );
 	return (fMaxX - fMinX + ARROW_SIZE) * fYZoom;
 }
 
@@ -744,7 +744,7 @@ void NoteField::set_text_measure_number_for_draw(
 	const float y_offset= ArrowEffects::GetYOffset(m_pPlayerState, 0, beat);
 	// const float y_pos= ArrowEffects::GetYPos(m_pPlayerState, 0, y_offset, m_fYReverseOffsetPixels); // xMAx
 	const float y_pos= ArrowEffects::GetYPos(0, y_offset); // xMAx
-	const float zoom= ArrowEffects::GetZoom(m_pPlayerState, y_offset, 0);
+	const float zoom= ArrowEffects::GetZoom(m_pPlayerState);
 	const float x_base= GetWidth() * .5f;
 	x_offset*= zoom;
 
@@ -1256,10 +1256,10 @@ void NoteField::DrawPrimitives()
 	// Draw the arrows in order of column. This minimizes texture switches and
 	// lets us draw in big batches.
 
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber);
-	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer,
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
+	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer,
 		ssprintf("NumTracks %d != ColsPerPlayer %d",m_pNoteData->GetNumTracks(),
-			GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer));
+			GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer));
 
 	if(*m_FieldRenderArgs.selection_begin_marker != -1 &&
 		*m_FieldRenderArgs.selection_end_marker != -1)
@@ -1546,12 +1546,12 @@ static void get_returned_column(Lua* L, PlayerNumber pn, int index, int& col)
 	{
 		// 1-indexed columns in lua
 		int tmpcol= lua_tonumber(L, index) - 1;
-		if(tmpcol < 0 || tmpcol >= GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer)
+		if(tmpcol < 0 || tmpcol >= GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer)
 		{
 			LuaHelpers::ReportScriptErrorFmt(
 				"Column returned by callback must be between 1 and %d "
 				"(GAMESTATE:GetCurrentStyle():ColumnsPerPlayer()).",
-				GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer);
+				GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer);
 		}
 		else
 		{
@@ -1690,11 +1690,11 @@ public:
 	{
 		// 1-indexed columns in lua
 		int col= IArg(1)-1;
-		if(col < 0 || col >= GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer)
+		if(col < 0 || col >= GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer)
 		{
 			luaL_error(L, "Column must be between 1 and %d "
 				"(GAMESTATE:GetCurrentStyle(pn):ColumnsPerPlayer()).",
-				GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer);
+				GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer);
 		}
 		return col;
 	}

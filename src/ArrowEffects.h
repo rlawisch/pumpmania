@@ -57,8 +57,8 @@ public:
 	// fRotation is Z rotation of an arrow.  This will depend on the column of
 	// the arrow and possibly the Arrow effect and the fYOffset (in the case of
 	// EFFECT_DIZZY).
-	static float GetRotationZ(	const PlayerState* pPlayerState, float fNoteBeat, bool bIsHoldHead, int iCol );
-	static float ReceptorGetRotationZ(	const PlayerState* pPlayerState, int iCol );
+	static float GetRotationZ(	const PlayerState* pPlayerState, float fNoteBeat, bool bIsHoldHead );
+	static float ReceptorGetRotationZ(	const PlayerState* pPlayerState );
 
 	// Due to the handling logic for holds on Twirl, we need to use an offset instead.
 	// It's more intuitive for Roll to be based off offset, so use an offset there too.
@@ -114,7 +114,7 @@ public:
 	static float GetBrightness( const PlayerState* pPlayerState, float fNoteBeat );
 
 	// This is the zoom of the individual tracks, not of the whole Player.
-	static float GetZoom( const PlayerState* pPlayerState, float fYOffset, int iCol );
+	static float GetZoom( const PlayerState* pPlayerState );
 	static float GetZoomVariable( float fYOffset, int iCol, float fCurZoom );
 	static float GetPulseInner();
 

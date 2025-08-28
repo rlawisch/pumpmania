@@ -47,7 +47,7 @@ void Style::GetTransformedNoteDataForStyle( PlayerNumber pn, const NoteData& ori
 	noteDataOut.LoadTransformed( original, m_iColsPerPlayer, iNewToOriginalTrack );
 }
 
-void Style::StyleInputToGameInput( int iCol, PlayerNumber pn, vector<GameInput>& ret ) const
+GameInput Style::StyleInputToGameInput( int iCol, PlayerNumber pn ) const
 {
 	ASSERT_M( pn < NUM_PLAYERS  &&  iCol < MAX_COLS_PER_PLAYER,
 		ssprintf("P%i C%i", pn, iCol) );
@@ -65,19 +65,8 @@ void Style::StyleInputToGameInput( int iCol, PlayerNumber pn, vector<GameInput>&
 			if( iThisInputCol == END_MAPPING )
 				break;
 
-			// A style can have multiple game inputs mapped to a single column, so
-			// we have to return all the game inputs that are valid.  If only the
-			// first is returned, then holds will drop on other inputs that should
-			// be valid. -Kyz
-			if( iThisInputCol == iCol )
-			{
-				ret.push_back(GameInput( gc, gb ));
-			}
+
 		}
-	}
-	if(unlikely(ret.empty()))
-	{
-		FAIL_M( ssprintf("Invalid column number %i for player %i in the style %s", iCol, pn, m_szName) );
 	}
 };
 
@@ -130,9 +119,8 @@ RString Style::ColToButtonName( int iCol ) const
 	if( pzColumnName != nullptr )
 		return pzColumnName;
 
-	vector<GameInput> GI;
-	StyleInputToGameInput( iCol, PLAYER_1, GI );
-	return INPUTMAPPER->GetInputScheme()->GetGameButtonName(GI[0].button);
+	GameInput GI = StyleInputToGameInput(iCol, PLAYER_1);
+	return INPUTMAPPER->GetInputScheme()->GetGameButtonName(GI.button);
 }
 
 // Lua bindings

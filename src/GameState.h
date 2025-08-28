@@ -73,10 +73,8 @@ public:
 	void SaveCurrentSettingsToProfile( PlayerNumber pn );
 	Song* GetDefaultSong() const;
 
-	bool CanSafelyEnterGameplay(RString& reason);
 	void SetCompatibleStylesForPlayers();
 	void ForceSharedSidesMatch();
-	void ForceOtherPlayersToCompatibleSteps(PlayerNumber main);
 
 	void Update( float fDelta );
 
@@ -137,9 +135,9 @@ public:
 	int		GetNumSidesJoined() const;
 
 	const Game*	GetCurrentGame() const;
-	const Style*	GetCurrentStyle(PlayerNumber pn) const;
-	void	SetCurrentStyle(const Style *style, PlayerNumber pn);
-	bool SetCompatibleStyle(StepsType stype, PlayerNumber pn);
+	const Style*	GetCurrentStyle() const;
+	void	SetCurrentStyle(const Style *style);
+	bool SetCompatibleStyle(StepsType stype);
 
 	void GetPlayerInfo( PlayerNumber pn, bool& bIsEnabledOut, bool& bIsHumanOut );
 	bool IsPlayerEnabled( PlayerNumber pn ) const;

@@ -22,6 +22,8 @@ public:
 	virtual ~MusicWheel();
 	virtual void Load(RString sType);
 	void BeginScreen();
+	void StartSelectingStepsAnimation();
+	void GoBackSelectingSongAnimation();
 
 	bool ChangeSort(SortOrder new_so, bool allowSameSort = false);	// return true if change successful
 	bool NextSort();						// return true if change successful
@@ -79,6 +81,7 @@ protected:
 	void readyWheelItemsData(SortOrder so);
 	void readyWheelChannelItemsData(RString group);	//xMAx - use this to make a cache for normal channels items
 	void FilterItems(vector<MusicWheelItemData*> arrayWheelItemDatas, vector<MusicWheelItemData*>& out, SortOrder so);
+
 
 	RString				m_sLastModeMenuItem;
 	SortOrder			m_SortOrder;

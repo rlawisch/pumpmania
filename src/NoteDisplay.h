@@ -49,7 +49,7 @@ struct NoteColorActor
 {
 	NoteColorActor();
 	~NoteColorActor();
-	void Load( const RString &sButton, const RString &sElement, PlayerNumber, GameController );
+	void Load( const RString &sButton, const RString &sElement );
 	Actor *Get();
 private:
 	NoteResource *m_p;
@@ -59,7 +59,7 @@ struct NoteColorSprite
 {
 	NoteColorSprite();
 	~NoteColorSprite();
-	void Load( const RString &sButton, const RString &sElement, PlayerNumber, GameController );
+	void Load( const RString &sButton, const RString &sElement );
 	Sprite *Get();
 private:
 	NoteResource *m_p;

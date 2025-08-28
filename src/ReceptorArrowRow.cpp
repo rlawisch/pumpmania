@@ -21,7 +21,7 @@ void ReceptorArrowRow::Load( const PlayerState* pPlayerState ) // xMAx
 	m_pPlayerState = pPlayerState;
 	// m_fYReverseOffsetPixels = fYReverseOffset; // xMAx
 
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(pPlayerState->m_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 
 	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ )
 	{
@@ -86,7 +86,7 @@ void ReceptorArrowRow::Update( float fDeltaTime )
 		{
 			// ScreenNameEntry uses ReceptorArrowRow but doesn't have or need
 			// column renderers.  Just do the lazy thing and offset x. -Kyz
-			const Style* style= GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber);
+			const Style* style= GAMESTATE->GetCurrentStyle();
 			m_ReceptorArrow[c]->SetX(style->m_ColumnInfo[m_pPlayerState->m_PlayerNumber][c].fXOffset);
 		}
 	}
@@ -94,7 +94,7 @@ void ReceptorArrowRow::Update( float fDeltaTime )
 
 void ReceptorArrowRow::DrawPrimitives()
 {
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	for( unsigned i=0; i<m_ReceptorArrow.size(); i++ )
 	{
 		const int c = pStyle->m_iColumnDrawOrder[i];

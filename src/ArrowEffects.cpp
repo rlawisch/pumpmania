@@ -81,6 +81,8 @@ static ThemeMetric<float>	BEAT_Z_PI_HEIGHT( "ArrowEffects", "BeatZPIHeight" );
 static ThemeMetric<float>	TINY_PERCENT_BASE( "ArrowEffects", "TinyPercentBase" );
 static ThemeMetric<float>	TINY_PERCENT_GATE( "ArrowEffects", "TinyPercentGate" );
 
+static ThemeMetric<bool>	DIZZY_HOLD_HEADS("ArrowEffects", "DizzyHoldHeads");
+
 static const PlayerOptions* curr_options= nullptr;
 
 float ArrowGetPercentVisible(float fYPosWithoutReverse, int iCol, float fYOffset,
@@ -260,7 +262,7 @@ static void UpdateTipsy(float * tipsy_result, float * tipsy_offset_result, float
 
 void ArrowEffects::Init(PlayerNumber pn)
 {
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(pn);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	const Style::ColumnInfo* pCols = pStyle->m_ColumnInfo[pn];
 	PerPlayerData &data = g_EffectData[pn];
 	// Init tornado limits.
@@ -320,7 +322,7 @@ void ArrowEffects::Update()
 
 	FOREACH_EnabledPlayer( pn )
 	{
-		const Style* pStyle = GAMESTATE->GetCurrentStyle(pn);
+		const Style* pStyle = GAMESTATE->GetCurrentStyle();
 		const Style::ColumnInfo* pCols = pStyle->m_ColumnInfo[pn];
 		const SongPosition &position = GAMESTATE->m_bIsUsingStepTiming
 		? GAMESTATE->m_pPlayerState[pn]->m_Position : GAMESTATE->m_Position;
@@ -752,7 +754,7 @@ float ArrowEffects::GetXPos( const PlayerState* pPlayerState, int iColNum, float
 {
 	float fPixelOffsetFromCenter = 0; // fill this in below
 
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(pPlayerState->m_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	const float* fEffects = curr_options->m_fEffects;
 
 	// TODO: Don't index by PlayerNumber.
@@ -969,48 +971,39 @@ float ArrowEffects::GetRotationY(float fYOffset) // xMAx
 	return fRotation;
 }
 
-float ArrowEffects::GetRotationZ( const PlayerState* pPlayerState, float fNoteBeat, bool bIsHoldHead, int iCol )
+float ArrowEffects::GetRotationZ(const PlayerState* pPlayerState, float fNoteBeat, bool bIsHoldHead)
 {
 	const float* fEffects = curr_options->m_fEffects;
 	float fRotation = 0;
-	if( fEffects[PlayerOptions::EFFECT_CONFUSION] != 0 || fEffects[PlayerOptions::EFFECT_CONFUSION_OFFSET] != 0 ||
-	curr_options->m_fConfusionZ[iCol] != 0
-	)
-		fRotation += ReceptorGetRotationZ( pPlayerState, iCol );
+	if (fEffects[PlayerOptions::EFFECT_CONFUSION] != 0)
+		fRotation += ReceptorGetRotationZ(pPlayerState);
 
 	// As usual, enable dizzy hold heads at your own risk. -Wolfman2000
-	if( fEffects[PlayerOptions::EFFECT_DIZZY] != 0 && ( curr_options->m_bDizzyHolds || !bIsHoldHead ) )
+	if (fEffects[PlayerOptions::EFFECT_DIZZY] != 0 && (DIZZY_HOLD_HEADS || !bIsHoldHead))
 	{
 		const float fSongBeat = pPlayerState->m_Position.m_fSongBeatVisible;
 		float fDizzyRotation = fNoteBeat - fSongBeat;
 		fDizzyRotation *= fEffects[PlayerOptions::EFFECT_DIZZY];
-		fDizzyRotation = fmodf( fDizzyRotation, 2*PI );
-		fDizzyRotation *= 180/PI;
+		fDizzyRotation = fmodf(fDizzyRotation, 2 * PI);
+		fDizzyRotation *= 180 / PI;
 		fRotation += fDizzyRotation;
 	}
 	return fRotation;
 }
 
-float ArrowEffects::ReceptorGetRotationZ( const PlayerState* pPlayerState, int iCol )
+float ArrowEffects::ReceptorGetRotationZ(const PlayerState* pPlayerState)
 {
 	const float* fEffects = curr_options->m_fEffects;
 	float fRotation = 0;
 
-	if( curr_options->m_fConfusionZ[iCol] != 0 )
-		fRotation += curr_options->m_fConfusionZ[iCol] * 180.0f/PI;
-
-	if( fEffects[PlayerOptions::EFFECT_CONFUSION_OFFSET] != 0 )
-		fRotation += fEffects[PlayerOptions::EFFECT_CONFUSION_OFFSET] * 180.0f/PI;
-
-	if( fEffects[PlayerOptions::EFFECT_CONFUSION] != 0 )
+	if (fEffects[PlayerOptions::EFFECT_CONFUSION] != 0)
 	{
 		float fConfRotation = pPlayerState->m_Position.m_fSongBeatVisible;
 		fConfRotation *= fEffects[PlayerOptions::EFFECT_CONFUSION];
-		fConfRotation = fmodf( fConfRotation, 2*PI );
-		fConfRotation *= -180/PI;
+		fConfRotation = fmodf(fConfRotation, 2 * PI);
+		fConfRotation *= -180 / PI;
 		fRotation += fConfRotation;
 	}
-
 	return fRotation;
 }
 
@@ -1440,26 +1433,18 @@ bool ArrowEffects::NeedZBuffer()
 	return false;
 }
 
-float ArrowEffects::GetZoom( const PlayerState* pPlayerState, float fYOffset, int iCol )
+float ArrowEffects::GetZoom(const PlayerState* pPlayerState)
 {
 	float fZoom = 1.0f;
-	// Design change:  Instead of having a flag in the style that toggles a
-	// fixed zoom (0.6) that is only applied to the columns, ScreenGameplay now
-	// calculates a zoom factor to apply to the notefield and puts it in the
-	// PlayerState. -Kyz
-	fZoom*= pPlayerState->m_NotefieldZoom;
-
-	fZoom = GetZoomVariable( fYOffset, iCol, fZoom);
+	// FIXME: Move the zoom values into Style
+	if (GAMESTATE->GetCurrentStyle()->m_bNeedsZoomOutWith2Players &&
+		(GAMESTATE->GetNumSidesJoined() == 2 || GAMESTATE->AnyPlayersAreCpu()))
+		fZoom *= 0.6f;
 
 	float fTinyPercent = curr_options->m_fEffects[PlayerOptions::EFFECT_TINY];
-	if( fTinyPercent != 0 )
+	if (fTinyPercent != 0)
 	{
-		fTinyPercent = powf( 0.5f, fTinyPercent );
-		fZoom *= fTinyPercent;
-	}
-	if( curr_options->m_fTiny[iCol] != 0 )
-	{
-		fTinyPercent = powf( 0.5f, curr_options->m_fTiny[iCol] );
+		fTinyPercent = powf(0.5f, fTinyPercent);
 		fZoom *= fTinyPercent;
 	}
 	return fZoom;

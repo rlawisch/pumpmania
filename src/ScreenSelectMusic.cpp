@@ -80,7 +80,7 @@ void ScreenSelectMusic::Init()
 	if (PREFSMAN->m_sTestInitialScreen.Get() == m_sName)
 	{
 		GAMESTATE->m_PlayMode.Set(PLAY_MODE_REGULAR);
-		GAMESTATE->SetCurrentStyle(GAMEMAN->GameAndStringToStyle(GAMEMAN->GetDefaultGame(), "versus"), PLAYER_INVALID);
+		GAMESTATE->SetCurrentStyle(GAMEMAN->GameAndStringToStyle(GAMEMAN->GetDefaultGame(), "versus"));
 		GAMESTATE->JoinPlayer(PLAYER_1);
 		GAMESTATE->SetMasterPlayerNumber(PLAYER_1);
 	}
@@ -279,12 +279,7 @@ void ScreenSelectMusic::BeginScreen()
 	g_ScreenStartedLoadingAt.Touch();
 	m_timerIdleComment.GetDeltaTime();
 
-	if (CommonMetrics::AUTO_SET_STYLE)
-	{
-		GAMESTATE->SetCompatibleStylesForPlayers();
-	}
-
-	if (GAMESTATE->GetCurrentStyle(PLAYER_INVALID) == nullptr)
+	if (GAMESTATE->GetCurrentStyle() == nullptr)
 	{
 		LuaHelpers::ReportScriptError("The Style has not been set.  A theme must set the Style before loading ScreenSelectMusic.");
 		// Instead of crashing, set the first compatible style.
@@ -298,7 +293,7 @@ void ScreenSelectMusic::BeginScreen()
 				GAMESTATE->GetNumSidesJoined(),
 				GAMESTATE->GetNumSidesJoined() == 1 ? "" : "s"));
 		}
-		GAMESTATE->SetCurrentStyle(pStyle, PLAYER_INVALID);
+		GAMESTATE->SetCurrentStyle(pStyle);
 	}
 
 	if (GAMESTATE->m_PlayMode == PlayMode_Invalid)
@@ -357,6 +352,26 @@ void ScreenSelectMusic::BeginScreen()
 		b_PlayerIsReady[p] = false;
 		m_bStepsChosen[p] = false; // por garantia
 	}
+
+	// Chama o BeginScreen do MusicWheel
+	m_MusicWheel.AnimateToEnterScreen();
+
+	// Usando o sistema de precache do StepMania
+	Song* pSong = m_MusicWheel.GetSelectedSong();
+
+	float fStartSeconds = pSong->GetPreviewStartSeconds();
+	SOUND->PlayMusic(
+		pSong->GetMusicPath(),  // sFile
+		nullptr,                // pTiming (nullptr para usar o timing padrão)
+		false,                  // bForceLoop
+		fStartSeconds,             // fStartSecond
+		10.0f,                  // fLengthSeconds (30 segundos de preview)
+		0.5f,                   // fFadeInLengthSeconds (fade in de 0.5s)
+		0.5f,                   // fFadeOutLengthSeconds (fade out de 0.5s)
+		false,                  // bAlignBeat
+		true                    // bApplyMusicRate
+	);
+
 }
 
 ScreenSelectMusic::~ScreenSelectMusic()
@@ -508,7 +523,6 @@ void ScreenSelectMusic::PrevChannel()
 
 	SetCurrentGroupIndex(newIndex);
 	m_MusicWheel.SelectSection(m_vAvailableGroups[newIndex]);
-
 
 }
 // -----------------------------------------------------------
@@ -787,6 +801,12 @@ bool ScreenSelectMusic::Input(const InputEventPlus& input)
 			}
 			m_soundStepsMoving.Play(true); // StepP1 Revival - bSilver
 		}
+		// StepP1 Revival - bSilver -------------------------------------------------------------------
+		if (input.MenuI == GAME_BUTTON_MENUUP || input.MenuI == GAME_BUTTON_MENUDOWN)
+		{
+			m_MusicWheel.AnimateFromSelectingSteps(); // bSilver - EXITING SELECTING STEPS ANIMATION
+		}
+
 		//This should not be MENUP or MENUDOWN, different games use different buttons to cancel.
 		//bSilver - BUT we only use Pump it Up here! ;) 
 	}
@@ -796,6 +816,8 @@ bool ScreenSelectMusic::Input(const InputEventPlus& input)
 	{
 		if (input.MenuI == GAME_BUTTON_MENUUP || input.MenuI == GAME_BUTTON_MENUDOWN)
 		{
+			SOUND->StopMusic();
+
 			m_soundEnterGroupSelect.Play(true);
 			LOG->Trace("Entering Groups");
 			//readyWheelChannelItemsData();
@@ -803,7 +825,15 @@ bool ScreenSelectMusic::Input(const InputEventPlus& input)
 			Message msg("GoBackSelectingGroup");
 			MESSAGEMAN->Broadcast(msg);
 
+			m_MusicWheel.AnimateToSelectingGroup();
+
+
+
 			return true;
+		}
+		if (input.MenuI == GAME_BUTTON_START)
+		{
+			m_MusicWheel.AnimateToSelectingSteps(); // bSilver - ENTERING SELECTING STEPS ANIMATION
 		}
 	}
 
@@ -897,6 +927,27 @@ bool ScreenSelectMusic::Input(const InputEventPlus& input)
 				m_SelectionState = SelectionState_SelectingSong;
 				Message msg("StartSelectingSong");
 				MESSAGEMAN->Broadcast(msg);
+
+				m_MusicWheel.AnimateFromSelectingGroup();
+
+				// Chama o BeginScreen do MusicWheel
+				m_MusicWheel.AnimateToEnterScreen();
+
+				// Usando o sistema de precache do StepMania
+				Song* pSong = m_MusicWheel.GetSelectedSong();
+
+				float fStartSeconds = pSong->GetPreviewStartSeconds();
+				SOUND->PlayMusic(
+					pSong->GetMusicPath(),  // sFile
+					nullptr,                // pTiming (nullptr para usar o timing padrão)
+					false,                  // bForceLoop
+					fStartSeconds,             // fStartSecond
+					10.0f,                  // fLengthSeconds (30 segundos de preview)
+					0.5f,                   // fFadeInLengthSeconds (fade in de 0.5s)
+					0.5f,                   // fFadeOutLengthSeconds (fade out de 0.5s)
+					false,                  // bAlignBeat
+					true                    // bApplyMusicRate
+				);
 
 				return true;
 			}
@@ -1103,7 +1154,6 @@ void ScreenSelectMusic::ChangeSteps(PlayerNumber pn, int dir)
 		  m_soundDifficultyHarder.PlayCopy(true);
 	  }
 	*/
-	GAMESTATE->ForceOtherPlayersToCompatibleSteps(pn);
 
 	Message msg("ChangeSteps");
 	msg.SetParam("Player", pn);
@@ -1484,17 +1534,19 @@ bool ScreenSelectMusic::MenuStart(const InputEventPlus& input)
 			}
 		}
 
-		//if (!bAllPlayersDoneSelectingSteps)
-		//{
-		//	m_bStepsChosen[pn] = true;
-		//	m_soundStart.Play(true);
 
-		//	// impldiff: Pump it Up Pro uses "StepsSelected". -aj
-		//	Message msg("StepsChosen");
-		//	msg.SetParam("Player", pn);
-		//	MESSAGEMAN->Broadcast(msg);
-		//	return true;
-		//}
+
+		if (!bAllPlayersDoneSelectingSteps)
+		{
+			m_bStepsChosen[pn] = true;
+			m_soundStart.Play(true);
+
+			// impldiff: Pump it Up Pro uses "StepsSelected". -aj
+			Message msg("StepsChosen");
+			msg.SetParam("Player", pn);
+			MESSAGEMAN->Broadcast(msg);
+			return true;
+		}
 		if (!b_PlayerIsReady[pn])
 		{
 			b_PlayerIsReady[pn] = true;
@@ -1512,6 +1564,7 @@ bool ScreenSelectMusic::MenuStart(const InputEventPlus& input)
 		}
 
 	}
+
 	break;
 	}
 
@@ -1557,13 +1610,17 @@ bool ScreenSelectMusic::MenuStart(const InputEventPlus& input)
 			{
 				m_bStepsChosen[p] = true;
 				// Don't play start sound. We play it again below on finalized
-				//m_soundStart.Play(true);
+				m_soundStart.Play(true);
 
-				//Message lMsg("StepsChosen");
-				//lMsg.SetParam("Player", p);
-				//MESSAGEMAN->Broadcast(lMsg);
+				Message lMsg("StepsChosen");
+				lMsg.SetParam("Player", p);
+				MESSAGEMAN->Broadcast(lMsg);
 			}
+
+
 		}
+
+
 
 		// Now that Steps have been chosen, set a Style that can play them.
 		GAMESTATE->SetCompatibleStylesForPlayers();
@@ -1966,7 +2023,7 @@ void ScreenSelectMusic::AfterMusicChange()
 			}
 			else
 			{ */
-		pStyle = GAMESTATE->GetCurrentStyle(PLAYER_INVALID);
+		pStyle = GAMESTATE->GetCurrentStyle();
 		lCourse->GetTrails(m_vpTrails, pStyle->m_StepsType);
 		// }
 	// --------------------------------------------------------------------------------------------

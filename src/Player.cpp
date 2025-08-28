@@ -871,7 +871,7 @@ void Player::Load()
 	m_Timing = GAMESTATE->m_pCurSteps[pn]->GetTimingData();
 
 	/* Apply transforms. */
-	NoteDataUtil::TransformNoteData(m_NoteData, *m_Timing, m_pPlayerState->m_PlayerOptions.GetStage(), GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->m_StepsType);
+	NoteDataUtil::TransformNoteData(m_NoteData, *m_Timing, m_pPlayerState->m_PlayerOptions.GetStage(), GAMESTATE->GetCurrentStyle()->m_StepsType);
 
 	const Song* pSong = GAMESTATE->m_pCurSong;
 
@@ -1201,7 +1201,7 @@ void Player::Update( float fDeltaTime )
 		return;
 
 	// update pressed flag
-	const int iNumCols = GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->m_iColsPerPlayer;
+	const int iNumCols = GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer;
 	ASSERT_M( iNumCols <= MAX_COLS_PER_PLAYER, ssprintf("%i > %i", iNumCols, MAX_COLS_PER_PLAYER) );
 	for( int col=0; col < iNumCols; ++col )
 	{
@@ -1209,7 +1209,7 @@ void Player::Update( float fDeltaTime )
 
 		// TODO: Remove use of PlayerNumber.
 		vector<GameInput> GameI;
-		GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->StyleInputToGameInput( col, m_pPlayerState->m_PlayerNumber, GameI );
+		GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( col, m_pPlayerState->m_PlayerNumber );
 
 		bool bIsHoldingButton= INPUTMAPPER->IsBeingPressed(GameI);
 
@@ -1819,45 +1819,45 @@ void Player::UpdateHoldNote( int iSongRow, float fDeltaTime, TrackRowTapNote &tr
 
     // StepP1 Revival - Thequila ------------------------------------------------------------------
     vector<GameInput> GameI;
-    GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->StyleInputToGameInput( iTrack, pn, GameI );
+    GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iTrack, pn );
 
     bIsHoldingButton &= INPUTMAPPER->IsBeingPressed(GameI, m_pPlayerState->m_mp);
     // --------------------------------------------------------------------------------------------
 
 		// m_bFreePerformance
-		if( GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions.GetCurrent().m_bFreePerformance && (GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer > 5) )
+		if( GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions.GetCurrent().m_bFreePerformance && (GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer > 5) )
 		{
-			if( GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer == 10 )	//piu double
+			if( GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer == 10 )	//piu double
 			{
 				if( iTrack > 4 )	// player 2 side
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( iTrack-5 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( iTrack-5 , pn, GameI_tmp ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iTrack-5 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 				else // player 1 side
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( iTrack+5 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( iTrack+5 , pn, GameI_tmp ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iTrack+5 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 			}
-			else if( GAMESTATE->GetCurrentStyle(pn)->m_iColsPerPlayer == 6 ) //piu half double
+			else if( GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer == 6 ) //piu half double
 			{
 				if( iTrack == 0 ) // Only the center is available
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( 5 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( 5 , pn, GameI_tmp ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( 5 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 				else if( iTrack == 5 ) // Only the center is available
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( 0 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( 0 , pn, GameI_tmp ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( 0 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 			}
@@ -2006,7 +2006,7 @@ void Player::ApplyWaitingTransforms()
 
 		// if re-adding noteskin changes, this is one place to edit -aj
 
-		NoteDataUtil::TransformNoteData(m_NoteData, *m_Timing, po, GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->m_StepsType, BeatToNoteRow(fStartBeat), BeatToNoteRow(fEndBeat));
+		NoteDataUtil::TransformNoteData(m_NoteData, *m_Timing, po, GAMESTATE->GetCurrentStyle()->m_StepsType, BeatToNoteRow(fStartBeat), BeatToNoteRow(fEndBeat));
 	}
 	m_pPlayerState->m_ModsToApply.clear();
 }
@@ -2017,7 +2017,7 @@ void Player::DrawPrimitives()
 	PlayerNumber pn = m_pPlayerState->m_PlayerNumber;
 
 	// May have both players in doubles (for battle play); only draw primary player.
-	if( GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->m_StyleType == StyleType_OnePlayerTwoSides  &&
+	if( GAMESTATE->GetCurrentStyle()->m_StyleType == StyleType_OnePlayerTwoSides  &&
 		pn != GAMESTATE->GetMasterPlayerNumber() )
 		return;
 
@@ -3619,7 +3619,7 @@ void Player::CrossedRows( int iLastRowCrossed, const RageTimer &now )
         */
 					PlayerNumber pn = m_pPlayerState->m_PlayerNumber;
 					vector<GameInput> GameI;
-					GAMESTATE->GetCurrentStyle(GetPlayerState()->m_PlayerNumber)->StyleInputToGameInput( iTrack, pn, GameI );
+					GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iTrack, pn );
 					if( PREFSMAN->m_fPadStickSeconds > 0.f )
 					{
 						for(size_t i= 0; i < GameI.size(); ++i)

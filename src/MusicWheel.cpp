@@ -23,6 +23,7 @@
 #include "CommonMetrics.h"
 #include "MessageManager.h"
 #include "LocalizedString.h"
+#include "ScreenDimensions.h" // bSilver
 
 static Preference<bool> g_bMoveRandomToEnd("MoveRandomToEnd", false);
 // static Preference<bool> g_bPrecacheAllSorts( "PreCacheAllWheelSorts", false); // xMAx
@@ -141,28 +142,30 @@ void MusicWheel::BeginScreen()
 		vector<RString>	vsAllAvailableChannels;
 
 		// xMAx - List channels by remaining life tokens and players
+		// bSilver - Maybe we not use this anymore because this game is 100% Freeplay/Event mode
 		SONGMAN->GetSongGroupNamesAvailables(vsAllAvailableChannels);
 
 		// xMAx - Search for automatic channels (sorts) and regular channels (song groups)
-		for (unsigned i = 0; i < vsAllAvailableChannels.size(); i++)
+		for (const auto& groupName : vsAllAvailableChannels)
 		{
-			if (vsAllAvailableChannels[i].find("SO_") != std::string::npos || vsAllAvailableChannels[i] == "AllCourses")
+			if (groupName.substr(0, 3) == "SO_" || groupName == "AllCourses")
 			{
-				SortOrder so = StringToSortOrder(vsAllAvailableChannels[i]);
+				SortOrder so = StringToSortOrder(groupName);
 				if (so != SortOrder_Invalid)
 				{
 					readyWheelItemsData(so);
-					LOG->Trace("MusicWheel::Pre-cached sort order: %s", vsAllAvailableChannels[i].c_str());
+					LOG->Trace("MusicWheel::Pre-cached sort order: %s", groupName.c_str());
 				}
 			}
 			else
 			{
-				readyWheelChannelItemsData(vsAllAvailableChannels[i]);
-				LOG->Trace("MusicWheel::Pre-cached song group: %s", vsAllAvailableChannels[i].c_str());
+				readyWheelChannelItemsData(groupName);
+				LOG->Trace("MusicWheel::Pre-cached song group: %s", groupName.c_str());
 			}
 		}
-		LOG->Trace("MusicWheel::MusicWheel precache items took: %s", ssprintf("%.3f ", timer.GetDeltaTime()).c_str());
+		LOG->Trace("MusicWheel::Precache completed in: %.3f seconds", timer.GetDeltaTime());
 	}
+
 
 	WheelBase::BeginScreen();
 }
@@ -296,6 +299,8 @@ void MusicWheel::ReloadSongList()
 	RebuildWheelItems();
 	LOG->Trace("MusicWheel::ReloadSongList() - Finished, final size: %d", m_CurWheelItemData.size());
 }
+
+
 
 /* If a song or course is set in GAMESTATE and available, select it.  Otherwise, choose the
  * first available song or course.  Return true if an item was set, false if no items are
@@ -643,6 +648,7 @@ void MusicWheel::GetSongList(vector<Song*>& arraySongs, SortOrder so, RString So
 // void MusicWheel::BuildWheelItemsData( vector<MusicWheelItemData *> &arrayWheelItemDatas, SortOrder so ) // xMAx
 void MusicWheel::BuildWheelItemsData(vector<MusicWheelItemData*>& arrayWheelItemDatas, SortOrder so, RString SongGroup) // xMAx
 {
+	
 	LOG->Trace("MusicWheel::BuildWheelItemsData - SortOrder: %d, SongGroup: %s", so, SongGroup.c_str());
 	switch (so)
 	{
@@ -804,7 +810,7 @@ void MusicWheel::BuildWheelItemsData(vector<MusicWheelItemData*>& arrayWheelItem
 			}
 
 			// check that this course has at least one song playable in the current style
-			if (!pCourse->IsPlayableIn(GAMESTATE->GetCurrentStyle(PLAYER_INVALID)->m_StepsType))
+			if (!pCourse->IsPlayableIn(GAMESTATE->GetCurrentStyle()->m_StepsType))
 				continue;
 
 			arrayWheelItemDatas.push_back(new MusicWheelItemData(WheelItemDataType_Course, NULL, sThisSection, pCourse, RageColor(1, 1, 1, 1), 0));
@@ -1388,7 +1394,8 @@ void MusicWheel::SetOpenSection(RString group)
 	RebuildWheelItems();
 
 	// Set the position of each item on the wheel (no moving)
-	SetPositions();
+	if (!GetTweenTimeLeft() && !this->m_bIsSelectingGroups)
+		SetPositions();
 
 	LOG->Trace("MusicWheel::SetOpenSection - Finished, final size: %d", m_CurWheelItemData.size());
 }
@@ -1575,6 +1582,42 @@ Song* MusicWheel::GetSelectedSong()
 	}
 }
 
+// bSilver - MusicWheel exit animation for SelectionState_SelectingSteps
+void MusicWheel::StartSelectingStepsAnimation()
+{
+	// Interrompe tweens anteriores
+	StopTweening();
+
+	// Posição inicial
+	SetY(SCREEN_HEIGHT - 118);
+
+	// Primeiro movimento
+	BeginTweening(0.2f, TWEEN_DECELERATE);
+	SetY(SCREEN_HEIGHT - 118 - 10);
+
+	// Segundo movimento
+	BeginTweening(0.1f, TWEEN_DECELERATE);
+	SetY(SCREEN_HEIGHT - 118 + 180);
+}
+
+// bSilver - MusicWheel exit animation for SelectionState_SelectingSteps
+void MusicWheel::GoBackSelectingSongAnimation()
+{
+	// Interrompe tweens anteriores
+	StopTweening();
+
+	// Posição inicial
+	SetY(SCREEN_HEIGHT - 118 + 180);
+
+	// Primeiro movimento
+	BeginTweening(0.2f, TWEEN_DECELERATE);
+	SetY(SCREEN_HEIGHT - 118 - 10);
+
+	// Segundo movimento
+	BeginTweening(0.1f, TWEEN_DECELERATE);
+	SetY(SCREEN_HEIGHT - 118);
+}
+
 /* Find a random song.  If possible, find one that has the preferred difficulties of
  * each player.  Prefer songs in the active group, if any.
  *
@@ -1605,7 +1648,7 @@ Song* MusicWheel::GetPreferredSelectionForRandomOrPortal()
 	vector<MusicWheelItemData*> wid;
 	getWheelItemsData(GAMESTATE->m_SortOrder, wid);
 
-	StepsType st = GAMESTATE->GetCurrentStyle(PLAYER_INVALID)->m_StepsType;
+	StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 
 #define NUM_PROBES 1000
 	for (int i = 0; i < NUM_PROBES; i++)

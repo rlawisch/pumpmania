@@ -24,7 +24,7 @@ void ScreenNameEntryTraditional::Init()
 		GAMESTATE->m_bSideIsJoined[PLAYER_2] = true;
 		GAMESTATE->SetMasterPlayerNumber(PLAYER_1);
 		GAMESTATE->m_PlayMode.Set( PLAY_MODE_REGULAR );
-		GAMESTATE->SetCurrentStyle( GAMEMAN->GameAndStringToStyle( GAMEMAN->GetDefaultGame(),"versus"), GAMESTATE->GetMasterPlayerNumber() );
+		GAMESTATE->SetCurrentStyle( GAMEMAN->GameAndStringToStyle( GAMEMAN->GetDefaultGame(),"versus") );
 		for( int z = 0; z < 3; ++z )
 		{
 			StageStats ss;
@@ -36,8 +36,8 @@ void ScreenNameEntryTraditional::Init()
 
 			FOREACH_PlayerNumber( p )
 			{
-				ss.m_player[p].m_pStyle = GAMESTATE->GetCurrentStyle(p);
-				StepsType st = GAMESTATE->GetCurrentStyle(p)->m_StepsType;
+				ss.m_player[p].m_pStyle = GAMESTATE->GetCurrentStyle();
+				StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 				Steps *pSteps = ss.m_vpPlayedSongs[0]->GetAllSteps()[0];
 				ss.m_player[p].m_iStepsPlayed = 1;
 				GAMESTATE->m_pCurSteps[p].Set( pSteps );

@@ -222,10 +222,10 @@ bool BeginnerHelper::CanUse(PlayerNumber pn)
 	// only check the first non-nullptr style.  Both styles need to be checked. -Kyz
 	if(pn == PLAYER_INVALID)
 	{
-		return GAMESTATE->GetCurrentStyle(PLAYER_1)->m_bCanUseBeginnerHelper ||
-			GAMESTATE->GetCurrentStyle(PLAYER_2)->m_bCanUseBeginnerHelper;
+		return GAMESTATE->GetCurrentStyle()->m_bCanUseBeginnerHelper ||
+			GAMESTATE->GetCurrentStyle()->m_bCanUseBeginnerHelper;
 	}
-	return GAMESTATE->GetCurrentStyle(pn)->m_bCanUseBeginnerHelper;
+	return GAMESTATE->GetCurrentStyle()->m_bCanUseBeginnerHelper;
 }
 
 void BeginnerHelper::DrawPrimitives()

@@ -212,7 +212,7 @@ void StageStats::FinalizeScores( bool bSummary )
 	FOREACH_HumanPlayer( p )
 	{
 		const HighScore &hs = m_player[p].m_HighScore;
-		StepsType st = GAMESTATE->GetCurrentStyle(p)->m_StepsType;
+		StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 
 		const Song* pSong = GAMESTATE->m_pCurSong;
 		const Steps* pSteps = GAMESTATE->m_pCurSteps[p];
@@ -266,7 +266,7 @@ void StageStats::FinalizeScores( bool bSummary )
 
 		HighScore &hs = m_player[p].m_HighScore;
 		Profile* pProfile = PROFILEMAN->GetMachineProfile();
-		StepsType st = GAMESTATE->GetCurrentStyle(p)->m_StepsType;
+		StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 
 		const HighScoreList *pHSL = nullptr;
 		if( bSummary )

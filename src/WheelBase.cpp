@@ -80,6 +80,14 @@ void WheelBase::Load( RString sType )
 	m_Moving = 0;
 	m_iTimesBeforeStartSpin = 1;	//xMAx
 
+	// bSilver
+	m_bIsSelectingSteps = false;
+	m_bIsBeginScreen = true;
+	m_bIsSelectingGroups = false;
+	m_fSelectingStepsAnimTime = 0;
+	m_fSelectingStepsDuration = 1.0f;
+	// --------
+
 	SWITCH_SECONDS.Load(sType,"SwitchSeconds");
 	LOCKED_INITIAL_VELOCITY.Load(sType,"LockedInitialVelocity");
 	// SCROLL_BAR_HEIGHT.Load(sType,"ScrollBarHeight"); // xMAx
@@ -106,33 +114,39 @@ void WheelBase::Load( RString sType )
 	if( (float)PREFSMAN->m_fDisplayAspectRatio >= 1.5f )
 		fXFactor = 2/3.0f;
 
-	wheel_positions.push_back(MadeWheelTweenState(floor(-720.0f * fXFactor), 0, -6, -60.0f, 0.18f)); // 0 - Out of the Wheel (Zoom 0)
+	wheel_positions.push_back(MadeWheelTweenState(floor(-850.0f * fXFactor), 0, -7, -60.0f, 0.17f)); // 0 - Out of the Wheel (Zoom 0)
+	wheel_positions.push_back(MadeWheelTweenState(floor(-720.0f * fXFactor), 0, -6, -60.0f, 0.17f)); // 1 
 	wheel_positions.push_back(MadeWheelTweenState(floor(-610.0f * fXFactor), 0, -5, -55.0f, 0.18f));
 	wheel_positions.push_back(MadeWheelTweenState(floor(-500.0f * fXFactor), 0, -4, -45.0f, 0.20f));
 	wheel_positions.push_back(MadeWheelTweenState(floor(-390.0f * fXFactor), 0, -3, -40.0f, 0.22f));
-	wheel_positions.push_back(MadeWheelTweenState(floor(-260.0f * fXFactor), 0, -2, -40.0f, 0.24f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(-260.0f * fXFactor), 0, -2, -40.0f, 0.23f));
 	wheel_positions.push_back(MadeWheelTweenState(floor(-150.0f * fXFactor), 0, -1, -35.0f, 0.24f));
-	wheel_positions.push_back(MadeWheelTweenState(0.0f, 0, 0.0f, 0.0f, 0.25f)); // 6
+	wheel_positions.push_back(MadeWheelTweenState(0.0f, 0, 0.0f, 0.0f, 0.25f)); // 7
 	wheel_positions.push_back(MadeWheelTweenState(floor(150.0f * fXFactor), 0, -1, 35.0f, 0.24f));
-	wheel_positions.push_back(MadeWheelTweenState(floor(260.0f * fXFactor), 0, -2, 40.0f, 0.24f));
+	wheel_positions.push_back(MadeWheelTweenState(floor(260.0f * fXFactor), 0, -2, 40.0f, 0.23f));
 	wheel_positions.push_back(MadeWheelTweenState(floor(390.0f * fXFactor), 0, -3, 40.0f, 0.22f));
 	wheel_positions.push_back(MadeWheelTweenState(floor(500.0f * fXFactor), 0, -4, 45.0f, 0.20f));
-	wheel_positions.push_back(MadeWheelTweenState(floor(610.0f * fXFactor), 0, -5, 55.0f, 0.18f));
-	wheel_positions.push_back(MadeWheelTweenState(floor(720.0f * fXFactor), 0, -6, 60.0f, 0.18f)); // 12 - Out of the Wheel (Zoom 0)
+	wheel_positions.push_back(MadeWheelTweenState(floor(610.0f * fXFactor), 0, -5, 55.0f, 0.18f)); 
+	wheel_positions.push_back(MadeWheelTweenState(floor(720.0f * fXFactor), 0, -6, 60.0f, 0.17f)); 
+	wheel_positions.push_back(MadeWheelTweenState(floor(850.0f * fXFactor), 0, -7, 60.0f, 0.17f)); // 14 - Out of the range visual 
 
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -6, -130.0f, 0)); // 0
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -5, -125.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -4, -120.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -3, -110.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -2, -100.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -1, -95.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(0.0f, 0, 0.0f, 0.0f, 0.0f)); // 6
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -1, 95.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -2, 100.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -3, 110.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -4, 115.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -5, 120.0f, 0));
-	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -6, 130.0f, 0)); // 12
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -7, -150.0f, 0)); //0
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -6, -130.0f, 0)); // 1
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -5, -125.0f, 0));// 2
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -4, -120.0f, 0));// 3
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -3, -110.0f, 0));// 4
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -2, -100.0f, 0));// 5
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -1, -95.0f, 0)); // 6
+	wheel_init_positions.push_back(MadeWheelTweenState(0.0f, 0, 0.0f, 0.0f, 0.0f)); // 7
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -1, 95.0f, 0));  // 8
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -2, 100.0f, 0)); // 9
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -3, 110.0f, 0)); // 10
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -4, 115.0f, 0)); // 11
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -5, 120.0f, 0)); // 12
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -6, 130.0f, 0)); // 13
+	wheel_init_positions.push_back(MadeWheelTweenState(floor(0.0f * fXFactor), 0, -7, 150.0f, 0)); // 14
+
+// TODO: Verify last item wheel, it always appear in the center wheel without properties. - bSilver
   // ----------------------------------------------------------------------------------------------
 
 	// draw outside->inside
@@ -159,7 +173,9 @@ void WheelBase::Load( RString sType )
 void WheelBase::BeginScreen()
 {
 	m_WheelState = STATE_SELECTING;
+
 }
+
 
 // xMAx - Prime -----------------------------------------------------------------------------------
 void WheelBase::OpenUpWheel( bool bOpenCenter )
@@ -169,7 +185,7 @@ void WheelBase::OpenUpWheel( bool bOpenCenter )
 	{
 		WheelItemBase *pDisplay = m_WheelBaseItems[i];
 
-		if ( i >= 13 || i < 0 )
+		if ( i >= 14 || i < 0 )
 			return;
 
 		pDisplay->FinishTweening();
@@ -194,7 +210,7 @@ void WheelBase::OpenUpWheel( bool bOpenCenter )
 			default: break;
 		}
 
-		if( i == 6 )
+		if( i == 7 )
 		{
 			pDisplay->BeginTweening(0.1f, TWEEN_DECELERATE);
 			pDisplay->SetY(-45.0f);
@@ -217,12 +233,12 @@ void WheelBase::CloseUpWheel( bool bCloseCenter )
 	{
 		WheelItemBase *pDisplay = m_WheelBaseItems[i];
 
-		if ( i >= 13 || i < 0 )
+		if ( i >= 14 || i < 0 )
 			return;
 
 		pDisplay->FinishTweening();
 
-		if( i==6 && !bCloseCenter )
+		if( i==7 && !bCloseCenter )
 		{
 			pDisplay->DestTweenState() = wheel_positions[i];
 			continue;
@@ -304,7 +320,7 @@ void WheelBase::SetPositions(int dir) // xMAx
     */
 
     // xMAx ---------------------------------------------------------------------------------------
-		if ( i >= 12 || i < 0 )
+		if ( i >= 14 || i < 0 )
 			return;
 
 		pDisplay->StopTweening();
@@ -325,7 +341,10 @@ void WheelBase::SetPositions(int dir) // xMAx
 		}
 		else if ( dir == -1 )
 		{
-			pDisplay->DestTweenState() = wheel_positions[i];
+			if (i > 0)
+				pDisplay->DestTweenState() = wheel_positions[i - 1];
+			else
+				pDisplay->DestTweenState() = wheel_positions[i];
 
 			if ( i==0 )
 			{
@@ -336,7 +355,7 @@ void WheelBase::SetPositions(int dir) // xMAx
 			else
 				pDisplay->BeginTweening(0.3f, TWEEN_LINEAR);
 
-			pDisplay->DestTweenState() = wheel_positions[i+1];
+			pDisplay->DestTweenState() = wheel_positions[i];
 		}
 		else
 			pDisplay->DestTweenState() = wheel_positions[i];
@@ -380,12 +399,870 @@ void WheelBase::HandleMessageOver( const Message &msg )	//test - (see ScreenSele
 }
 // ------------------------------------------------------------------------------------------------
 
+void WheelBase::AnimateToEnterScreen()
+{
+	float fXFactor = 0.55f;
+	if ((float)PREFSMAN->m_fDisplayAspectRatio >= 1.5f)
+		fXFactor = 2 / 3.0f;
+
+	for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	{
+		m_WheelBaseItems[i]->StopTweening();
+
+		if (i == 1)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.6f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-720.0f * fXFactor));
+		}
+
+		if (i == 2)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.5f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+		}
+
+		if (i == 3)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.4f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+		}
+
+		if (i == 4)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.3f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+		}
+
+		if (i == 5)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.2f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-260.0f * fXFactor));
+		}
+
+		if (i == 6)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.1f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-150.0f * fXFactor));
+		}
+
+		if (i == 7) // item central
+		{
+			m_WheelBaseItems[i]->SetZoom(0.50f);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetZoom(0.25f);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+		}
+
+		if (i == 8)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.1f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(150.0f * fXFactor));
+		}
+
+		if (i == 9)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.2f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(260.0f * fXFactor));
+		}
+
+		if (i == 10)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.3f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+		}
+
+		if (i == 11)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.4f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+		}
+
+		if (i == 12)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.5f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+		}
+
+		if (i == 13)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[7]->GetX());
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.24f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+			m_WheelBaseItems[i]->BeginTweening(.01f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+			m_WheelBaseItems[i]->BeginTweening(.6f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(720.0f * fXFactor));
+		}
+	}
+}
+
+// bSilver - Animation to Enter Selecting Steps
+void WheelBase::AnimateToSelectingSteps()
+{
+	m_bIsSelectingSteps = true;
+
+	//if (m_bIsSelectingSteps) return;
+
+	//m_bIsSelectingSteps = true;
+	//m_fSelectingStepsAnimTime = 0;
+	//m_fSelectingStepsDuration = 1.0f; // 1 second
+
+	//// Save the current state of all itens
+	//m_InitialTweenStates.clear();
+	//for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	//{
+	//	Actor::TweenState ts;
+	//	ts.pos.x = m_WheelBaseItems[i]->GetX();
+	//	ts.pos.y = m_WheelBaseItems[i]->GetY();
+	//	ts.pos.z = m_WheelBaseItems[i]->GetZ();
+	//	ts.rotation.y = m_WheelBaseItems[i]->GetRotationY();
+	//	ts.scale.x = m_WheelBaseItems[i]->GetZoom();
+	//	ts.scale.y = m_WheelBaseItems[i]->GetZoom();
+
+	//	m_InitialTweenStates.push_back(ts);
+	//}
+
+	float fXFactor = 0.55f;
+	if ((float)PREFSMAN->m_fDisplayAspectRatio >= 1.5f)
+		fXFactor = 2 / 3.0f;
+
+	for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	{
+		m_WheelBaseItems[i]->StopTweening();
+		if (i == 1)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.30f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX()-300);
+		}
+		if (i == 2)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[1]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX() - 300);
+		}
+		if (i == 3)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.20f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[2]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[1]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX() - 300);
+		}
+		if (i == 4)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[3]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[2]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[1]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX() - 300);
+		}
+		if (i == 5)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.10f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[4]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[3]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[2]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[1]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX() - 300);
+		}
+		if (i == 6)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[5]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[4]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[3]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[2]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[1]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[0]->GetX() - 300);
+			//m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			//m_WheelBaseItems[i]->SetX(-900.0f * fXFactor);
+		}
+		if (i == 7) // Item central
+		{
+			m_WheelBaseItems[i]->SetZoom(m_WheelBaseItems[i]->GetZoom());
+			m_WheelBaseItems[i]->BeginTweening(0.1f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetZoom(0.28f);
+			m_WheelBaseItems[i]->BeginTweening(.20f, TWEEN_ACCELERATE);
+			m_WheelBaseItems[i]->SetZoom(0.0f);
+		}
+		if (i == 8)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[9]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[10]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[11]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[12]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX() + 300);
+		}
+		if (i == 9)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.10f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[10]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[11]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[12]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX() + 300);
+
+		}
+		if (i == 10)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[11]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[12]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX() + 300);
+		}
+		if (i == 11)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.20f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[12]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX() + 300);
+		}
+		if (i == 12)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX() + 300);
+		}
+		if (i == 13)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[13]->GetX() + 300);
+		}
+	}
+}
+
+void WheelBase::AnimateFromSelectingSteps()
+{
+	float fXFactor = 0.55f;
+	if ((float)PREFSMAN->m_fDisplayAspectRatio >= 1.5f)
+		fXFactor = 2 / 3.0f;
+
+	//390.0f 500.0f 610.0f
+
+	for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	{
+		m_WheelBaseItems[i]->StopTweening();
+		if (i == 2)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+		}
+		if (i == 3)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+		}
+		if (i == 4)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+		}
+		if (i == 5)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-260.0f * fXFactor));
+		}
+		if (i == 6)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-260.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-150.0f * fXFactor));
+		}
+		if (i == 7) // Item central
+		{
+			m_WheelBaseItems[i]->BeginTweening(.5f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetZoom(0.25f);
+		}
+		if (i == 8)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(260.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(150.0f * fXFactor));
+		}
+		if (i == 9)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(260.0f * fXFactor));
+		}
+		if (i == 10)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+		}
+		if (i == 11)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+		}
+		if (i == 12)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+		}
+	}
+
+	m_bIsSelectingSteps = false; // ← Bloqueia reset
+
+}
+
+void WheelBase::AnimateToSelectingGroup()
+{
+	m_bIsSelectingGroups = true;
+	// Obs.: Quando os outros itens chegarem no 6 e 8, já desaparecem todos da tela de uma vez.
+	for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	{
+		m_WheelBaseItems[i]->StopTweening();
+		if (i == 1)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[2]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[3]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[4]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[5]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[6]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 2)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.10f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[3]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[4]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[5]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[6]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 3)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[4]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[5]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[6]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 4)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.20f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[5]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[6]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 5)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[6]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 6)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.30f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+
+		}
+		if (i == 7) // Item central
+		{
+			m_WheelBaseItems[i]->BeginTweening(.30f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 8)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.30f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 9)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.25f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[8]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+
+		}
+		if (i == 10)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.20f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[9]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[8]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 11)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[10]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[9]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[8]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 12)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.10f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[11]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[10]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[9]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[8]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+		if (i == 13)
+		{
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[12]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[11]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[10]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[9]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[8]->GetX());
+			m_WheelBaseItems[i]->BeginTweening(.15f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetDiffuseAlpha(0.0f);
+		}
+	}
+}
+
+void WheelBase::NotResetWheelYet()
+{
+	m_bIsSelectingGroups = true;
+
+}
+
+void WheelBase::AnimateFromSelectingGroup()
+{
+	float fXFactor = 0.55f;
+	if ((float)PREFSMAN->m_fDisplayAspectRatio >= 1.5f)
+		fXFactor = 2 / 3.0f;
+
+	for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	{
+		m_WheelBaseItems[i]->StopTweening();
+
+		if (i == 1)
+		{
+			m_WheelBaseItems[i]->SetX(floor(-1000 * fXFactor));
+
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-720.0f * fXFactor));
+		}
+		if (i == 2)
+		{
+			m_WheelBaseItems[i]->SetX(floor(-1000 * fXFactor));
+
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+		}
+		if (i == 3)
+		{
+
+			m_WheelBaseItems[i]->SetX(floor(-1000 * fXFactor));
+
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+		}
+		if (i == 4)
+		{
+			m_WheelBaseItems[i]->SetX(m_WheelBaseItems[i]->GetX());
+
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+		}
+		if (i == 5)
+		{
+			m_WheelBaseItems[i]->SetX(floor(-1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-260.0f * fXFactor));
+		}
+		if (i == 6)
+		{
+			m_WheelBaseItems[i]->SetX(floor(-1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-260.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(-150.0f * fXFactor));
+		}
+		if (i == 7) // Item central
+		{
+			m_WheelBaseItems[i]->SetZoom(0.0f);
+			m_WheelBaseItems[i]->SetX(0.0f);
+
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.5f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetZoom(0.25f);
+		}
+		if (i == 8)
+		{
+			m_WheelBaseItems[i]->SetX(floor(1000 * fXFactor));
+
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(260.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(150.0f * fXFactor));
+		}
+		if (i == 9)
+		{
+			m_WheelBaseItems[i]->SetX(floor(1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(260.0f * fXFactor));
+		}
+		if (i == 10)
+		{
+			m_WheelBaseItems[i]->SetX(floor(1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(390.0f * fXFactor));
+		}
+		if (i == 11)
+		{
+			m_WheelBaseItems[i]->SetX(floor(1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(500.0f * fXFactor));
+		}
+		if (i == 12)
+		{
+			m_WheelBaseItems[i]->SetX(floor(1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(610.0f * fXFactor));
+		}
+		if (i == 13)
+		{
+			m_WheelBaseItems[i]->SetX(floor(1000 * fXFactor));
+			m_WheelBaseItems[i]->SetDiffuseAlpha(1.0f);
+
+			m_WheelBaseItems[i]->BeginTweening(.05f, TWEEN_LINEAR);
+			m_WheelBaseItems[i]->SetX(floor(720.0f * fXFactor));
+		}
+	}
+	m_bIsSelectingGroups = false;
+}
+
+// ----------------------------------------------
+
 void WheelBase::Update( float fDeltaTime )
 {
 	ActorFrame::Update( fDeltaTime );
 
+	//// bSilver - Update for SelectingStepsAnimation
+	//if (m_bIsSelectingSteps)
+	//{
+	//	m_fSelectingStepsAnimTime += fDeltaTime;
+	//	float percent = m_fSelectingStepsAnimTime / m_fSelectingStepsDuration;
+
+	//	// Using easing function to smoother animation
+	//	percent = pow(percent, 1.5f); // Ease-out
+
+	//	if (percent >= 1.0f)
+	//	{
+	//		m_bIsSelectingSteps = false;
+	//		percent = 1.0f;
+
+	//		// Ensure accurate end state
+	//		for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	//		{
+	//			if (i == 6) // Central Index
+	//			{
+	//				m_WheelBaseItems[i]->SetZoom(0.0f);
+	//			}
+	//		}
+	//		return;
+	//	}
+
+	//	// Apply animation only in central index ( // 6 )
+	//	for (int i = 0; i < NUM_WHEEL_ITEMS; i++)
+	//	{
+	//		if (i == 6) // Only central index
+	//		{
+	//			// Zoom only, keeping other properties
+	//			float initialZoom = m_InitialTweenStates[i].scale.x;
+	//			float targetZoom = 0.0f;
+	//			float newZoom = initialZoom + (targetZoom - initialZoom) * percent;
+
+	//			m_WheelBaseItems[i]->SetZoom(newZoom);
+	//		}
+	//		// Other itens keep your current properties 
+	//	}
+	//}
+
 	// If tweens aren't controlling the position of the wheel, set positions.
-	if( !GetTweenTimeLeft() )
+	if( !GetTweenTimeLeft() && !m_bIsSelectingSteps && !m_bIsSelectingGroups)
 		SetPositions();
 
   /* xMAx
@@ -483,6 +1360,9 @@ void WheelBase::Update( float fDeltaTime )
 			case -12:
 				m_SpinSpeed=float(3 * 12.2f);
 				break;
+			case -13:
+				m_SpinSpeed = float(3 * 13.6f);
+				break;
 			default:
 				break;
 		}
@@ -509,7 +1389,7 @@ void WheelBase::Update( float fDeltaTime )
 			temp = m_Moving; // xMAx
 
 			// xMAx - Stop subtracting if the count is less than -7 (bSilver: -13 to PhoenixWheel)
-			if( m_iTimesBeforeStartSpin > -13 )
+			if( m_iTimesBeforeStartSpin > -14 )
 				m_iTimesBeforeStartSpin -= 1;
 
       /* xMAx
@@ -747,6 +1627,10 @@ void WheelBase::RebuildWheelItems( int iDist )
 
 	// find the first wheel item shown
 	iFirstVisibleIndex -= NUM_WHEEL_ITEMS/2;
+
+	// xMAx - para corregir el moviento a la izquierda
+	//if (iDist < 0)
+	//	iFirstVisibleIndex += 1;
 
 	ASSERT(data.size() != 0);
 	wrap( iFirstVisibleIndex, data.size() );
