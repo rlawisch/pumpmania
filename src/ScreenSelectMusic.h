@@ -23,7 +23,6 @@ enum SelectionState
 	SelectionState_SelectingGroup, // StepP1 Revival - bSilver
 	SelectionState_SelectingSong,
 	SelectionState_SelectingSteps,
-	SelectionState_IsPlayerReady, // StepP1 Revival - bSilver
 	SelectionState_Finalized,
 	NUM_SelectionState,
 };
@@ -138,9 +137,6 @@ protected:
 			// return TWO_PART_SELECTION ? SelectionState_SelectingSteps : SelectionState_Finalized; // StepP1 Revival - bSilver
 			return SelectionState_SelectingSteps; // StepP1 Revival - bSilver
 		case SelectionState_SelectingSteps:
-			// return SelectionState_Finalized; // StepP1 Revival - bSilver
-      return SelectionState_IsPlayerReady; // StepP1 Revival - bSilver
-    case SelectionState_IsPlayerReady: // StepP1 Revival - bSilver
 			return SelectionState_Finalized;
 		DEFAULT_FAIL( m_SelectionState );
 		}

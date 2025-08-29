@@ -39,7 +39,6 @@ static const char* SelectionStateNames[] = {
 	"SelectingGroups", // StepP1 Revival - bSilver
 	"SelectingSong",
 	"SelectingSteps",
-	"IsPlayerReady", // StepP1 Revival - bSilver
 	"Finalized"
 };
 XToString(SelectionState);
@@ -796,7 +795,7 @@ bool ScreenSelectMusic::Input(const InputEventPlus& input)
 			}
 			else if (input.MenuI == GAME_BUTTON_START)
 			{
-				m_SelectionState = SelectionState_IsPlayerReady;
+				//m_SelectionState = SelectionState_IsPlayerReady;
 				MESSAGEMAN->Broadcast("StepsChosen");
 			}
 			m_soundStepsMoving.Play(true); // StepP1 Revival - bSilver
@@ -862,21 +861,21 @@ bool ScreenSelectMusic::Input(const InputEventPlus& input)
 		}
 	}
 
-	if (m_SelectionState == SelectionState_IsPlayerReady)
-	{
-		if (input.type == IET_FIRST_PRESS)
-		{
-			if (input.MenuI == GAME_BUTTON_MENULEFT || input.MenuI == GAME_BUTTON_MENURIGHT)
-			{
-				m_SelectionState = SelectionState_SelectingSteps;
-			}
-			else if (input.MenuI == GAME_BUTTON_MENUUP || input.MenuI == GAME_BUTTON_MENUDOWN)
-			{
-				m_SelectionState = SelectionState_SelectingSong;
-				MESSAGEMAN->Broadcast("GoBackSelectingSong");
-			}
-		}
-	}
+	//if (m_SelectionState == SelectionState_IsPlayerReady)
+	//{
+	//	if (input.type == IET_FIRST_PRESS)
+	//	{
+	//		if (input.MenuI == GAME_BUTTON_MENULEFT || input.MenuI == GAME_BUTTON_MENURIGHT)
+	//		{
+	//			m_SelectionState = SelectionState_SelectingSteps;
+	//		}
+	//		else if (input.MenuI == GAME_BUTTON_MENUUP || input.MenuI == GAME_BUTTON_MENUDOWN)
+	//		{
+	//			m_SelectionState = SelectionState_SelectingSong;
+	//			MESSAGEMAN->Broadcast("GoBackSelectingSong");
+	//		}
+	//	}
+	//}
 
 	if (m_SelectionState == SelectionState_SelectingGroup)
 	{
@@ -1556,10 +1555,7 @@ bool ScreenSelectMusic::MenuStart(const InputEventPlus& input)
 
 			// Som de confirmação (opcional)
 			m_soundStart.Play(true);
-			m_SelectionState = GetNextSelectionState();
-
-			LOG->Trace("SelectingSteps: first START by P%d -> READY? shown", pn);
-			LOG->Trace("SelectingSteps: ChangeSelection -> %s", SelectionStateToString(m_SelectionState).c_str());
+			//m_SelectionState = GetNextSelectionState();
 
 		}
 
@@ -1616,11 +1612,7 @@ bool ScreenSelectMusic::MenuStart(const InputEventPlus& input)
 				lMsg.SetParam("Player", p);
 				MESSAGEMAN->Broadcast(lMsg);
 			}
-
-
 		}
-
-
 
 		// Now that Steps have been chosen, set a Style that can play them.
 		GAMESTATE->SetCompatibleStylesForPlayers();

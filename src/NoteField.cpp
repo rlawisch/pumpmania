@@ -707,7 +707,7 @@ static ThemeMetric<RageColor> BPM_COLOR ( "NoteField", "BPMColor" );
 static ThemeMetric<RageColor> STOP_COLOR ( "NoteField", "StopColor" );
 static ThemeMetric<RageColor> DELAY_COLOR ( "NoteField", "DelayColor" );
 static ThemeMetric<RageColor> WARP_COLOR ( "NoteField", "WarpColor" );
-static ThemeMetric<RageColor> TIME_SIG_COLOR ( "NoteField", "TimeSignatureColor" );
+static ThemeMetric<RageColor> TIME_SIGNATURE_COLOR("NoteField", "TimeSignatureColor");
 static ThemeMetric<RageColor> TICKCOUNT_COLOR ( "NoteField", "TickcountColor" );
 static ThemeMetric<RageColor> COMBO_COLOR ( "NoteField", "ComboColor" );
 static ThemeMetric<RageColor> LABEL_COLOR ( "NoteField", "LabelColor" );
@@ -718,7 +718,7 @@ static ThemeMetric<bool> BPM_IS_LEFT_SIDE ( "NoteField", "BPMIsLeftSide" );
 static ThemeMetric<bool> STOP_IS_LEFT_SIDE ( "NoteField", "StopIsLeftSide" );
 static ThemeMetric<bool> DELAY_IS_LEFT_SIDE ( "NoteField", "DelayIsLeftSide" );
 static ThemeMetric<bool> WARP_IS_LEFT_SIDE ( "NoteField", "WarpIsLeftSide" );
-static ThemeMetric<bool> TIME_SIG_IS_LEFT_SIDE ( "NoteField", "TimeSignatureIsLeftSide" );
+static ThemeMetric<bool> TIME_SIGNATURE_IS_LEFT_SIDE("NoteField", "TimeSignatureIsLeftSide");
 static ThemeMetric<bool> TICKCOUNT_IS_LEFT_SIDE ( "NoteField", "TickcountIsLeftSide" );
 static ThemeMetric<bool> COMBO_IS_LEFT_SIDE ( "NoteField", "ComboIsLeftSide" );
 static ThemeMetric<bool> LABEL_IS_LEFT_SIDE ( "NoteField", "LabelIsLeftSide" );
@@ -729,7 +729,7 @@ static ThemeMetric<float> BPM_OFFSETX ( "NoteField", "BPMOffsetX" );
 static ThemeMetric<float> STOP_OFFSETX ( "NoteField", "StopOffsetX" );
 static ThemeMetric<float> DELAY_OFFSETX ( "NoteField", "DelayOffsetX" );
 static ThemeMetric<float> WARP_OFFSETX ( "NoteField", "WarpOffsetX" );
-static ThemeMetric<float> TIME_SIG_OFFSETX ( "NoteField", "TimeSignatureOffsetX" );
+static ThemeMetric<float> TIME_SIGNATURE_OFFSETX("NoteField", "TimeSignatureOffsetX");
 static ThemeMetric<float> TICKCOUNT_OFFSETX ( "NoteField", "TickcountOffsetX" );
 static ThemeMetric<float> COMBO_OFFSETX ( "NoteField", "ComboOffsetX" );
 static ThemeMetric<float> LABEL_OFFSETX ( "NoteField", "LabelOffsetX" );
@@ -737,51 +737,223 @@ static ThemeMetric<float> SPEED_OFFSETX ( "NoteField", "SpeedOffsetX" );
 static ThemeMetric<float> SCROLL_OFFSETX ( "NoteField", "ScrollOffsetX" );
 static ThemeMetric<float> FAKE_OFFSETX ( "NoteField", "FakeOffsetX" );
 
-void NoteField::set_text_measure_number_for_draw(
-	const float beat, const float side_sign, float x_offset,
-	const float horiz_align, const RageColor& color, const RageColor& glow)
+void NoteField::DrawBPMText(const float fBeat, const float fBPM)
 {
-	const float y_offset= ArrowEffects::GetYOffset(m_pPlayerState, 0, beat);
-	// const float y_pos= ArrowEffects::GetYPos(m_pPlayerState, 0, y_offset, m_fYReverseOffsetPixels); // xMAx
-	const float y_pos= ArrowEffects::GetYPos(0, y_offset); // xMAx
-	const float zoom= ArrowEffects::GetZoom(m_pPlayerState);
-	const float x_base= GetWidth() * .5f;
-	x_offset*= zoom;
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = BPM_OFFSETX * fZoom;
 
-	m_textMeasureNumber.SetZoom(zoom);
-	m_textMeasureNumber.SetHorizAlign(horiz_align);
-	m_textMeasureNumber.SetDiffuse(color);
-	m_textMeasureNumber.SetGlow(glow);
-	m_textMeasureNumber.SetXY((x_offset + x_base) * side_sign, y_pos);
-}
-
-void NoteField::draw_timing_segment_text(const RString& text,
-	const float beat, const float side_sign, float x_offset,
-	const float horiz_align, const RageColor& color, const RageColor& glow)
-{
-	set_text_measure_number_for_draw(beat, side_sign, x_offset, horiz_align,
-		color, glow);
-	m_textMeasureNumber.SetText(text);
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(BPM_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(BPM_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(FloatToString(fBPM));
+	m_textMeasureNumber.SetXY((BPM_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
 	m_textMeasureNumber.Draw();
 }
 
-void NoteField::DrawAttackText(const float beat, const Attack &attack,
-	const RageColor& glow)
+void NoteField::DrawFreezeText(const float fBeat, const float fSecs)
 {
-	set_text_measure_number_for_draw(beat, 1, 10, align_left,
-		RageColor(0,0.8f,0.8f,1), glow);
-	m_textMeasureNumber.SetText( attack.GetTextDescription() );
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = STOP_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(STOP_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(STOP_COLOR);
+	m_textMeasureNumber.SetXY((STOP_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(FloatToString(fSecs));
 	m_textMeasureNumber.Draw();
 }
 
-void NoteField::DrawBGChangeText(const float beat, const RString new_bg_name,
-	const RageColor& glow)
+void NoteField::DrawDelayText(const float fBeat, const float fSecs)
 {
-	set_text_measure_number_for_draw(beat, 1, 0, align_left, RageColor(0,1,0,1),
-		glow);
-	m_textMeasureNumber.SetText(new_bg_name);
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = DELAY_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(DELAY_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(DELAY_COLOR);
+	m_textMeasureNumber.SetXY((DELAY_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(FloatToString(fSecs));
 	m_textMeasureNumber.Draw();
 }
+
+void NoteField::DrawWarpText(const float fBeat, const float fNewBeat)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = WARP_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(WARP_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(WARP_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(FloatToString(fNewBeat));
+	m_textMeasureNumber.SetXY((WARP_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawTimeSignatureText(const float fBeat, int iNumerator, int iDenominator)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = TIME_SIGNATURE_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(TIME_SIGNATURE_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(TIME_SIGNATURE_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(ssprintf("%d\n--\n%d", iNumerator, iDenominator));
+	m_textMeasureNumber.SetXY((TIME_SIGNATURE_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawTickcountText(const float fBeat, int iTicks)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = TICKCOUNT_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(TICKCOUNT_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(TICKCOUNT_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(ssprintf("%d", iTicks));
+	m_textMeasureNumber.SetXY((TICKCOUNT_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawComboText(const float fBeat, int iCombo, int iMiss)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = COMBO_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(COMBO_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(COMBO_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(ssprintf("%d/%d", iCombo, iMiss));
+	m_textMeasureNumber.SetXY((COMBO_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawLabelText(const float fBeat, RString sLabel)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = LABEL_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(LABEL_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(LABEL_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(sLabel.c_str());
+	m_textMeasureNumber.SetXY((LABEL_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawSpeedText(const float fBeat, float fPercent, float fWait, int iMode)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = SPEED_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(SPEED_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(SPEED_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(ssprintf("%s\n%s\n%s", FloatToString(fPercent).c_str(), (iMode == 1 ? "S" : "B"), FloatToString(fWait).c_str()));
+	m_textMeasureNumber.SetXY((SPEED_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawScrollText(const float fBeat, float fPercent)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = SCROLL_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(SCROLL_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(SCROLL_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(FloatToString(fPercent));
+	m_textMeasureNumber.SetXY((SCROLL_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawFakeText(const float fBeat, const float fNewBeat)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+	const float xBase = GetWidth() / 2.f;
+	const float xOffset = FAKE_OFFSETX * fZoom;
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(FAKE_IS_LEFT_SIDE ? align_right : align_left);
+	m_textMeasureNumber.SetDiffuse(FAKE_COLOR);
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(FloatToString(fNewBeat));
+	m_textMeasureNumber.SetXY((FAKE_IS_LEFT_SIDE ? -xBase - xOffset : xBase + xOffset), fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawAttackText(const float fBeat, const Attack& attack)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(align_left);
+	m_textMeasureNumber.SetDiffuse(RageColor(0, 0.8f, 0.8f, 1));
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(attack.GetTextDescription());
+	m_textMeasureNumber.SetXY(+GetWidth() / 2.f + 10 * fZoom, fYPos);
+	m_textMeasureNumber.Draw();
+}
+
+void NoteField::DrawBGChangeText(const float fBeat, const RString sNewBGName)
+{
+	const float fYOffset = ArrowEffects::GetYOffset(m_pPlayerState, 0, fBeat);
+	const float fYPos = ArrowEffects::GetYPos(0, fYOffset);
+	const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+
+	m_textMeasureNumber.SetZoom(fZoom);
+	m_textMeasureNumber.SetHorizAlign(align_left);
+	m_textMeasureNumber.SetDiffuse(RageColor(0, 1, 0, 1));
+	m_textMeasureNumber.SetGlow(RageColor(1, 1, 1, RageFastCos(RageTimer::GetTimeSinceStartFast() * 2) / 2 + 0.5f));
+	m_textMeasureNumber.SetText(sNewBGName);
+	m_textMeasureNumber.SetXY(+GetWidth() / 2.f, fYPos);
+	m_textMeasureNumber.Draw();
+}
+
 
 static CacheNoteStat GetNumNotesFromBeginning( const PlayerState *pPlayerState, float beat )
 {
@@ -970,6 +1142,7 @@ void NoteField::CalcPixelsBeforeAndAfterTargets()
 		(int)(m_FieldRenderArgs.draw_pixels_before_targets * draw_scale);
 }
 
+#define IS_ON_SCREEN( fBeat )  ( fFirstBeatToDraw <= (fBeat) && (fBeat) <= fLastBeatToDraw && IsOnScreen( fBeat, 0, iDrawDistanceAfterTargetsPixels, iDrawDistanceBeforeTargetsPixels ) )
 void NoteField::DrawPrimitives()
 {
 	//LOG->Trace( "NoteField::DrawPrimitives()" );
@@ -980,40 +1153,58 @@ void NoteField::DrawPrimitives()
 	// ArrowEffects::Update call moved because having it happen once per
 	// NoteField (which means twice in two player) seemed wasteful. -Kyz
 
-	if(m_drawing_board_primitive)
+	/*if(m_drawing_board_primitive)
 	{
 		CalcPixelsBeforeAndAfterTargets();
 		DrawBoard(m_FieldRenderArgs.draw_pixels_after_targets,
 			m_FieldRenderArgs.draw_pixels_before_targets);
 		return;
-	}
+	}*/
+	// bSilver - Nope?
+
+	const PlayerOptions& current_po = m_pPlayerState->m_PlayerOptions.GetCurrent();
+
 	// Some might prefer an else block, instead of returning from the if, but I
 	// don't want to bump the indent on the entire remaining section. -Kyz
 	ArrowEffects::SetCurrentOptions(&m_pPlayerState->m_PlayerOptions.GetCurrent());
 
-	CalcPixelsBeforeAndAfterTargets();
-	NoteDisplayCols *cur = m_pCurDisplay;
+	// Adjust draw range depending on some effects
+	int iDrawDistanceAfterTargetsPixels = m_iDrawDistanceAfterTargetsPixels;
+	// HACK: If boomerang and centered are on, then we want to draw much 
+	// earlier so that the notes don't pop on screen.
+	float fCenteredTimesBoomerang =
+		current_po.m_fScrolls[PlayerOptions::SCROLL_CENTERED] *
+		current_po.m_fAccels[PlayerOptions::ACCEL_BOOMERANG];
+	iDrawDistanceAfterTargetsPixels += int(SCALE(fCenteredTimesBoomerang, 0.f, 1.f, 0.f, -SCREEN_HEIGHT / 2));
+	int iDrawDistanceBeforeTargetsPixels = m_iDrawDistanceBeforeTargetsPixels;
+
+	float fDrawScale = 1;
+	fDrawScale *= 1 + 0.5f * fabsf(current_po.m_fPerspectiveTilt);
+	fDrawScale *= 1 + fabsf(current_po.m_fEffects[PlayerOptions::EFFECT_MINI]);
+
+	iDrawDistanceAfterTargetsPixels = (int)(iDrawDistanceAfterTargetsPixels * fDrawScale);
+	iDrawDistanceBeforeTargetsPixels = (int)(iDrawDistanceBeforeTargetsPixels * fDrawScale);
+
 	// Probe for first and last notes on the screen
-	float first_beat_to_draw= FindFirstDisplayedBeat(
-		m_pPlayerState, m_FieldRenderArgs.draw_pixels_after_targets);
-	float last_beat_to_draw= FindLastDisplayedBeat(
-		m_pPlayerState, m_FieldRenderArgs.draw_pixels_before_targets);
+	float fFirstBeatToDraw = FindFirstDisplayedBeat(m_pPlayerState, iDrawDistanceAfterTargetsPixels);
+	float fLastBeatToDraw = FindLastDisplayedBeat(m_pPlayerState, iDrawDistanceBeforeTargetsPixels);
 
-	m_pPlayerState->m_fLastDrawnBeat = last_beat_to_draw;
+	m_pPlayerState->m_fLastDrawnBeat = fLastBeatToDraw;
 
-	m_FieldRenderArgs.first_row  = BeatToNoteRow(first_beat_to_draw);
-	m_FieldRenderArgs.last_row   = BeatToNoteRow(last_beat_to_draw);
+	const int iFirstRowToDraw = BeatToNoteRow(fFirstBeatToDraw);
+	const int iLastRowToDraw = BeatToNoteRow(fLastBeatToDraw);
 
 	//LOG->Trace( "start = %f.1, end = %f.1", first_beat_to_draw-fSongBeat, last_beat_to_draw-fSongBeat );
 	//LOG->Trace( "Drawing elements %d through %d", m_FieldRenderArgs.first_row, m_FieldRenderArgs.last_row );
 
-#define IS_ON_SCREEN(fBeat)  (first_beat_to_draw <= (fBeat) && (fBeat) <= last_beat_to_draw && IsOnScreen(fBeat, 0, m_FieldRenderArgs.draw_pixels_after_targets, m_FieldRenderArgs.draw_pixels_before_targets))
+// Draw board
+	if (SHOW_BOARD)
+	{
+		DrawBoard(iDrawDistanceAfterTargetsPixels, iDrawDistanceBeforeTargetsPixels);
+	}
 
 	// Draw Receptors
-	{
-		// cur->m_ReceptorArrowRow.Draw(); // xMAx
-  	m_pReceptorDisplay->m_ReceptorArrowRow.Draw();
-	}
+	m_pReceptorDisplay->m_ReceptorArrowRow.Draw();
 
 	// xMAx - added
 	if( GAMESTATE->IsEditing() )
@@ -1073,42 +1264,139 @@ void NoteField::DrawPrimitives()
       ASSERT(GAMESTATE->m_pCurSong != nullptr);
 
       const TimingData &timing = *pTiming;
-      const RageColor text_glow= RageColor(1,1,1,RageFastCos(RageTimer::GetTimeSinceStartFast()*2)/2+0.5f);
 
-      float horiz_align= align_right;
-      float side_sign= 1;
-  #define draw_all_segments(str_exp, name, caps_name)	\
-      horiz_align= caps_name##_IS_LEFT_SIDE ? align_right : align_left; \
-      side_sign= caps_name##_IS_LEFT_SIDE ? -1 : 1; \
-      for(unsigned int i= 0; i < segs[SEGMENT_##caps_name]->size(); ++i) \
-      { \
-        const name##Segment* seg= To##name((*segs[SEGMENT_##caps_name])[i]); \
-        if(seg->GetRow() >= m_FieldRenderArgs.first_row && \
-          seg->GetRow() <= m_FieldRenderArgs.last_row && \
-          IS_ON_SCREEN(seg->GetBeat())) \
-        { \
-          draw_timing_segment_text(str_exp, seg->GetBeat(), side_sign, \
-            caps_name##_OFFSETX, horiz_align, caps_name##_COLOR, text_glow); \
-        } \
-      }
+	  // Scroll text
+	  for (i = 0; i < segs[SEGMENT_SCROLL]->size(); i++)
+	  {
+		  ScrollSegment* seg = ToScroll(segs[SEGMENT_SCROLL]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawScrollText(fBeat, seg->GetRatio());
+		  }
+	  }
 
-      draw_all_segments(std::to_string(seg->GetRatio()), Scroll, SCROLL);
-      draw_all_segments(std::to_string(seg->GetBPM()), BPM, BPM);
-      draw_all_segments(std::to_string(seg->GetPause()), Stop, STOP);
-      draw_all_segments(std::to_string(seg->GetPause()), Delay, DELAY);
-      draw_all_segments(std::to_string(seg->GetLength()), Warp, WARP);
-      draw_all_segments(ssprintf("%d\n--\n%d", seg->GetNum(), seg->GetDen()),
-        TimeSignature, TIME_SIG);
-      draw_all_segments(ssprintf("%d", seg->GetTicks()), Tickcount, TICKCOUNT);
-      draw_all_segments(
-        ssprintf("%d/%d", seg->GetCombo(), seg->GetMissCombo()), Combo, COMBO);
-      draw_all_segments(seg->GetLabel(), Label, LABEL);
-      draw_all_segments(ssprintf("%s\n%s\n%s",
-          std::to_string(seg->GetRatio()).c_str(),
-          (seg->GetUnit() == 1 ? "S" : "B"),
-          std::to_string(seg->GetDelay()).c_str()), Speed, SPEED);
-      draw_all_segments(std::to_string(seg->GetLength()), Fake, FAKE);
-  #undef draw_all_segments
+	  // BPM text
+	  for (i = 0; i < segs[SEGMENT_BPM]->size(); i++)
+	  {
+		  const BPMSegment* seg = ToBPM(segs[SEGMENT_BPM]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawBPMText(fBeat, seg->GetBPM());
+		  }
+	  }
+
+	  // Freeze text
+	  for (i = 0; i < segs[SEGMENT_STOP]->size(); i++)
+	  {
+		  const StopSegment* seg = ToStop(segs[SEGMENT_STOP]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawFreezeText(fBeat, seg->GetPause());
+		  }
+	  }
+
+	  // Delay text
+	  for (i = 0; i < segs[SEGMENT_DELAY]->size(); i++)
+	  {
+		  const DelaySegment* seg = ToDelay(segs[SEGMENT_DELAY]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawDelayText(fBeat, seg->GetPause());
+		  }
+	  }
+
+	  // Warp text
+	  for (i = 0; i < segs[SEGMENT_WARP]->size(); i++)
+	  {
+		  const WarpSegment* seg = ToWarp(segs[SEGMENT_WARP]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawWarpText(fBeat, seg->GetLength());
+		  }
+	  }
+
+	  // Time Signature text
+	  for (i = 0; i < segs[SEGMENT_TIME_SIG]->size(); i++)
+	  {
+		  const TimeSignatureSegment* seg = ToTimeSignature(segs[SEGMENT_TIME_SIG]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawTimeSignatureText(fBeat, seg->GetNum(), seg->GetDen());
+		  }
+	  }
+
+	  // Tickcount text
+	  for (i = 0; i < segs[SEGMENT_TICKCOUNT]->size(); i++)
+	  {
+		  const TickcountSegment* seg = ToTickcount(segs[SEGMENT_TICKCOUNT]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawTickcountText(fBeat, seg->GetTicks());
+		  }
+	  }
+
+	  // Combo text
+	  for (i = 0; i < segs[SEGMENT_COMBO]->size(); i++)
+	  {
+		  const ComboSegment* seg = ToCombo(segs[SEGMENT_COMBO]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawComboText(fBeat, seg->GetCombo(), seg->GetMissCombo());
+		  }
+	  }
+
+	  // Label text
+	  for (i = 0; i < segs[SEGMENT_LABEL]->size(); i++)
+	  {
+		  const LabelSegment* seg = ToLabel(segs[SEGMENT_LABEL]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawLabelText(fBeat, seg->GetLabel());
+		  }
+	  }
+
+	  // Speed text
+	  for (i = 0; i < segs[SEGMENT_SPEED]->size(); i++)
+	  {
+		  const SpeedSegment* seg = ToSpeed(segs[SEGMENT_SPEED]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawSpeedText(fBeat, seg->GetRatio(),
+					  seg->GetDelay(), seg->GetUnit());
+		  }
+	  }
+
+	  // Fake text
+	  for (i = 0; i < segs[SEGMENT_FAKE]->size(); i++)
+	  {
+		  const FakeSegment* seg = ToFake(segs[SEGMENT_FAKE]->at(i));
+		  if (seg->GetRow() >= iFirstRowToDraw && seg->GetRow() <= iLastRowToDraw)
+		  {
+			  float fBeat = seg->GetBeat();
+			  if (IS_ON_SCREEN(fBeat))
+				  DrawFakeText(fBeat, seg->GetLength());
+		  }
+	  }
 
       // Course mods text
       const Course *pCourse = GAMESTATE->m_pCurCourse;
@@ -1119,15 +1407,15 @@ void NoteField::DrawPrimitives()
         const CourseEntry &ce = pCourse->m_vEntries[GAMESTATE->m_iEditCourseEntryIndex];
         for (Attack const &a : ce.attacks)
         {
-          float fSecond = a.fStartSecond;
-          float fBeat = timing.GetBeatFromElapsedTime( fSecond );
+			float fSecond = a.fStartSecond;
+			float fBeat = timing.GetBeatFromElapsedTime(fSecond);
 
-          if( BeatToNoteRow(fBeat) >= m_FieldRenderArgs.first_row &&
-            BeatToNoteRow(fBeat) <= m_FieldRenderArgs.last_row &&
-            IS_ON_SCREEN(fBeat))
-          {
-            DrawAttackText(fBeat, a, text_glow);
-          }
+			if (BeatToNoteRow(fBeat) >= iFirstRowToDraw &&
+				BeatToNoteRow(fBeat) <= iLastRowToDraw)
+			{
+				if (IS_ON_SCREEN(fBeat))
+					DrawAttackText(fBeat, a);
+			}
         }
       }
       else
@@ -1145,7 +1433,7 @@ void NoteField::DrawPrimitives()
               BeatToNoteRow(fBeat) <= m_FieldRenderArgs.last_row &&
               IS_ON_SCREEN(fBeat))
             {
-              this->DrawAttackText(fBeat, a, text_glow);
+              this->DrawAttackText(fBeat, a);
             }
           }
         }
@@ -1214,7 +1502,7 @@ void NoteField::DrawPrimitives()
                     }
                     vsBGChanges.push_back( s );
                   }
-                  DrawBGChangeText(fLowestBeat, join("\n",vsBGChanges), text_glow);
+                  DrawBGChangeText(fLowestBeat, join("\n",vsBGChanges));
                 }
                 for (BackgroundLayer const &bl : viLowestIndex)
                 {
@@ -1229,26 +1517,26 @@ void NoteField::DrawPrimitives()
       }
 
       // Draw marker bars
-      if( m_iBeginMarker != -1  &&  m_iEndMarker != -1 )
-      {
-        int iBegin = m_iBeginMarker;
-        int iEnd = m_iEndMarker;
-        CLAMP( iBegin, m_FieldRenderArgs.first_row, m_FieldRenderArgs.last_row );
-        CLAMP( iEnd, m_FieldRenderArgs.first_row, m_FieldRenderArgs.last_row );
-        DrawAreaHighlight( iBegin, iEnd );
-      }
-      else if( m_iBeginMarker != -1 )
-      {
-        if( m_iBeginMarker >= m_FieldRenderArgs.first_row &&
-          m_iBeginMarker <= m_FieldRenderArgs.last_row )
-          DrawMarkerBar( m_iBeginMarker );
-      }
-      else if( m_iEndMarker != -1 )
-      {
-        if( m_iEndMarker >= m_FieldRenderArgs.first_row &&
-          m_iEndMarker <= m_FieldRenderArgs.last_row )
-        DrawMarkerBar( m_iEndMarker );
-      }
+	  if (m_iBeginMarker != -1 && m_iEndMarker != -1)
+	  {
+		  int iBegin = m_iBeginMarker;
+		  int iEnd = m_iEndMarker;
+		  CLAMP(iBegin, iFirstRowToDraw, iLastRowToDraw);
+		  CLAMP(iEnd, iFirstRowToDraw, iLastRowToDraw);
+		  DrawAreaHighlight(iBegin, iEnd);
+	  }
+	  else if (m_iBeginMarker != -1)
+	  {
+		  if (m_iBeginMarker >= iFirstRowToDraw &&
+			  m_iBeginMarker <= iLastRowToDraw)
+			  DrawMarkerBar(m_iBeginMarker);
+	  }
+	  else if (m_iEndMarker != -1)
+	  {
+		  if (m_iEndMarker >= iFirstRowToDraw &&
+			  m_iEndMarker <= iLastRowToDraw)
+			  DrawMarkerBar(m_iEndMarker);
+	  }
     }
   } // xMAx
 
@@ -1261,26 +1549,17 @@ void NoteField::DrawPrimitives()
 		ssprintf("NumTracks %d != ColsPerPlayer %d",m_pNoteData->GetNumTracks(),
 			GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer));
 
-	if(*m_FieldRenderArgs.selection_begin_marker != -1 &&
-		*m_FieldRenderArgs.selection_end_marker != -1)
-	{
-		m_FieldRenderArgs.selection_glow= SCALE(
-			RageFastCos(RageTimer::GetTimeSinceStartFast()*2), -1, 1, 0.1f, 0.3f);
-	}
-	m_FieldRenderArgs.fade_before_targets= FADE_BEFORE_TARGETS_PERCENT;
-
   // xMAx
 	m_NoteDrawData.clear();
 	float fCenterLine = ArrowEffects::GetCenterLine();
-
 	for( int j=0; j<m_pNoteData->GetNumTracks(); j++ )	// for each arrow column
 	{
 		bool bAnyUpcomingInThisCol = false; // xMAx
 		const int c = pStyle->m_iColumnDrawOrder[j];
-		m_ColumnRenderers[c].Draw();
-    // xMAx ---------------------------------------------------------------------------------------
+
+		// xMAx ---------------------------------------------------------------------------------------
     NoteData::TrackMap::iterator begin, end;
-		m_pNoteData->GetTapNoteRangeInclusive( c, m_FieldRenderArgs.first_row, m_FieldRenderArgs.last_row+1, begin, end );
+	m_pNoteData->GetTapNoteRangeInclusive(c, iFirstRowToDraw, iLastRowToDraw + 1, begin, end);
 
 		for( ; begin != end; ++begin )
 		{
@@ -1322,7 +1601,7 @@ void NoteField::DrawPrimitives()
 				fRowYOffset = ArrowEffects::GetYOffset( m_pPlayerState, c, fBeat );
 			//
 
-			if( fRowYOffset > m_FieldRenderArgs.draw_pixels_before_targets )	// off screen - don't need to fetch more taps or holds - xMAx
+			if (fRowYOffset > iDrawDistanceBeforeTargetsPixels)	// off screen - don't need to fetch more taps or holds - xMAx
 				break;
 
 			bAnyUpcomingInThisCol = true;
@@ -1339,24 +1618,26 @@ void NoteField::DrawPrimitives()
 				float fThrowAway;
 				bool bStartIsPastPeak = false;
 				bool bEndIsPastPeak = false;
-				float fStartYOffset	= ArrowEffects::GetYOffset( m_pPlayerState, c, NoteRowToBeat(iStartRow), fThrowAway, bStartIsPastPeak );
-				float fEndYOffset	= ArrowEffects::GetYOffset( m_pPlayerState, c, NoteRowToBeat(iEndRow), fThrowAway, bEndIsPastPeak );
+				float fStartYOffset = ArrowEffects::GetYOffset(m_pPlayerState, c, NoteRowToBeat(iStartRow), fThrowAway, bStartIsPastPeak);
+				float fEndYOffset = ArrowEffects::GetYOffset(m_pPlayerState, c, NoteRowToBeat(iEndRow), fThrowAway, bEndIsPastPeak);
 
-				if( fStartYOffset > (float) m_FieldRenderArgs.draw_pixels_before_targets )	// off screen - el hold head está por debajo del limite.. no hay que dibujar mas - xMAx
+				if (fStartYOffset > (float)iDrawDistanceBeforeTargetsPixels)	// off screen - el hold head est� por debajo del limite.. no hay que dibujar mas - xMAx
 					break;
 
-				bool bTailIsOnVisible = m_FieldRenderArgs.draw_pixels_after_targets <= fEndYOffset && fEndYOffset <= m_FieldRenderArgs.draw_pixels_before_targets;
-				bool bHeadIsVisible = m_FieldRenderArgs.draw_pixels_after_targets <= fStartYOffset  && fStartYOffset <= m_FieldRenderArgs.draw_pixels_before_targets;
-				bool bStraddlingVisible = fStartYOffset <= m_FieldRenderArgs.draw_pixels_after_targets && m_FieldRenderArgs.draw_pixels_before_targets <= fEndYOffset;
+				bool bTailIsOnVisible = iDrawDistanceAfterTargetsPixels <= fEndYOffset && fEndYOffset <= iDrawDistanceBeforeTargetsPixels;
+				bool bHeadIsVisible = iDrawDistanceAfterTargetsPixels <= fStartYOffset && fStartYOffset <= iDrawDistanceBeforeTargetsPixels;
+				bool bStraddlingVisible = fStartYOffset <= iDrawDistanceAfterTargetsPixels && iDrawDistanceBeforeTargetsPixels <= fEndYOffset;
 				bool bStaddlingPeak = bStartIsPastPeak && !bEndIsPastPeak;
-				if( !(bTailIsOnVisible || bHeadIsVisible || bStraddlingVisible || bStaddlingPeak) )
+				if (!(bTailIsOnVisible || bHeadIsVisible || bStraddlingVisible || bStaddlingPeak))
 				{
 					//LOG->Trace( "skip drawing this hold." );
 					continue;	// skip
 				}
 
-				fStartYOffset = max( fStartYOffset, m_FieldRenderArgs.draw_pixels_after_targets );
-				fEndYOffset = min( fEndYOffset, m_FieldRenderArgs.draw_pixels_before_targets );
+				// xMAx added
+				fStartYOffset = max(fStartYOffset, iDrawDistanceAfterTargetsPixels);
+				fEndYOffset = min(fEndYOffset, iDrawDistanceBeforeTargetsPixels);
+				//
 
 				if( tn->HoldResult.bActive && tn->HoldResult.fLife > 0 && tn->result.tns != TNS_None )
 					fStartYOffset = 0;
@@ -1391,17 +1672,21 @@ void NoteField::DrawPrimitives()
 
 				if( displayCols != nullptr )
 				{
-            // StepP1 Revival - Thequila - Trying to make it compile with new NoteColumnRenderArgs type
-          	NoteColumnRenderArgs columnRenderArgs = NoteColumnRenderArgs();
-            columnRenderArgs.song_beat= m_FieldRenderArgs.player_state->GetDisplayedPosition().m_fSongBeatVisible;
-            // columnRenderArgs.pos_handler= &NCR_current.m_pos_handler;
-            // columnRenderArgs.rot_handler= &NCR_current.m_rot_handler;
-            // columnRenderArgs.zoom_handler= &NCR_current.m_zoom_handler;
-            columnRenderArgs.diffuse= m_pTempState->diffuse[0];
-            columnRenderArgs.glow= m_pTempState->glow;
-					displayCols->display[c].DrawHold( *tn, m_FieldRenderArgs, columnRenderArgs, iStartRow, bIsHoldingNote, Result, bUseAdditionColoring, m_FieldRenderArgs.fail_fade,
-						fStartYOffset, fEndYOffset, bStartIsPastPeak, bEndIsPastPeak, fCenterLine ); // added fStartYOffset && fEndYOffset
-        }
+     //       // StepP1 Revival - Thequila - Trying to make it compile with new NoteColumnRenderArgs type
+     //     	NoteColumnRenderArgs columnRenderArgs = NoteColumnRenderArgs();
+     //       columnRenderArgs.song_beat= m_FieldRenderArgs.player_state->GetDisplayedPosition().m_fSongBeatVisible;
+     //       // columnRenderArgs.pos_handler= &NCR_current.m_pos_handler;
+     //       // columnRenderArgs.rot_handler= &NCR_current.m_rot_handler;
+     //       // columnRenderArgs.zoom_handler= &NCR_current.m_zoom_handler;
+     //       columnRenderArgs.diffuse= m_pTempState->diffuse[0];
+     //       columnRenderArgs.glow= m_pTempState->glow;
+					//displayCols->display[c].DrawHold( *tn, m_FieldRenderArgs, columnRenderArgs, iStartRow, bIsHoldingNote, Result, bUseAdditionColoring, m_FieldRenderArgs.fail_fade,
+					//	fStartYOffset, fEndYOffset, bStartIsPastPeak, bEndIsPastPeak, fCenterLine ); // added fStartYOffset && fEndYOffset
+				// bSilver - Trying to use the Source code
+					displayCols->display[c].DrawHold(*tn, c, iStartRow, bIsHoldingNote, Result, bUseAdditionColoring, m_fPercentFadeToFail,
+						m_fYReverseOffsetPixels, (float)iDrawDistanceAfterTargetsPixels, (float)iDrawDistanceBeforeTargetsPixels, iDrawDistanceBeforeTargetsPixels,
+						FADE_BEFORE_TARGETS_PERCENT, fStartYOffset, fEndYOffset, bStartIsPastPeak, bEndIsPastPeak, fCenterLine); // added fStartYOffset && fEndYOffset 			
+				}
 			}
 			else
 			{
@@ -1413,13 +1698,13 @@ void NoteField::DrawPrimitives()
 				}
 
 				// Replace for "IsOnScreen"
-				if( fRowYOffset > (float) m_FieldRenderArgs.draw_pixels_before_targets || fRowYOffset < (float) m_FieldRenderArgs.draw_pixels_after_targets )
+				if (fRowYOffset > (float)iDrawDistanceBeforeTargetsPixels || fRowYOffset < (float)iDrawDistanceAfterTargetsPixels)
 				{
 					bAnyUpcomingInThisCol = false;
 					continue;
 				}
 
-				ASSERT_M( fBeat > -2000, ssprintf("%i %i %i, %f %f", iCurrentRow, m_FieldRenderArgs.last_row, m_FieldRenderArgs.first_row, m_pPlayerState->GetDisplayedPosition().m_fSongBeat, m_pPlayerState->GetDisplayedPosition().m_fMusicSeconds) );
+				ASSERT_M(fBeat > -2000, ssprintf("%i %i %i, %f %f", iCurrentRow, iLastRowToDraw, iFirstRowToDraw, m_pPlayerState->GetDisplayedPosition().m_fSongBeat, m_pPlayerState->GetDisplayedPosition().m_fMusicSeconds));
 
 				// See if there is a hold step that begins on this index.
 				// Only do this if the noteskin cares.
@@ -1455,6 +1740,11 @@ void NoteField::DrawPrimitives()
           // StepP1 Revival - Thequila - Commented for trying to compile
 					// displayCols->display[c].DrawTap(*tn, m_FieldRenderArgs, c, fBeat, bHoldNoteBeginsOnThisBeat, bRollNoteBeginsOnThisBeat,
 					// 	bUseAdditionColoring, m_FieldRenderArgs.fail_fade, fCenterLine, fRowYOffset );
+					// bSilver - Trying to use source code
+					displayCols->display[c].DrawTap(*tn, c, fBeat, bHoldNoteBeginsOnThisBeat, bRollNoteBeginsOnThisBeat,
+						//bUseAdditionColoring, bIsInSelectionRange ? fSelectedRangeGlow : m_fPercentFadeToFail, 	//xMAx - deleted bIsInSelectionRange
+						bUseAdditionColoring, m_fPercentFadeToFail, m_fYReverseOffsetPixels, iDrawDistanceAfterTargetsPixels, iDrawDistanceBeforeTargetsPixels,
+						FADE_BEFORE_TARGETS_PERCENT, fRowYOffset, fCenterLine);
 				}
 			}
 
@@ -1495,6 +1785,8 @@ void NoteField::DrawPrimitives()
 				}
 			}
 		}
+		//DISPLAY->ClearZBuffer();
+		//cur->m_ReceptorArrowRow.SetNoteUpcoming( c, bAnyUpcomingInThisCol ); //xMAx
 		m_pReceptorDisplay->m_ReceptorArrowRow.SetNoteUpcoming( c, bAnyUpcomingInThisCol );
 	}
 

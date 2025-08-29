@@ -284,9 +284,14 @@ Player::Player( NoteData &nd, bool bVisibleParts ) : m_NoteData(nd)
 	m_pPrimaryScoreKeeper = nullptr;
 	m_pSecondaryScoreKeeper = nullptr;
 	m_pInventory = nullptr;
+
+	// local stuff
 	m_pIterNeedsTapJudging = nullptr;
-	// m_pIterNeedsHoldJudging = nullptr; // xMAx
 	m_pIterUncrossedRows = nullptr;
+	m_pIterNeedsHoldJudging = nullptr;
+	m_pNoteField = nullptr;
+
+
 	// m_pIterUnjudgedRows = nullptr; // xMAx
 	// m_pIterUnjudgedMineRows = nullptr; // xMAx
 
@@ -342,7 +347,7 @@ Player::~Player()
 	// 	SAFE_DELETE( m_vpHoldJudgment[i] );
 	// SAFE_DELETE( m_pJudgedRows ); // xMAx
 	SAFE_DELETE( m_pIterNeedsTapJudging );
-	// SAFE_DELETE( m_pIterNeedsHoldJudging ); // xMAx
+	SAFE_DELETE( m_pIterNeedsHoldJudging );
 	SAFE_DELETE( m_pIterUncrossedRows );
 	// SAFE_DELETE( m_pIterUnjudgedRows ); // xMAx
 	// SAFE_DELETE( m_pIterUnjudgedMineRows ); // xMAx
@@ -1017,8 +1022,8 @@ void Player::Load()
 	SAFE_DELETE( m_pIterNeedsTapJudging );
 	m_pIterNeedsTapJudging = new NoteData::all_tracks_iterator( m_NoteData.GetTapNoteRangeAllTracks(iNoteRow, MAX_NOTE_ROW) );
 
-	// SAFE_DELETE( m_pIterNeedsHoldJudging ); // xMAx
-	// m_pIterNeedsHoldJudging = new NoteData::all_tracks_iterator( m_NoteData.GetTapNoteRangeAllTracks(iNoteRow, MAX_NOTE_ROW ) ); // xMAx
+	SAFE_DELETE( m_pIterNeedsHoldJudging ); 
+	m_pIterNeedsHoldJudging = new NoteData::all_tracks_iterator( m_NoteData.GetTapNoteRangeAllTracks(iNoteRow, MAX_NOTE_ROW ) );
 
 	SAFE_DELETE( m_pIterUncrossedRows );
 	m_pIterUncrossedRows = new NoteData::all_tracks_iterator( m_NoteData.GetTapNoteRangeAllTracks(iNoteRow, MAX_NOTE_ROW ) );
@@ -2820,11 +2825,9 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 
 		const float fSecondsFromExact = fabsf( fNoteOffset );
 
-		TapNote tnDummy = TAP_ORIGINAL_TAP;
-		TapNote *pTN = nullptr;
-		// NoteData::iterator iter = m_NoteData.FindTapNote( col, iRowOfOverlappingNoteOrRow ); // StepP1 Revival - bSilver
-		NoteData::iterator iter = m_NoteData.FindTapNote( col, fSecondsFromExact ); // StepP1 Revival - bSilver
-		DEBUG_ASSERT( iter!= m_NoteData.end(col) );
+		TapNote* pTN = NULL;
+		NoteData::iterator iter = m_NoteData.FindTapNote(col, iRowOfOverlappingNoteOrRow);
+		DEBUG_ASSERT(iter != m_NoteData.end(col));
 		pTN = &iter->second;
 
 		switch( m_pPlayerState->m_PlayerController )

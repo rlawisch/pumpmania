@@ -190,9 +190,9 @@ public:
 	bool DrawHoldsInRange(const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args,
 		const vector<NoteData::TrackMap::const_iterator>& tap_set);
-	bool DrawTapsInRange(const NoteFieldRenderArgs& field_args,
-		const NoteColumnRenderArgs& column_args,
-		const vector<NoteData::TrackMap::const_iterator>& tap_set);
+	//bool DrawTapsInRange(const NoteFieldRenderArgs& field_args,
+	//	const NoteColumnRenderArgs& column_args,
+	//	const vector<NoteData::TrackMap::const_iterator>& tap_set);
 	/**
 	 * @brief Draw the TapNote onto the NoteField.
 	 * @param tn the TapNote in question.
@@ -206,21 +206,30 @@ public:
 	 * @param fDrawDistanceAfterTargetsPixels how much to draw after the receptors.
 	 * @param fDrawDistanceBeforeTargetsPixels how much ot draw before the receptors.
 	 * @param fFadeInPercentOfDrawFar when to start fading in. */
-	void DrawTap(const TapNote& tn, const NoteFieldRenderArgs& field_args,
-		const NoteColumnRenderArgs& column_args, float fBeat,
-		bool bOnSameRowAsHoldStart,
-		bool bOnSameRowAsRollBeat, bool bIsAddition, float fPercentFadeToFail,
-    // xMAx - Added
-    float fCenterLine, float fYOffset = -1
-  );
-	void DrawHold(const TapNote& tn, const NoteFieldRenderArgs& field_args,
-		const NoteColumnRenderArgs& column_args, int iRow, bool bIsBeingHeld,
-		const HoldNoteResult &Result,
+
+	// 5.1 adapted
+	//void DrawTap(const TapNote& tn, const NoteFieldRenderArgs& field_args,
+	//	const NoteColumnRenderArgs& column_args, float fBeat,
+	//	bool bOnSameRowAsHoldStart,
+	//	bool bOnSameRowAsRollBeat, bool bIsAddition, float fPercentFadeToFail,
+ //   // xMAx - Added
+ //   float fCenterLine, float fYOffset = -1
+
+	void DrawTap(const TapNote& tn, int iCol, float fBeat,
+		bool bOnSameRowAsHoldStart, bool bOnSameRowAsRollBeat,
 		bool bIsAddition, float fPercentFadeToFail,
-    // xMAx - Added
-    float fStartYOffset, float fEndYOffset,
-    bool bStartIsPastPeak, bool bEndIsPastPeak, float fCenterLine
-  );
+		float fReverseOffsetPixels,
+		float fDrawDistanceAfterTargetsPixels,
+		float fDrawDistanceBeforeTargetsPixels,
+		float fFadeInPercentOfDrawFar,
+		float fCenterLine,
+		float fYOffset = -1);	//xMAx - added // bSilver - Trying to use Source Code (beta 3 or 4)
+
+	void DrawHold(const TapNote& tn, int iCol, int iRow, bool bIsBeingHeld, const HoldNoteResult& Result,
+		bool bIsAddition, float fPercentFadeToFail, float fReverseOffsetPixels, float fDrawDistanceAfterTargetsPixels, float fDrawDistanceBeforeTargetsPixels,
+		//float fDrawDistanceBeforeTargetsPixels2, float fFadeInPercentOfDrawFar ); //xMAx
+		float fDrawDistanceBeforeTargetsPixels2, float fFadeInPercentOfDrawFar, float fStartYOffset, float fEndYOffset, bool bStartIsPastPeak, bool bEndIsPastPeak, float fCenterLine);  //xMAx
+
 
 	bool DrawHoldHeadForTapsOnSameRow() const;
 	bool DrawRollHeadForTapsOnSameRow() const;
@@ -248,21 +257,9 @@ private:
 		bool flip_texture_vertically;
 	};
 
-	void DrawActor(const TapNote& tn, Actor* pActor, NotePart part,
-		const NoteFieldRenderArgs& field_args,
-		const NoteColumnRenderArgs& column_args, float fYOffset, float fBeat,
-		bool bIsAddition, float fPercentFadeToFail, float fColorScale,
-		bool is_being_held,
-    // xMAx
-    float fCenterLine
-  );
-	void DrawHoldPart(vector<Sprite*> &vpSpr,
-		const NoteFieldRenderArgs& field_args,
-		const NoteColumnRenderArgs& column_args,
-		const draw_hold_part_args& part_args, bool glow, int part_type,
-    // xMAx - added bIsHidden & fYHoldHead & Force conditions
-    bool bIsHidden, float fYHoldHead,
-    float fCenterLine, bool bForceSudden, bool bForceVanish);
+	void DrawActor(const TapNote& tn, Actor* pActor, NotePart part, int iCol, float fYOffset, float fBeat, bool bIsAddition, float fPercentFadeToFail,
+		float fReverseOffsetPixels, float fColorScale, float fDrawDistanceAfterTargetsPixels, float fDrawDistanceBeforeTargetsPixels, float fFadeInPercentOfDrawFar, float fCenterLine);
+
 	void DrawHoldBodyInternal(vector<Sprite*>& sprite_top,
 		vector<Sprite*>& sprite_body, vector<Sprite*>& sprite_bottom,
 		const NoteFieldRenderArgs& field_args,
@@ -275,12 +272,16 @@ private:
     bool bIsHidden, float fYHoldHead,
     float fCenterLine, bool bForceSudden, bool bForceVanish
   );
-	void DrawHoldBody(const TapNote& tn, const NoteFieldRenderArgs& field_args,
-		const NoteColumnRenderArgs& column_args, float beat, bool being_held,
-		float y_head, float y_tail, float percent_fade_to_fail,
-		float color_scale, float top_beat, float bottom_beat,
-    // xMAx
-    float fCenterLine);
+	void DrawHoldBody(const TapNote& tn, int iCol, float fBeat, bool bIsBeingHeld, float fYHead, float fYTail, bool bIsAddition, float fPercentFadeToFail,
+		float fColorScale,
+		bool bGlow, float fDrawDistanceAfterTargetsPixels, float fDrawDistanceBeforeTargetsPixels, float fFadeInPercentOfDrawFar, float fCenterLine);
+	void DrawHoldPart(vector<Sprite*>& vpSpr, int iCol, int fYStep, float fPercentFadeToFail, float fColorScale, bool bGlow,
+		float fDrawDistanceAfterTargetsPixels, float fDrawDistanceBeforeTargetsPixels, float fFadeInPercentOfDrawFar, float fOverlappedTime,
+		float fYTop, float fYBottom,
+		float fYStartPos, float fYEndPos,
+		bool bWrapping, bool bAnchorToTop, bool bFlipTextureVertically, bool bIsHidden, float fYHoldHead,
+		float fCenterLine, bool bForceSudden, bool bForceVanish);	// xMAx added bIsHidden & fYHoldHead & Force conditions
+
 
 	const PlayerState	*m_pPlayerState;	// to look up PlayerOptions
 	NoteMetricCache_t	*cache;

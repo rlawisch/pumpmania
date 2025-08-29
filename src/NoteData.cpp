@@ -1288,6 +1288,7 @@ void NoteData::RevalidateATIs(vector<int> const& added_or_removed_tracks, bool a
 template<typename ND, typename iter, typename TN>
 void NoteData::_all_tracks_iterator<ND, iter, TN>::Find( bool bReverse )
 {
+
 	// If no notes can be found in the range, m_iTrack will stay -1 and IsAtEnd() will return true.
 	m_iTrack = -1;
 	if( bReverse )
@@ -1320,6 +1321,8 @@ void NoteData::_all_tracks_iterator<ND, iter, TN>::Find( bool bReverse )
 		}
 	}
 }
+
+
 
 template<typename ND, typename iter, typename TN>
 	NoteData::_all_tracks_iterator<ND, iter, TN>::_all_tracks_iterator( ND &nd, int iStartRow, int iEndRow, bool bReverse, bool bInclusive ) :
@@ -1361,22 +1364,23 @@ template<typename ND, typename iter, typename TN>
 	Find( bReverse );
 }
 
-template<typename ND, typename iter, typename TN>
-NoteData::_all_tracks_iterator<ND, iter, TN>::_all_tracks_iterator( const _all_tracks_iterator &other ) :
+	template<typename ND, typename iter, typename TN>
+	NoteData::_all_tracks_iterator<ND, iter, TN>::_all_tracks_iterator(const _all_tracks_iterator& other) :
 #define COPY_OTHER( x ) x( other.x )
-	COPY_OTHER( m_pNoteData ),
-	COPY_OTHER( m_vBeginIters ),
-	COPY_OTHER( m_vCurrentIters ),
-	COPY_OTHER( m_vEndIters ),
-	COPY_OTHER( m_iTrack ),
-	COPY_OTHER( m_bReverse ),
-	COPY_OTHER( m_PrevCurrentRows ),
-	COPY_OTHER( m_StartRow ),
-	COPY_OTHER( m_EndRow )
+		COPY_OTHER(m_pNoteData),
+		COPY_OTHER(m_vBeginIters),
+		COPY_OTHER(m_vCurrentIters),
+		COPY_OTHER(m_vEndIters),
+		COPY_OTHER(m_iTrack),
+		COPY_OTHER(m_bReverse),
+		COPY_OTHER(m_PrevCurrentRows),
+		COPY_OTHER(m_Inclusive),
+		COPY_OTHER(m_StartRow),
+		COPY_OTHER(m_EndRow)
 #undef COPY_OTHER
-{
-	m_pNoteData->AddATIToList(this);
-}
+	{
+		m_pNoteData->AddATIToList(this);
+	}
 
 template<typename ND, typename iter, typename TN>
 	NoteData::_all_tracks_iterator<ND, iter, TN>::~_all_tracks_iterator()

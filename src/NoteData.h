@@ -88,7 +88,7 @@ public:
 		//_all_tracks_iterator operator--( int dummy );	// postdecrement
 		inline int Track() const		{ return m_iTrack; }
 		inline int Row() const			{ return m_vCurrentIters[m_iTrack]->first; }
-		inline bool IsAtEnd() const		{ return m_iTrack == -1; }
+		inline bool IsAtEnd() const		{ return m_iTrack == -1; } 
 		inline iter GetIter( int iTrack ) const	{ return m_vCurrentIters[iTrack]; }
 		inline TN &operator*()			{ DEBUG_ASSERT( !IsAtEnd() ); return m_vCurrentIters[m_iTrack]->second; }
 		inline TN *operator->()			{ DEBUG_ASSERT( !IsAtEnd() ); return &m_vCurrentIters[m_iTrack]->second; }

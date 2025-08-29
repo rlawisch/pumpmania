@@ -3108,6 +3108,17 @@ void ScreenGameplay::HandleScreenMessage( const ScreenMessage SM )
 		// If they're both zero length, only play the Ready sound.
 		// Otherwise, play both sounds.
 		// -Kyz
+			// Proteção extra: checar se a música/steps foram carregados
+		if (GAMESTATE->m_pCurSong == nullptr) {
+			LOG->Warn("ScreenGameplay::HandleScreenMessage - SM_DoneFadingIn sem Song carregado!");
+			return;
+		}
+		if (GAMESTATE->m_pCurSteps[PLAYER_1] == nullptr
+			&& GAMESTATE->m_pCurSteps[PLAYER_2] == nullptr) {
+			LOG->Warn("ScreenGameplay::HandleScreenMessage - SM_DoneFadingIn sem Steps carregados!");
+			return;
+		}
+
 		m_Ready.StartTransitioning( SM_PlayGo );
 		if(m_Ready.GetTweenTimeLeft() <= .0f)
 		{
@@ -3122,34 +3133,6 @@ void ScreenGameplay::HandleScreenMessage( const ScreenMessage SM )
 	else if( SM == SM_PlayGo )
 	{
 		m_Go.StartTransitioning( SM_None );
-		bool should_play_go= true;
-		if(m_delaying_ready_announce)
-		{
-			if(m_Go.GetTweenTimeLeft() <= .0f)
-			{
-				SOUND->PlayOnceFromAnnouncer("gameplay ready");
-				should_play_go= false;
-			}
-			else
-			{
-				should_play_go= true;
-			}
-		}
-		if(should_play_go)
-		{
-			if( GAMESTATE->IsAnExtraStage() )
-			{
-				SOUND->PlayOnceFromAnnouncer( "gameplay here we go extra" );
-			}
-			else if( GAMESTATE->GetSmallestNumStagesLeftForAnyHumanPlayer() == 0 )
-			{
-				SOUND->PlayOnceFromAnnouncer( "gameplay here we go final" );
-			}
-			else
-			{
-				SOUND->PlayOnceFromAnnouncer( "gameplay here we go normal" );
-			}
-		}
 
 		GAMESTATE->m_DanceStartTime.Touch();
 
@@ -3371,18 +3354,18 @@ void ScreenGameplay::HandleScreenMessage( const ScreenMessage SM )
 
 		StartPlayingSong( MIN_SECONDS_TO_STEP_NEXT_SONG, 0 );
 	}
-	else if( SM == SM_PlayToasty )
-	{
-		if(g_bEasterEggs)
-		{
-			if(PREFSMAN->m_AllowMultipleToasties ||
-				m_Toasty.IsWaiting())
-			{
-				m_Toasty.Reset();
-				m_Toasty.StartTransitioning();
-			}
-		}
-	}
+	//else if( SM == SM_PlayToasty )
+	//{
+	//	if(g_bEasterEggs)
+	//	{
+	//		if(PREFSMAN->m_AllowMultipleToasties ||
+	//			m_Toasty.IsWaiting())
+	//		{
+	//			m_Toasty.Reset();
+	//			m_Toasty.StartTransitioning();
+	//		}
+	//	}
+	//} // bSilver - Nope?
   /* xMAx - Removed from Player.h
 	else if( ScreenMessageHelpers::ScreenMessageToString(SM).find("0Combo") != string::npos )
 	{

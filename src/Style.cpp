@@ -51,7 +51,10 @@ GameInput Style::StyleInputToGameInput( int iCol, PlayerNumber pn ) const
 {
 	ASSERT_M( pn < NUM_PLAYERS  &&  iCol < MAX_COLS_PER_PLAYER,
 		ssprintf("P%i C%i", pn, iCol) );
+
 	bool bUsingOneSide = m_StyleType != StyleType_OnePlayerTwoSides && m_StyleType != StyleType_TwoPlayersSharedSides;
+
+	GameInput result; // bSilver
 
 	FOREACH_ENUM( GameController, gc)
 	{
@@ -65,10 +68,16 @@ GameInput Style::StyleInputToGameInput( int iCol, PlayerNumber pn ) const
 			if( iThisInputCol == END_MAPPING )
 				break;
 
-
+			if (iThisInputCol == iCol) { // -- bSilver
+				result.controller = gc;
+				result.button = gb;
+				return result;
+			}
 		}
 	}
-};
+
+	return result;
+}
 
 int Style::GameInputToColumn( const GameInput &GameI ) const
 {
