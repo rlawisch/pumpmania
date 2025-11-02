@@ -814,7 +814,7 @@ RageColor SongManager::GetSongColor( const Song* pSong ) const
 		 *
 		 * XXX: Ack. This means this function can only be called when we have
 		 * a style set up, which is too restrictive. How to handle this? */
-		//const StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
+		//const StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
 		const vector<Steps*>& vpSteps = pSong->GetAllSteps();
 		for( unsigned i=0; i<vpSteps.size(); i++ )
 		{

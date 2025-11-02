@@ -136,7 +136,7 @@ public:
 
   // xMAx - Removed static
 	float GetMaxStepDistanceSeconds();
-	float GetWindowSeconds( TimingWindow tw );
+	float GetWindowSeconds( TimingWindow tw ) const;
 
 	const NoteData &GetNoteData() const { return m_NoteData; }
 	bool HasVisibleParts() const { return false; } // xMAx
@@ -290,6 +290,7 @@ protected:
 
 	// vector<bool>	m_vbFretIsDown; // xMAx
 
+	vector<TrackRowTapNote> vHoldNotesToUpdate; // xMAx
 	vector<RageSound>	m_vKeysounds;
 
   // xMAx

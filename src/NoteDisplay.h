@@ -323,7 +323,7 @@ struct NoteColumnRenderer : public Actor
 	// UpdateReceptorGhostStuff takes care of the logic for making the ghost
 	// and receptor positions follow the splines.  It's called by their row
 	// update functions. -Kyz
-	void UpdateReceptorGhostStuff(Actor* receptor) const;
+	//void UpdateReceptorGhostStuff(Actor* receptor) const;
 	virtual void DrawPrimitives();
 	virtual void PushSelf(lua_State* L);
 

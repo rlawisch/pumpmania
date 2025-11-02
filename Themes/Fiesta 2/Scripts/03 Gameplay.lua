@@ -107,7 +107,7 @@ function ComboPerRow()
 	sGame = CurGameName()
 	if sGame == "pump" then
 		return true
-	elseif GAMESTATE:GetPlayMode() == "PlayMode_Oni" then
+	else if GAMESTATE:GetPlayMode() == "PlayMode_Oni" then
 		return true
 	else
 		return false

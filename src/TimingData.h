@@ -68,7 +68,7 @@ public:
 
 	void Copy( const TimingData &other );
 	void Clear();
-	bool IsSafeFullTiming();
+	//bool IsSafeFullTiming();
 
 	TimingData( const TimingData &cpy ) { Copy(cpy); }
 	TimingData& operator=( const TimingData &cpy ) { Copy(cpy); return *this; }
@@ -126,8 +126,8 @@ public:
 	beat_start_lookup_t m_beat_start_lookup;
 	beat_start_lookup_t m_time_start_lookup;
 
-	void PrepareLookup();
-	void ReleaseLookup();
+	//void PrepareLookup();
+	//void ReleaseLookup();
 	void DumpOneTable(const beat_start_lookup_t& lookup, const RString& name);
 	void DumpLookupTables();
 
@@ -151,7 +151,8 @@ public:
 
 	bool empty() const;
 
-	void CopyRange(int start_row, int end_row, TimingSegmentType copy_type, int dest_row, TimingData& dest) const;
+	//void CopyRange(int start_row, int end_row, TimingSegmentType copy_type, int dest_row, TimingData& dest) const; // bSilver
+	TimingData CopyRange(int startRow, int endRow) const;
 	void ShiftRange(int start_row, int end_row, TimingSegmentType shift_type, int shift_amount);
 	void ClearRange(int start_row, int end_row, TimingSegmentType clear_type);
 	/**
@@ -173,6 +174,8 @@ public:
 	 */
 	const TimingSegment* GetSegmentAtRow( int iNoteRow, TimingSegmentType tst ) const;
 	TimingSegment* GetSegmentAtRow( int iNoteRow, TimingSegmentType tst );
+
+	
 
 	/**
 	 * @brief Retrieve the TimingSegment at the given beat.
@@ -356,23 +359,44 @@ public:
 		unsigned int max_segment) const;
 	float GetElapsedTimeInternal(GetBeatStarts& start, float beat,
 		unsigned int max_segment) const;
-	void GetBeatAndBPSFromElapsedTime(GetBeatArgs& args) const;
-	float GetBeatFromElapsedTime(float elapsed_time) const	// shortcut for places that care only about the beat
+	//void GetBeatAndBPSFromElapsedTime(GetBeatArgs& args) const;
+	void GetBeatAndBPSFromElapsedTime(float fElapsedTime, float& fBeatOut, float& fBPSOut, bool& bFreezeOut, bool& bDelayOut, int& iWarpBeginOut, float& fWarpLengthOut) const;
+
+	//float GetBeatFromElapsedTime(float elapsed_time) const	// shortcut for places that care only about the beat
+	//{
+	//	GetBeatArgs args;
+	//	args.elapsed_time= elapsed_time;
+	//	GetBeatAndBPSFromElapsedTime(args);
+	//	return args.beat;
+	//}
+
+	float GetBeatFromElapsedTime(float fElapsedTime) const	// shortcut for places that care only about the beat
 	{
-		GetBeatArgs args;
-		args.elapsed_time= elapsed_time;
-		GetBeatAndBPSFromElapsedTime(args);
-		return args.beat;
+		float fBeat, fThrowAway, fThrowAway2;
+		bool bThrowAway, bThrowAway2;
+		int iThrowAway;
+		GetBeatAndBPSFromElapsedTime(fElapsedTime, fBeat, fThrowAway, bThrowAway, bThrowAway2, iThrowAway, fThrowAway2);
+		return fBeat;
 	}
+
 	float GetElapsedTimeFromBeat( float fBeat ) const;
 
-	void GetBeatAndBPSFromElapsedTimeNoOffset(GetBeatArgs& args) const;
-	float GetBeatFromElapsedTimeNoOffset(float elapsed_time) const	// shortcut for places that care only about the beat
+	//void GetBeatAndBPSFromElapsedTimeNoOffset(GetBeatArgs& args) const;
+	//float GetBeatFromElapsedTimeNoOffset(float elapsed_time) const	// shortcut for places that care only about the beat
+	//{
+	//	GetBeatArgs args;
+	//	args.elapsed_time= elapsed_time;
+	//	GetBeatAndBPSFromElapsedTimeNoOffset(args);
+	//	return args.beat;
+	//}
+	void GetBeatAndBPSFromElapsedTimeNoOffset(float fElapsedTime, float& fBeatOut, float& fBPSOut, bool& bFreezeOut, bool& bDelayOut, int& iWarpBeginOut, float& fWarpDestinationOut) const;
+	float GetBeatFromElapsedTimeNoOffset(float fElapsedTime) const	// shortcut for places that care only about the beat
 	{
-		GetBeatArgs args;
-		args.elapsed_time= elapsed_time;
-		GetBeatAndBPSFromElapsedTimeNoOffset(args);
-		return args.beat;
+		float fBeat, fThrowAway, fThrowAway2;
+		bool bThrowAway, bThrowAway2;
+		int iThrowAway;
+		GetBeatAndBPSFromElapsedTimeNoOffset(fElapsedTime, fBeat, fThrowAway, bThrowAway, bThrowAway2, iThrowAway, fThrowAway2);
+		return fBeat;
 	}
 	float GetElapsedTimeFromBeatNoOffset( float fBeat ) const;
 	float GetDisplayedBeat( float fBeat ) const;
@@ -467,7 +491,8 @@ protected:
 	void AddSegment( const TimingSegment *seg );
 
 	// All of the following vectors must be sorted before gameplay.
-	std::array<vector<TimingSegment *>, NUM_TimingSegmentType> m_avpTimingSegments;
+	//std::array<vector<TimingSegment *>, NUM_TimingSegmentType> m_avpTimingSegments;
+	vector<TimingSegment*> m_avpTimingSegments[NUM_TimingSegmentType];
 };
 
 #undef COMPARE

@@ -278,7 +278,7 @@ void ScreenSelectMusic::BeginScreen()
 	g_ScreenStartedLoadingAt.Touch();
 	m_timerIdleComment.GetDeltaTime();
 
-	if (GAMESTATE->GetCurrentStyle() == nullptr)
+	if (GAMESTATE->GetCurrentStyle(NUM_PlayerNumber) == nullptr)
 	{
 		LuaHelpers::ReportScriptError("The Style has not been set.  A theme must set the Style before loading ScreenSelectMusic.");
 		// Instead of crashing, set the first compatible style.
@@ -2015,7 +2015,7 @@ void ScreenSelectMusic::AfterMusicChange()
 			}
 			else
 			{ */
-		pStyle = GAMESTATE->GetCurrentStyle();
+		pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
 		lCourse->GetTrails(m_vpTrails, pStyle->m_StepsType);
 		// }
 	// --------------------------------------------------------------------------------------------

@@ -221,7 +221,7 @@ RString OptionRow::GetRowTitle() const
 			else if( GAMESTATE->m_pCurCourse )
 			{
 				const Course *pCourse = GAMESTATE->m_pCurCourse;
-				StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
+				StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
 				const Trail* pTrail = pCourse->GetTrail( st );
 				ASSERT( pTrail != nullptr );
 				pTrail->GetDisplayBpms( bpms );

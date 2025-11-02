@@ -135,7 +135,7 @@ public:
 	int		GetNumSidesJoined() const;
 
 	const Game*	GetCurrentGame() const;
-	const Style*	GetCurrentStyle() const;
+	const Style*	GetCurrentStyle(PlayerNumber pn) const;
 	void	SetCurrentStyle(const Style *style);
 	bool SetCompatibleStyle(StepsType stype);
 
