@@ -73,6 +73,7 @@ void PlayerStageStats::InternalInit()
 	m_HighScore = HighScore();
 
 	m_bReachedLifeZero = false; // StepP1 Revival - bSilver
+	m_bStageIsDoublePerformance = false;
 }
 
 void PlayerStageStats::Init(PlayerNumber pn)

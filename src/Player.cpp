@@ -1199,7 +1199,7 @@ void Player::Update( float fDeltaTime )
 		return;
 
 	// update pressed flag
-	const int iNumCols = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer;
+	const int iNumCols = GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer;
 	ASSERT_M( iNumCols <= MAX_COLS_PER_PLAYER, ssprintf("%i > %i", iNumCols, MAX_COLS_PER_PLAYER) );
 	for( int col=0; col < iNumCols; ++col )
 	{
@@ -1207,7 +1207,7 @@ void Player::Update( float fDeltaTime )
 
 		// TODO: Remove use of PlayerNumber.
 		vector<GameInput> GameI;
-		GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( col, m_pPlayerState->m_PlayerNumber );
+		GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->StyleInputToGameInput( col, m_pPlayerState->m_PlayerNumber );
 
 		bool bIsHoldingButton= INPUTMAPPER->IsBeingPressed(GameI);
 
@@ -1817,45 +1817,45 @@ void Player::UpdateHoldNote( int iSongRow, float fDeltaTime, TrackRowTapNote &tr
 
     // StepP1 Revival - Thequila ------------------------------------------------------------------
     vector<GameInput> GameI;
-    GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( iTrack, pn );
+    GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->StyleInputToGameInput( iTrack, pn );
 
     bIsHoldingButton &= INPUTMAPPER->IsBeingPressed(GameI, m_pPlayerState->m_mp);
     // --------------------------------------------------------------------------------------------
 
 		// m_bFreePerformance
-		if( GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions.GetCurrent().m_bFreePerformance && (GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer > 5) )
+		if( GAMESTATE->m_pPlayerState[pn]->m_PlayerOptions.GetCurrent().m_bFreePerformance && (GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer > 5) )
 		{
-			if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer == 10 )	//piu double
+			if( GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer == 10 )	//piu double
 			{
 				if( iTrack > 4 )	// player 2 side
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( iTrack-5 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( iTrack-5 , pn ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->StyleInputToGameInput( iTrack-5 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 				else // player 1 side
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( iTrack+5 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( iTrack+5 , pn ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->StyleInputToGameInput( iTrack+5 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 			}
-			else if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer == 6 ) //piu half double
+			else if( GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer == 6 ) //piu half double
 			{
 				if( iTrack == 0 ) // Only the center is available
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( 5 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( 5 , pn ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->StyleInputToGameInput( 5 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 				else if( iTrack == 5 ) // Only the center is available
 				{
 					// GameInput GameI_tmp = GAMESTATE->GetCurrentStyle(pn)->StyleInputToGameInput( 0 , pn ); // StepP1 Revival - Thequila
 					vector<GameInput> GameI_tmp; // StepP1 Revival - Thequila
-          GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( 0 , pn ); // StepP1 Revival - Thequila
+          GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->StyleInputToGameInput( 0 , pn ); // StepP1 Revival - Thequila
 					bIsHoldingButton |= INPUTMAPPER->IsBeingPressed( GameI_tmp, m_pPlayerState->m_mp );
 				}
 			}
@@ -3664,29 +3664,30 @@ void Player::FlashGhostRow( int iRow, int iPlayerNoteSkin ) // xMAx
 	ASSERT_M( lastTNS != TNS_None, "lastTNS != TNS_None" );
 	ASSERT_M( lastTNS != TNS_HitMine, "lastTNS != TNS_HitMine" );
 
+	bool filterBySkin = (iPlayerNoteSkin >= 0);
+
 	for( int iTrack = 0; iTrack < m_NoteData.GetNumTracks(); ++iTrack )
 	{
 		const TapNote &tn = m_NoteData.GetTapNote( iTrack, iRow );
 
 		if(tn.type == TapNoteType_Empty || tn.type == TapNoteType_Mine ||
 			tn.judge == TapNoteJudge_Fake || // xMAx
-      tn.result.bHidden ||
-      tn.playerNoteSkin != static_cast<TapNotePlayerNoteSkin> (iPlayerNoteSkin) // xMAx
-    )
-		{
+      tn.result.bHidden)
+			{
+				continue;
+			}
+		if (filterBySkin && tn.playerNoteSkin != static_cast<TapNotePlayerNoteSkin>(iPlayerNoteSkin)) // xMAx
 			continue;
-		}
-		if( m_pNoteField
-      && lastTNS >= TNS_W3 // xMAx
-    )
+
+		if( m_pNoteField && lastTNS >= TNS_W3 ) // xMAx
 		{
 			// m_pNoteField->DidTapNote( iTrack, lastTNS, bBright ); // xMAx
 			m_pNoteField->DidTapNote( iTrack, lastTNS, true ); // xMAx
 		}
-		if(
+		if(lastTNS >= TNS_W3 || (m_pPlayerState->m_PlayerOptions.GetCurrent().m_fBlind != 0))
       // lastTNS >= m_pPlayerState->m_PlayerOptions.GetCurrent().m_MinTNSToHideNotes || // xMAx
-      lastTNS >= TNS_W3 || (m_pPlayerState->m_PlayerOptions.GetCurrent().m_fBlind != 0)/*||*/ // xMAx
-      /*bBlind*/ )
+      /*||*/ // xMAx
+      /*bBlind*/ 
 		{
 			HideNote( iTrack, iRow );
 		}
@@ -4227,6 +4228,16 @@ void Player::HandleTapRowScore( unsigned row, TapNoteScore tns ) // xMAx
 	if( m_pPlayerStageStats )
 		m_pPlayerStageStats->m_iMaxCombo = max(m_pPlayerStageStats->m_iMaxCombo, iCurCombo);
   */
+
+	// ------- Pumpmania - BSilver - Guard para evitar contagem multipla dentro de uma linha (Exemplo: Duplos ou mais contando por note e não por linha)
+	// Guard for CountNotes like a Row
+	if (!m_bCountNotesSeparately)
+	{
+		// Entra aqui somente se a condição acima for falsa. 
+		if (m_iLastHandledTapRow == (int)row)
+			return;
+		m_iLastHandledTapRow = (int)row;
+	}
 
   // xMAx -----------------------------------------------------------------------------------------
   // Update the score

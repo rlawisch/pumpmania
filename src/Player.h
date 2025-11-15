@@ -190,6 +190,9 @@ public:
 
 	bool m_bCountNotesSeparately;
 
+	int m_iLastHandledTapRow = -1;
+
+
 	/** xMAx: use this when using Record mode in the steps editor */
 	/** Else, the game will send Combo/Judging messages when the "Player" were updated in the Update() function in the Editor */
 	/** That will happen only after one Player load (which happens when play in the editor) */
