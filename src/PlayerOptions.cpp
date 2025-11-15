@@ -1159,7 +1159,7 @@ bool PlayerOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut
 	// bSilver
 	else if (sBit == "judgebynote")
 	{
-		m_bJudgeByNote = false;
+		m_bJudgeByNote = true;
 	}
 	else if (sBit == "normal")
 	{
