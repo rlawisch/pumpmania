@@ -1055,11 +1055,11 @@ static MenuDef g_SongInformation(
 // it's the only way to make it visible to EnabledIfClipboardTimingIsSafe for
 // making sure it's safe to paste as the timing data for the Steps/Song. -Kyz
 static TimingData* clipboard_full_timing= nullptr;
-//static bool EnabledIfClipboardTimingIsSafe();
-//static bool EnabledIfClipboardTimingIsSafe()
-//{
-//	return clipboard_full_timing != nullptr && clipboard_full_timing->IsSafeFullTiming();
-//}
+static bool EnabledIfClipboardTimingIsSafe();
+static bool EnabledIfClipboardTimingIsSafe()
+{
+	return clipboard_full_timing != nullptr && clipboard_full_timing->IsSafeFullTiming();
+}
 static MenuDef g_TimingDataInformation(
 	"ScreenMiniMenuTimingDataInformation",
 	MenuRowDef(ScreenEdit::beat_0_offset,
@@ -1121,7 +1121,7 @@ static MenuDef g_TimingDataInformation(
 		true, EditMode_Full, true, true, 0, nullptr ),
 	MenuRowDef(ScreenEdit::paste_full_timing,
 		"Paste timing data",
-		/*EnabledIfClipboardTimingIsSafe*/true, EditMode_Full, true, true, 0, nullptr ),
+		EnabledIfClipboardTimingIsSafe, EditMode_Full, true, true, 0, nullptr ),
 	MenuRowDef(ScreenEdit::erase_step_timing,
 		"Erase step timing",
 		true, EditMode_Full, true, true, 0, nullptr )
@@ -1418,7 +1418,7 @@ void ScreenEdit::Init()
 	m_CurrentAction = MAIN_MENU_CHOICE_INVALID;
 	m_InputPlayerNumber = PLAYER_INVALID;
 
-	if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType == StyleType_TwoPlayersSharedSides )
+	if( GAMESTATE->GetCurrentStyle()->m_StyleType == StyleType_TwoPlayersSharedSides )
 		m_InputPlayerNumber = PLAYER_1;
 
 	FOREACH_PlayerNumber( p )
@@ -1675,10 +1675,10 @@ void ScreenEdit::Update( float fDeltaTime )
 	{
 		// TODO: Find a way to prevent STATE_RECORDING when in Song Timing.
 
-		for( int t=0; t<GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer; t++ )	// for each track
+		for( int t=0; t<GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer; t++ )	// for each track
 		{
 			vector<GameInput> GameI;
-			GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( t, PLAYER_1 );
+			GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( t, PLAYER_1 );
 			float fSecsHeld= 0.0f;
 			for(size_t i= 0; i < GameI.size(); ++i)
 			{
@@ -1735,10 +1735,10 @@ void ScreenEdit::Update( float fDeltaTime )
 		 * range.
 		 */
 		bool bButtonIsBeingPressed = false;
-		for( int t=0; t<GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer; t++ )	// for each track
+		for( int t=0; t<GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer; t++ )	// for each track
 		{
 			vector<GameInput> GameI;
-			GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( t, PLAYER_1 );
+			GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( t, PLAYER_1 );
 			if( INPUTMAPPER->IsBeingPressed(GameI) )
 				bButtonIsBeingPressed = true;
 		}
@@ -2097,9 +2097,9 @@ bool ScreenEdit::Input( const InputEventPlus &input )
 
 static void ShiftToRightSide( int &iCol, int iNumTracks )
 {
-	switch( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType )
+	switch( GAMESTATE->GetCurrentStyle()->m_StyleType )
 	{
-	DEFAULT_FAIL( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType );
+	DEFAULT_FAIL( GAMESTATE->GetCurrentStyle()->m_StyleType );
 	case StyleType_OnePlayerOneSide:
 		break;
 	case StyleType_TwoPlayersTwoSides:
@@ -3112,7 +3112,7 @@ bool ScreenEdit::InputRecord( const InputEventPlus &input, EditButton EditB )
 	if( input.pn != PLAYER_1 )
 		return false;		// ignore
 
-	const int iCol = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn( input.GameI );
+	const int iCol = GAMESTATE->GetCurrentStyle()->GameInputToColumn( input.GameI );
 
 	//Is this actually a column? If not, ignore the input.
 	if( iCol == -1 )
@@ -3229,13 +3229,13 @@ bool ScreenEdit::InputPlay( const InputEventPlus &input, EditButton EditB )
 
 	if( GamePreferences::m_AutoPlayP1 == PC_HUMAN && GAMESTATE->m_pPlayerState[PLAYER_1]->m_PlayerOptions.GetCurrent().m_fPlayerAutoPlay == 0 )
 	{
-		const int iCol = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn( input.GameI );
+		const int iCol = GAMESTATE->GetCurrentStyle()->GameInputToColumn( input.GameI );
 		bool bRelease = input.type == IET_RELEASE;
 		switch( input.pn )
 		{
 		case PLAYER_2:
 			// ignore player 2 input unless this mode requires it
-			if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType != StyleType_TwoPlayersSharedSides )
+			if( GAMESTATE->GetCurrentStyle()->m_StyleType != StyleType_TwoPlayersSharedSides )
 				break;
 
 		// fall through to input handling logic:
@@ -5158,7 +5158,7 @@ void ScreenEdit::HandleAlterMenuChoice(AlterMenuChoice c, const vector<int> &ans
 			const NoteData OldClipboard( m_Clipboard );
 			HandleAlterMenuChoice( cut, false );
 
-			StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
+			StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 			TurnType tt = (TurnType)answers[c];
 			switch( tt )
 			{
@@ -5180,7 +5180,7 @@ void ScreenEdit::HandleAlterMenuChoice(AlterMenuChoice c, const vector<int> &ans
 			int iBeginRow = m_NoteFieldEdit.m_iBeginMarker;
 			int iEndRow = m_NoteFieldEdit.m_iEndMarker;
 			TransformType tt = (TransformType)answers[c];
-			StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
+			StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 
 			switch( tt )
 			{
@@ -5907,7 +5907,7 @@ void ScreenEdit::HandleTimingDataInformationChoice( TimingDataInformationChoice 
 			);
 			break;
 		}
-	/*	case shift_timing_in_region_down:
+		case shift_timing_in_region_down:
 			m_timing_change_menu_purpose= menu_is_for_shifting;
 			m_timing_rows_being_shitted= GetRowsFromAnswers(c, iAnswers);
 			DisplayTimingChangeMenu();
@@ -5927,7 +5927,7 @@ void ScreenEdit::HandleTimingDataInformationChoice( TimingDataInformationChoice 
 			break;
 		case paste_timing_from_clip:
 			clipboardFullTiming.CopyRange(0, MAX_NOTE_ROW, TimingSegmentType_Invalid, GetRow(), GetAppropriateTimingForUpdate());
-			break;*/
+			break;
 	case copy_full_timing:
 	{
 		clipboardFullTiming = GetAppropriateTiming();
@@ -6007,7 +6007,7 @@ void ScreenEdit::HandleTimingDataChangeChoice(TimingDataChangeChoice choice,
 	{
 		end= MAX_NOTE_ROW;
 	}
-	/*switch(m_timing_change_menu_purpose)
+	switch(m_timing_change_menu_purpose)
 	{
 		case menu_is_for_copying:
 			clipboardFullTiming.Clear();
@@ -6020,7 +6020,7 @@ void ScreenEdit::HandleTimingDataChangeChoice(TimingDataChangeChoice choice,
 			GetAppropriateTimingForUpdate().ClearRange(begin, end, change_type);
 			break;
 		default: break;
-	}*/
+	}
 }
 
 void ScreenEdit::HandleBGChangeChoice( BGChangeChoice c, const vector<int> &iAnswers )

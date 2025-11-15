@@ -6,59 +6,35 @@ static Preference<float> g_fVisualDelaySeconds( "VisualDelaySeconds", 0.0f );
 void SongPosition::UpdateSongPosition( float fPositionSeconds, const TimingData &timing, const RageTimer &timestamp )
 {
 
-	//if( !timestamp.IsZero() )
-	//	m_LastBeatUpdate = timestamp;
-	//else
-	//	m_LastBeatUpdate.Touch();
-
-	//TimingData::GetBeatArgs beat_info;
-	//beat_info.elapsed_time= fPositionSeconds;
-	//timing.GetBeatAndBPSFromElapsedTime(beat_info);
-	//m_fSongBeat= beat_info.beat;
-	//m_fCurBPS= beat_info.bps_out;
-	//m_bFreeze= beat_info.freeze_out;
-	//m_bDelay= beat_info.delay_out;
-	//m_iWarpBeginRow= beat_info.warp_begin_out;
-	//m_fWarpDestination= beat_info.warp_dest_out;
-	//
-	//// "Crash reason : -243478.890625 -48695.773438"
-	//// The question is why is -2000 used as the limit? -aj
-	//ASSERT_M( m_fSongBeat > -2000, ssprintf("Song beat %f at %f seconds is less than -2000!", m_fSongBeat, fPositionSeconds) );
-
-	//m_fMusicSeconds = fPositionSeconds;
-
-	//m_fLightSongBeat = timing.GetBeatFromElapsedTime( fPositionSeconds + g_fLightsAheadSeconds );
-
-	//m_fSongBeatNoOffset = timing.GetBeatFromElapsedTimeNoOffset( fPositionSeconds );
-	//
-	//m_fMusicSecondsVisible = fPositionSeconds - g_fVisualDelaySeconds.Get();
-	//beat_info.elapsed_time= m_fMusicSecondsVisible;
-	//timing.GetBeatAndBPSFromElapsedTime(beat_info);
-	//m_fSongBeatVisible= beat_info.beat;
-
-	if (!timestamp.IsZero())
+	if( !timestamp.IsZero() )
 		m_LastBeatUpdate = timestamp;
 	else
 		m_LastBeatUpdate.Touch();
 
-	timing.GetBeatAndBPSFromElapsedTime(fPositionSeconds, m_fSongBeat, m_fCurBPS, m_bFreeze, m_bDelay, m_iWarpBeginRow, m_fWarpDestination);
-
+	TimingData::GetBeatArgs beat_info;
+	beat_info.elapsed_time= fPositionSeconds;
+	timing.GetBeatAndBPSFromElapsedTime(beat_info);
+	m_fSongBeat= beat_info.beat;
+	m_fCurBPS= beat_info.bps_out;
+	m_bFreeze= beat_info.freeze_out;
+	m_bDelay= beat_info.delay_out;
+	m_iWarpBeginRow= beat_info.warp_begin_out;
+	m_fWarpDestination= beat_info.warp_dest_out;
+	
 	// "Crash reason : -243478.890625 -48695.773438"
 	// The question is why is -2000 used as the limit? -aj
-	ASSERT_M(m_fSongBeat > -2000, ssprintf("Song beat %f at %f seconds is less than -2000!", m_fSongBeat, fPositionSeconds));
+	ASSERT_M( m_fSongBeat > -2000, ssprintf("Song beat %f at %f seconds is less than -2000!", m_fSongBeat, fPositionSeconds) );
 
 	m_fMusicSeconds = fPositionSeconds;
 
-	m_fLightSongBeat = timing.GetBeatFromElapsedTime(fPositionSeconds + g_fLightsAheadSeconds);
+	m_fLightSongBeat = timing.GetBeatFromElapsedTime( fPositionSeconds + g_fLightsAheadSeconds );
 
-	m_fSongBeatNoOffset = timing.GetBeatFromElapsedTimeNoOffset(fPositionSeconds);
-
+	m_fSongBeatNoOffset = timing.GetBeatFromElapsedTimeNoOffset( fPositionSeconds );
+	
 	m_fMusicSecondsVisible = fPositionSeconds - g_fVisualDelaySeconds.Get();
-	float fThrowAway, fThrowAway2;
-	bool bThrowAway;
-	int iThrowAway;
-	timing.GetBeatAndBPSFromElapsedTime(m_fMusicSecondsVisible, m_fSongBeatVisible, fThrowAway, bThrowAway, bThrowAway, iThrowAway, fThrowAway2);
-
+	beat_info.elapsed_time= m_fMusicSecondsVisible;
+	timing.GetBeatAndBPSFromElapsedTime(beat_info);
+	m_fSongBeatVisible= beat_info.beat;
 }
 
 void SongPosition::Reset()

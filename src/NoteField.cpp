@@ -42,11 +42,13 @@ NoteField::NoteField()
 {
 	m_pNoteData = nullptr;
 	m_pCurDisplay = nullptr;
-	//m_drawing_board_primitive= false;
+	m_drawing_board_primitive= false;
 
   // xMAx
 	m_pReceptorDisplay = nullptr;
 	m_pPlayerState = nullptr;
+	m_bUseRandomSkin = false;
+	m_bIsRoutine = false;
 
 	m_textMeasureNumber.LoadFromFont( THEME->GetPathF("NoteField","MeasureNumber") );
 	m_textMeasureNumber.SetZoom( 1.0f );
@@ -73,21 +75,18 @@ NoteField::NoteField()
 	m_sprBeatBars.Load( THEME->GetPathG("NoteField","bars") );
 	m_sprBeatBars.StopAnimating();
 
-	//// I decided to do it this way because I don't want to dig through
-	//// ScreenEdit to change all the places it touches the markers. -Kyz
-	//m_FieldRenderArgs.selection_begin_marker= &m_iBeginMarker;
-	//m_FieldRenderArgs.selection_end_marker= &m_iEndMarker;
+	// I decided to do it this way because I don't want to dig through
+	// ScreenEdit to change all the places it touches the markers. -Kyz
+	m_FieldRenderArgs.selection_begin_marker= &m_iBeginMarker;
+	m_FieldRenderArgs.selection_end_marker= &m_iEndMarker;
 	m_iBeginMarker = m_iEndMarker = -1;
 
 	m_FieldRenderArgs.fail_fade = -1;
 
-	/*m_StepCallback.SetFromNil();
+	m_StepCallback.SetFromNil();
 	m_SetPressedCallback.SetFromNil();
 	m_DidTapNoteCallback.SetFromNil();
-	m_DidHoldNoteCallback.SetFromNil();*/
-
-	m_bUseRandomSkin = false;
-	m_bIsRoutine = false;
+	m_DidHoldNoteCallback.SetFromNil();
 }
 
 NoteField::~NoteField()
@@ -127,9 +126,9 @@ void NoteField::CacheNoteSkin( const RString &sNoteSkin_ )
 	LockNoteSkin l( sNoteSkinLower );
 
 	// LOG->Trace("NoteField::CacheNoteSkin: cache %s", sNoteSkinLower.c_str() ); // xMAx
-	NoteDisplayCols *nd = new NoteDisplayCols( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer );
+	NoteDisplayCols *nd = new NoteDisplayCols( GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer );
 
-	for( int c=0; c<GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer; c++ )
+	for( int c=0; c<GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer; c++ )
 		// nd->display[c].Load( c, m_pPlayerState, m_fYReverseOffsetPixels ); // xMAx
 		nd->display[c].Load( c, m_pPlayerState ); // xMAx
 
@@ -339,7 +338,7 @@ void NoteField::CacheAllUsedNoteSkins()
 	}
   // ----------------------------------------------------------------------------------------------
 
-	//InitColumnRenderers();
+	InitColumnRenderers();
 }
 
 void NoteField::Init( const PlayerState* pPlayerState, float fYReverseOffsetPixels, bool use_states_zoom )
@@ -355,22 +354,23 @@ void NoteField::Init( const PlayerState* pPlayerState, float fYReverseOffsetPixe
 	// PlayerState. -Kyz
 	// use_states_zoom flag exists because edit mode has to set its own special
 	// zoom factor. -Kyz
-	//if(use_states_zoom)
-	//{
-	//	SetZoom(pPlayerState->m_NotefieldZoom);
-	//}
-	//// Pass the player state info down to children so that they can set
-	//// per-player things.  For example, if a screen filter is in the notefield
-	//// board, this tells it what player it's for. -Kyz
-	//Message msg("PlayerStateSet");
-	//msg.SetParam("PlayerNumber", pPlayerState->m_PlayerNumber);
-	//HandleMessage(msg);
+	if(use_states_zoom)
+	{
+		SetZoom(pPlayerState->m_NotefieldZoom);
+	}
+	// Pass the player state info down to children so that they can set
+	// per-player things.  For example, if a screen filter is in the notefield
+	// board, this tells it what player it's for. -Kyz
+	Message msg("PlayerStateSet");
+	msg.SetParam("PlayerNumber", pPlayerState->m_PlayerNumber);
+	HandleMessage(msg);
 }
 
 void NoteField::Load(
 	const NoteData *pNoteData,
 	int iDrawDistanceAfterTargetsPixels,
-	int iDrawDistanceBeforeTargetsPixels, bool bIsDoublePerformance // xMAx
+	int iDrawDistanceBeforeTargetsPixels,
+  bool bIsDoublePerformance // xMAx
  )
 {
 	ASSERT( pNoteData != nullptr );
@@ -379,13 +379,13 @@ void NoteField::Load(
 	m_iDrawDistanceBeforeTargetsPixels = iDrawDistanceBeforeTargetsPixels;
 	ASSERT( m_iDrawDistanceBeforeTargetsPixels >= m_iDrawDistanceAfterTargetsPixels );
 
-	m_fPercentFadeToFail = -1;
+	m_FieldRenderArgs.fail_fade = -1;
 
 	//int i1 = m_pNoteData->GetNumTracks();
 	//int i2 = GAMESTATE->GetCurrentStyle(m_pPlayerState->m_PlayerNumber)->m_iColsPerPlayer;
-	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer,
+	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer,
 		 ssprintf("NumTracks %d = ColsPerPlayer %d",m_pNoteData->GetNumTracks(),
-			  GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer));
+			  GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer));
 
   /* xMAx
 	// If we're in routine mode, the noteskin is forcibly set to the routine
@@ -404,7 +404,7 @@ void NoteField::Load(
 	m_NoteDrawData.clear();
   // ----------------------------------------------------------------------------------------------
 
-	//InitColumnRenderers();
+	InitColumnRenderers();
 }
 
 void NoteField::ensure_note_displays_have_skin()
@@ -483,8 +483,6 @@ void NoteField::InitColumnRenderers()
 
 void NoteField::Update( float fDeltaTime )
 {
-	NoteDisplayCols* cur = m_pReceptorDisplay;
-
   /* xMAx - Not used
 	if( m_bFirstUpdate )
 	{
@@ -527,17 +525,17 @@ void NoteField::Update( float fDeltaTime )
 	  m_rectMarkerBar.Update( fDeltaTime );
 
 	// NoteDisplayCols *cur = m_pCurDisplay; // xMAx
-	//NoteDisplayCols *cur = m_pReceptorDisplay; // xMAx
+	NoteDisplayCols *cur = m_pReceptorDisplay; // xMAx
 
 	cur->m_ReceptorArrowRow.Update( fDeltaTime );
 	cur->m_GhostArrowRow.Update( fDeltaTime );
 
-	if(m_fPercentFadeToFail >= 0 )
-		m_fPercentFadeToFail = min(m_fPercentFadeToFail + fDeltaTime/FADE_FAIL_TIME, 1 );
+	if( m_FieldRenderArgs.fail_fade >= 0 )
+		m_FieldRenderArgs.fail_fade = min( m_FieldRenderArgs.fail_fade + fDeltaTime/FADE_FAIL_TIME, 1 );
 
 	// Update fade to failed
 	// m_pCurDisplay->m_ReceptorArrowRow.SetFadeToFailPercent( m_FieldRenderArgs.fail_fade ); // xMAx
-	cur->m_ReceptorArrowRow.SetFadeToFailPercent(m_fPercentFadeToFail); // xMAx
+	cur->m_ReceptorArrowRow.SetFadeToFailPercent( m_FieldRenderArgs.fail_fade ); // xMAx
 
   /* xMAx
 	NoteDisplay::Update( fDeltaTime );
@@ -553,8 +551,7 @@ void NoteField::Update( float fDeltaTime )
 
 float NoteField::GetWidth() const
 {
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber); // PlayerNumber pn restored
-	// Ok, I think I delete the PlayerNumber (?!?!) but if we put it back in GetCurrentStyle the notes will appear!
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	float fMinX, fMaxX;
 	// TODO: Remove use of PlayerNumber.
 	pStyle->GetMinAndMaxColX( m_pPlayerState->m_PlayerNumber, fMinX, fMaxX );
@@ -1122,27 +1119,27 @@ bool NoteField::IsOnScreen( float fBeat, int iCol, int iDrawDistanceAfterTargets
 
 void NoteField::CalcPixelsBeforeAndAfterTargets()
 {
-	//const PlayerOptions& curr_options= m_pPlayerState->m_PlayerOptions.GetCurrent();
-	//// Adjust draw range depending on some effects
-	//m_FieldRenderArgs.draw_pixels_after_targets= m_iDrawDistanceAfterTargetsPixels * (1.f + curr_options.m_fDrawSizeBack);
-	//// HACK: If boomerang and centered are on, then we want to draw much
-	//// earlier so that the notes don't pop on screen.
-	//float centered_times_boomerang=
-	//	curr_options.m_fScrolls[PlayerOptions::SCROLL_CENTERED] *
-	//	curr_options.m_fAccels[PlayerOptions::ACCEL_BOOMERANG];
-	//m_FieldRenderArgs.draw_pixels_after_targets +=
-	//	int(SCALE(centered_times_boomerang, 0.f, 1.f, 0.f, -SCREEN_HEIGHT/2));
-	//m_FieldRenderArgs.draw_pixels_before_targets =
-	//	m_iDrawDistanceBeforeTargetsPixels * (1.f + curr_options.m_fDrawSize);
+	const PlayerOptions& curr_options= m_pPlayerState->m_PlayerOptions.GetCurrent();
+	// Adjust draw range depending on some effects
+	m_FieldRenderArgs.draw_pixels_after_targets= m_iDrawDistanceAfterTargetsPixels * (1.f + curr_options.m_fDrawSizeBack);
+	// HACK: If boomerang and centered are on, then we want to draw much
+	// earlier so that the notes don't pop on screen.
+	float centered_times_boomerang=
+		curr_options.m_fScrolls[PlayerOptions::SCROLL_CENTERED] *
+		curr_options.m_fAccels[PlayerOptions::ACCEL_BOOMERANG];
+	m_FieldRenderArgs.draw_pixels_after_targets +=
+		int(SCALE(centered_times_boomerang, 0.f, 1.f, 0.f, -SCREEN_HEIGHT/2));
+	m_FieldRenderArgs.draw_pixels_before_targets =
+		m_iDrawDistanceBeforeTargetsPixels * (1.f + curr_options.m_fDrawSize);
 
-	//float draw_scale= 1;
-	//draw_scale*= 1 + 0.5f * fabsf(curr_options.m_fPerspectiveTilt);
-	//draw_scale*= 1 + fabsf(curr_options.m_fEffects[PlayerOptions::EFFECT_MINI]);
+	float draw_scale= 1;
+	draw_scale*= 1 + 0.5f * fabsf(curr_options.m_fPerspectiveTilt);
+	draw_scale*= 1 + fabsf(curr_options.m_fEffects[PlayerOptions::EFFECT_MINI]);
 
-	//m_FieldRenderArgs.draw_pixels_after_targets=
-	//	(int)(m_FieldRenderArgs.draw_pixels_after_targets * draw_scale);
-	//m_FieldRenderArgs.draw_pixels_before_targets=
-	//	(int)(m_FieldRenderArgs.draw_pixels_before_targets * draw_scale);
+	m_FieldRenderArgs.draw_pixels_after_targets=
+		(int)(m_FieldRenderArgs.draw_pixels_after_targets * draw_scale);
+	m_FieldRenderArgs.draw_pixels_before_targets=
+		(int)(m_FieldRenderArgs.draw_pixels_before_targets * draw_scale);
 }
 
 #define IS_ON_SCREEN( fBeat )  ( fFirstBeatToDraw <= (fBeat) && (fBeat) <= fLastBeatToDraw && IsOnScreen( fBeat, 0, iDrawDistanceAfterTargetsPixels, iDrawDistanceBeforeTargetsPixels ) )
@@ -1151,7 +1148,7 @@ void NoteField::DrawPrimitives()
 	//LOG->Trace( "NoteField::DrawPrimitives()" );
 
 	// This should be filled in on the first update.
-	ASSERT( m_pCurDisplay != nullptr, "NoteField::m_pCurDisplay has a NULL value");
+	ASSERT( m_pCurDisplay != nullptr );
 
 	// ArrowEffects::Update call moved because having it happen once per
 	// NoteField (which means twice in two player) seemed wasteful. -Kyz
@@ -1547,10 +1544,10 @@ void NoteField::DrawPrimitives()
 	// Draw the arrows in order of column. This minimizes texture switches and
 	// lets us draw in big batches.
 
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
-	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer,
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
+	ASSERT_M(m_pNoteData->GetNumTracks() == GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer,
 		ssprintf("NumTracks %d != ColsPerPlayer %d",m_pNoteData->GetNumTracks(),
-			GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer));
+			GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer));
 
   // xMAx
 	m_NoteDrawData.clear();
@@ -1803,13 +1800,13 @@ void NoteField::DrawPrimitives()
 
 void NoteField::DrawBoardPrimitive()
 {
-	//if(!SHOW_BOARD)
-	//{
-	//	return;
-	//}
-	//m_drawing_board_primitive= true;
-	//Draw();
-	//m_drawing_board_primitive= false;
+	if(!SHOW_BOARD)
+	{
+		return;
+	}
+	m_drawing_board_primitive= true;
+	Draw();
+	m_drawing_board_primitive= false;
 }
 
 void NoteField::FadeToFail()
@@ -1818,272 +1815,242 @@ void NoteField::FadeToFail()
 		// don't fade all over again if this is called twice
 }
 
-// xMAx
-void NoteField::Step(int iCol, TapNoteScore score) { m_pReceptorDisplay->m_ReceptorArrowRow.Step(iCol, score); }
-void NoteField::SetPressed(int iCol) { m_pReceptorDisplay->m_ReceptorArrowRow.SetPressed(iCol); }
-void NoteField::DidTapNote(int iCol, TapNoteScore score, bool bBright) { m_pReceptorDisplay->m_GhostArrowRow.DidTapNote(iCol, score, bBright); }
-void NoteField::DidHoldNote(int iCol, HoldNoteScore score, bool bBright) { m_pReceptorDisplay->m_GhostArrowRow.DidHoldNote(iCol, score, bBright); }
-void NoteField::UpdateHoldBody(TapNote* tn)
-{
-	if (m_bUseRandomSkin)
+// A few functions and macros to take care of processing the callback
+// return values, since the code would be identical in all of them. -Kyz
+
+#define OPEN_CALLBACK_BLOCK(member_name) \
+	if(!from_lua && !member_name.IsNil()) \
+	{ \
+		Lua* L= LUA->Get(); \
+		member_name.PushSelf(L);
+
+#define OPEN_RUN_BLOCK(arg_count) \
+	RString error= "Error running callback: "; \
+	if(LuaHelpers::RunScriptOnStack(L, error, arg_count, arg_count, true)) \
 	{
-		//if( tn->iSkin == -1 || bIsHoldingNote )
+
+#define CLOSE_RUN_AND_CALLBACK_BLOCKS  } lua_settop(L, 0);  LUA->Release(L); }
+#define PUSH_COLUMN lua_pushnumber(L, col+1)
+
+static void get_returned_column(Lua* L, PlayerNumber pn, int index, int& col)
+{
+	if(lua_isnumber(L, index))
+	{
+		// 1-indexed columns in lua
+		int tmpcol= lua_tonumber(L, index) - 1;
+		if(tmpcol < 0 || tmpcol >= GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer)
 		{
-			int	random_skin = rand() % NUM_RANDOM_NOTESKINS;
-			tn->iSkin = random_skin;
+			LuaHelpers::ReportScriptErrorFmt(
+				"Column returned by callback must be between 1 and %d "
+				"(GAMESTATE:GetCurrentStyle():ColumnsPerPlayer()).",
+				GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer);
+		}
+		else
+		{
+			col= tmpcol;
 		}
 	}
 }
 
-void NoteField::HandleMessage(const Message& msg)
+// Templated so it can be used for TNS and HNS. -Kyz
+template<class T> static void get_returned_score(Lua* L, int index, T& score)
 {
-	if (msg == Message_CurrentSongChanged)
+	T maybe_score= Enum::Check<T>(L, index, true, true);
+	if(maybe_score != EnumTraits<T>::Invalid)
+	{
+		score= maybe_score;
+	}
+}
+
+static void get_returned_bright(Lua* L, int index, bool& bright)
+{
+	if(lua_isboolean(L, index))
+	{
+		bright= lua_toboolean(L, index);
+	}
+}
+
+void NoteField::Step(int col, TapNoteScore score, bool from_lua)
+{
+	OPEN_CALLBACK_BLOCK(m_StepCallback);
+	PUSH_COLUMN;
+	Enum::Push(L, score);
+	OPEN_RUN_BLOCK(2);
+	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
+	get_returned_score(L, 2, score);
+	CLOSE_RUN_AND_CALLBACK_BLOCKS;
+	// m_pCurDisplay->m_ReceptorArrowRow.Step(col, score); // xMAx
+	m_pReceptorDisplay->m_ReceptorArrowRow.Step(col, score); // xMAx
+}
+void NoteField::SetPressed(int col, bool from_lua)
+{
+	OPEN_CALLBACK_BLOCK(m_SetPressedCallback);
+	PUSH_COLUMN;
+	OPEN_RUN_BLOCK(1);
+	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
+	CLOSE_RUN_AND_CALLBACK_BLOCKS;
+	// m_pCurDisplay->m_ReceptorArrowRow.SetPressed(col); // xMAx
+	m_pReceptorDisplay->m_ReceptorArrowRow.SetPressed(col); // xMAx
+}
+void NoteField::DidTapNote(int col, TapNoteScore score, bool bright, bool from_lua)
+{
+	OPEN_CALLBACK_BLOCK(m_DidTapNoteCallback);
+	PUSH_COLUMN;
+	Enum::Push(L, score);
+	lua_pushboolean(L, bright);
+	OPEN_RUN_BLOCK(3);
+	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
+	get_returned_score(L, 2, score);
+	get_returned_bright(L, 3, bright);
+	CLOSE_RUN_AND_CALLBACK_BLOCKS;
+	// m_pCurDisplay->m_GhostArrowRow.DidTapNote(col, score, bright); // xMAx
+	m_pReceptorDisplay->m_GhostArrowRow.DidTapNote(col, score, bright); // xMAx
+}
+void NoteField::DidHoldNote(int col, HoldNoteScore score, bool bright, bool from_lua)
+{
+	OPEN_CALLBACK_BLOCK(m_DidHoldNoteCallback);
+	PUSH_COLUMN;
+	Enum::Push(L, score);
+	lua_pushboolean(L, bright);
+	OPEN_RUN_BLOCK(3);
+	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
+	get_returned_score(L, 2, score);
+	get_returned_bright(L, 3, bright);
+	CLOSE_RUN_AND_CALLBACK_BLOCKS;
+	// m_pCurDisplay->m_GhostArrowRow.DidHoldNote(col, score, bright); // xMAx
+	m_pReceptorDisplay->m_GhostArrowRow.DidHoldNote(col, score, bright); // xMAx
+}
+
+// xMAx -------------------------------------------------------------------------------------------
+void NoteField::UpdateHoldBody(TapNote* tn)
+{
+	if( m_bUseRandomSkin )
+	{
+    int	random_skin = rand() % NUM_RANDOM_NOTESKINS;
+    tn->iSkin = random_skin;
+	}
+}
+// ------------------------------------------------------------------------------------------------
+
+#undef OPEN_CALLBACK_BLOCK
+#undef OPEN_RUN_BLOCK
+#undef CLOSE_RUN_AND_CALLBACK_BLOCKS
+#undef PUSH_COLUMN
+
+void NoteField::HandleMessage( const Message &msg )
+{
+	if( msg == Message_CurrentSongChanged )
 	{
 		m_fCurrentBeatLastUpdate = -1;
 		m_fYPosCurrentBeatLastUpdate = -1;
 	}
 
-	ActorFrame::HandleMessage(msg);
+	ActorFrame::HandleMessage( msg );
 }
 
+// lua start
+#include "LuaBinding.h"
 
-// A few functions and macros to take care of processing the callback
-// return values, since the code would be identical in all of them. -Kyz
+/** @brief Allow Lua to have access to the Notefield. */
+class LunaNoteField: public Luna<NoteField>
+{
+public:
+#define SET_CALLBACK_GENERIC(callback_name, member_name) \
+	static int callback_name(T* p, lua_State* L) \
+	{ \
+		if(lua_isnoneornil(L, 1)) \
+		{ \
+			p->member_name.SetFromNil(); \
+		} \
+		else if(lua_isfunction(L, 1)) \
+		{ \
+			p->member_name.SetFromStack(L); \
+		} \
+		else \
+		{ \
+			luaL_error(L, #callback_name "Callback argument must be nil (to clear the callback) or a function (to set the callback)."); \
+		} \
+		return 0; \
+	}
+	SET_CALLBACK_GENERIC(set_step_callback, m_StepCallback);
+	SET_CALLBACK_GENERIC(set_set_pressed_callback, m_SetPressedCallback);
+	SET_CALLBACK_GENERIC(set_did_tap_note_callback, m_DidTapNoteCallback);
+	SET_CALLBACK_GENERIC(set_did_hold_note_callback, m_DidHoldNoteCallback);
+#undef SET_CALLBACK_GENERIC
 
-//#define OPEN_CALLBACK_BLOCK(member_name) \
-//	if(!from_lua && !member_name.IsNil()) \
-//	{ \
-//		Lua* L= LUA->Get(); \
-//		member_name.PushSelf(L);
-//
-//#define OPEN_RUN_BLOCK(arg_count) \
-//	RString error= "Error running callback: "; \
-//	if(LuaHelpers::RunScriptOnStack(L, error, arg_count, arg_count, true)) \
-//	{
-//
-//#define CLOSE_RUN_AND_CALLBACK_BLOCKS  } lua_settop(L, 0);  LUA->Release(L); }
-//#define PUSH_COLUMN lua_pushnumber(L, col+1)
-//
-//static void get_returned_column(Lua* L, PlayerNumber pn, int index, int& col)
-//{
-//	if(lua_isnumber(L, index))
-//	{
-//		// 1-indexed columns in lua
-//		int tmpcol= lua_tonumber(L, index) - 1;
-//		if(tmpcol < 0 || tmpcol >= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer)
-//		{
-//			LuaHelpers::ReportScriptErrorFmt(
-//				"Column returned by callback must be between 1 and %d "
-//				"(GAMESTATE:GetCurrentStyle(NUM_PlayerNumber):ColumnsPerPlayer()).",
-//				GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer);
-//		}
-//		else
-//		{
-//			col= tmpcol;
-//		}
-//	}
-//}
-//
-//// Templated so it can be used for TNS and HNS. -Kyz
-//template<class T> static void get_returned_score(Lua* L, int index, T& score)
-//{
-//	T maybe_score= Enum::Check<T>(L, index, true, true);
-//	if(maybe_score != EnumTraits<T>::Invalid)
-//	{
-//		score= maybe_score;
-//	}
-//}
-//
-//static void get_returned_bright(Lua* L, int index, bool& bright)
-//{
-//	if(lua_isboolean(L, index))
-//	{
-//		bright= lua_toboolean(L, index);
-//	}
-//}
-//
-//void NoteField::Step(int col, TapNoteScore score, bool from_lua)
-//{
-//	OPEN_CALLBACK_BLOCK(m_StepCallback);
-//	PUSH_COLUMN;
-//	Enum::Push(L, score);
-//	OPEN_RUN_BLOCK(2);
-//	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
-//	get_returned_score(L, 2, score);
-//	CLOSE_RUN_AND_CALLBACK_BLOCKS;
-//	// m_pCurDisplay->m_ReceptorArrowRow.Step(col, score); // xMAx
-//	m_pReceptorDisplay->m_ReceptorArrowRow.Step(col, score); // xMAx
-//}
-//void NoteField::SetPressed(int col, bool from_lua)
-//{
-//	OPEN_CALLBACK_BLOCK(m_SetPressedCallback);
-//	PUSH_COLUMN;
-//	OPEN_RUN_BLOCK(1);
-//	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
-//	CLOSE_RUN_AND_CALLBACK_BLOCKS;
-//	// m_pCurDisplay->m_ReceptorArrowRow.SetPressed(col); // xMAx
-//	m_pReceptorDisplay->m_ReceptorArrowRow.SetPressed(col); // xMAx
-//}
-//void NoteField::DidTapNote(int col, TapNoteScore score, bool bright, bool from_lua)
-//{
-//	OPEN_CALLBACK_BLOCK(m_DidTapNoteCallback);
-//	PUSH_COLUMN;
-//	Enum::Push(L, score);
-//	lua_pushboolean(L, bright);
-//	OPEN_RUN_BLOCK(3);
-//	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
-//	get_returned_score(L, 2, score);
-//	get_returned_bright(L, 3, bright);
-//	CLOSE_RUN_AND_CALLBACK_BLOCKS;
-//	// m_pCurDisplay->m_GhostArrowRow.DidTapNote(col, score, bright); // xMAx
-//	m_pReceptorDisplay->m_GhostArrowRow.DidTapNote(col, score, bright); // xMAx
-//}
-//void NoteField::DidHoldNote(int col, HoldNoteScore score, bool bright, bool from_lua)
-//{
-//	OPEN_CALLBACK_BLOCK(m_DidHoldNoteCallback);
-//	PUSH_COLUMN;
-//	Enum::Push(L, score);
-//	lua_pushboolean(L, bright);
-//	OPEN_RUN_BLOCK(3);
-//	get_returned_column(L, m_pPlayerState->m_PlayerNumber, 1, col);
-//	get_returned_score(L, 2, score);
-//	get_returned_bright(L, 3, bright);
-//	CLOSE_RUN_AND_CALLBACK_BLOCKS;
-//	// m_pCurDisplay->m_GhostArrowRow.DidHoldNote(col, score, bright); // xMAx
-//	m_pReceptorDisplay->m_GhostArrowRow.DidHoldNote(col, score, bright); // xMAx
-//}
-//
-//// xMAx -------------------------------------------------------------------------------------------
-//void NoteField::UpdateHoldBody(TapNote* tn)
-//{
-//	if( m_bUseRandomSkin )
-//	{
-//    int	random_skin = rand() % NUM_RANDOM_NOTESKINS;
-//    tn->iSkin = random_skin;
-//	}
-//}
-//// ------------------------------------------------------------------------------------------------
-//
-//#undef OPEN_CALLBACK_BLOCK
-//#undef OPEN_RUN_BLOCK
-//#undef CLOSE_RUN_AND_CALLBACK_BLOCKS
-//#undef PUSH_COLUMN
-//
-//void NoteField::HandleMessage( const Message &msg )
-//{
-//	if( msg == Message_CurrentSongChanged )
-//	{
-//		m_fCurrentBeatLastUpdate = -1;
-//		m_fYPosCurrentBeatLastUpdate = -1;
-//	}
-//
-//	ActorFrame::HandleMessage( msg );
-//}
-//
-//// lua start
-//#include "LuaBinding.h"
-//
-///** @brief Allow Lua to have access to the Notefield. */
-//class LunaNoteField: public Luna<NoteField>
-//{
-//public:
-//#define SET_CALLBACK_GENERIC(callback_name, member_name) \
-//	static int callback_name(T* p, lua_State* L) \
-//	{ \
-//		if(lua_isnoneornil(L, 1)) \
-//		{ \
-//			p->member_name.SetFromNil(); \
-//		} \
-//		else if(lua_isfunction(L, 1)) \
-//		{ \
-//			p->member_name.SetFromStack(L); \
-//		} \
-//		else \
-//		{ \
-//			luaL_error(L, #callback_name "Callback argument must be nil (to clear the callback) or a function (to set the callback)."); \
-//		} \
-//		return 0; \
-//	}
-//	SET_CALLBACK_GENERIC(set_step_callback, m_StepCallback);
-//	SET_CALLBACK_GENERIC(set_set_pressed_callback, m_SetPressedCallback);
-//	SET_CALLBACK_GENERIC(set_did_tap_note_callback, m_DidTapNoteCallback);
-//	SET_CALLBACK_GENERIC(set_did_hold_note_callback, m_DidHoldNoteCallback);
-//#undef SET_CALLBACK_GENERIC
-//
-//	static int check_column(lua_State* L, int index, PlayerNumber pn)
-//	{
-//		// 1-indexed columns in lua
-//		int col= IArg(1)-1;
-//		if(col < 0 || col >= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer)
-//		{
-//			luaL_error(L, "Column must be between 1 and %d "
-//				"(GAMESTATE:GetCurrentStyle(pn):ColumnsPerPlayer()).",
-//				GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer);
-//		}
-//		return col;
-//	}
-//
-//	static int step(T* p, lua_State* L)
-//	{
-//		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
-//		TapNoteScore tns= Enum::Check<TapNoteScore>(L, 2);
-//		p->Step(col, tns, true);
-//		return 0;
-//	}
-//
-//	static int set_pressed(T* p, lua_State* L)
-//	{
-//		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
-//		p->SetPressed(col, true);
-//		return 0;
-//	}
-//
-//	static int did_tap_note(T* p, lua_State* L)
-//	{
-//		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
-//		TapNoteScore tns= Enum::Check<TapNoteScore>(L, 2);
-//		bool bright= BArg(3);
-//		p->DidTapNote(col, tns, bright, true);
-//		return 0;
-//	}
-//
-//	static int did_hold_note(T* p, lua_State* L)
-//	{
-//		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
-//		HoldNoteScore hns= Enum::Check<HoldNoteScore>(L, 2);
-//		bool bright= BArg(3);
-//		p->DidHoldNote(col, hns, bright, true);
-//		return 0;
-//	}
-//
-//	static int get_column_actors(T* p, lua_State* L)
-//	{
-//		lua_createtable(L, p->m_ColumnRenderers.size(), 0);
-//		for(size_t i= 0; i < p->m_ColumnRenderers.size(); ++i)
-//		{
-//			p->m_ColumnRenderers[i].PushSelf(L);
-//			lua_rawseti(L, -2, i+1);
-//		}
-//		return 1;
-//	}
-//
-//	LunaNoteField()
-//	{
-//		ADD_METHOD(set_step_callback);
-//		ADD_METHOD(set_set_pressed_callback);
-//		ADD_METHOD(set_did_tap_note_callback);
-//		ADD_METHOD(set_did_hold_note_callback);
-//		ADD_METHOD(step);
-//		ADD_METHOD(set_pressed);
-//		ADD_METHOD(did_tap_note);
-//		ADD_METHOD(did_hold_note);
-//		ADD_METHOD(get_column_actors);
-//	}
-//};
-//
-//LUA_REGISTER_DERIVED_CLASS(NoteField, ActorFrame)
+	static int check_column(lua_State* L, int index, PlayerNumber pn)
+	{
+		// 1-indexed columns in lua
+		int col= IArg(1)-1;
+		if(col < 0 || col >= GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer)
+		{
+			luaL_error(L, "Column must be between 1 and %d "
+				"(GAMESTATE:GetCurrentStyle(pn):ColumnsPerPlayer()).",
+				GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer);
+		}
+		return col;
+	}
+
+	static int step(T* p, lua_State* L)
+	{
+		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
+		TapNoteScore tns= Enum::Check<TapNoteScore>(L, 2);
+		p->Step(col, tns, true);
+		return 0;
+	}
+
+	static int set_pressed(T* p, lua_State* L)
+	{
+		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
+		p->SetPressed(col, true);
+		return 0;
+	}
+
+	static int did_tap_note(T* p, lua_State* L)
+	{
+		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
+		TapNoteScore tns= Enum::Check<TapNoteScore>(L, 2);
+		bool bright= BArg(3);
+		p->DidTapNote(col, tns, bright, true);
+		return 0;
+	}
+
+	static int did_hold_note(T* p, lua_State* L)
+	{
+		int col= check_column(L, 1, p->GetPlayerState()->m_PlayerNumber);
+		HoldNoteScore hns= Enum::Check<HoldNoteScore>(L, 2);
+		bool bright= BArg(3);
+		p->DidHoldNote(col, hns, bright, true);
+		return 0;
+	}
+
+	static int get_column_actors(T* p, lua_State* L)
+	{
+		lua_createtable(L, p->m_ColumnRenderers.size(), 0);
+		for(size_t i= 0; i < p->m_ColumnRenderers.size(); ++i)
+		{
+			p->m_ColumnRenderers[i].PushSelf(L);
+			lua_rawseti(L, -2, i+1);
+		}
+		return 1;
+	}
+
+	LunaNoteField()
+	{
+		ADD_METHOD(set_step_callback);
+		ADD_METHOD(set_set_pressed_callback);
+		ADD_METHOD(set_did_tap_note_callback);
+		ADD_METHOD(set_did_hold_note_callback);
+		ADD_METHOD(step);
+		ADD_METHOD(set_pressed);
+		ADD_METHOD(did_tap_note);
+		ADD_METHOD(did_hold_note);
+		ADD_METHOD(get_column_actors);
+	}
+};
+
+LUA_REGISTER_DERIVED_CLASS(NoteField, ActorFrame)
 // lua end
-// bSilver - Nope, nope, nope and nopeeeee
 
 /*
  * (c) 2001-2004 Chris Danford

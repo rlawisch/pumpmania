@@ -20,7 +20,7 @@ void ReceptorArrow::Load( const PlayerState* pPlayerState, int iColNo )
 	m_iColNo = iColNo;
 
 	const PlayerNumber pn = m_pPlayerState->m_PlayerNumber;
-	const GameInput GameI = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput(m_iColNo, pn);
+	const GameInput GameI = GAMESTATE->GetCurrentStyle()->StyleInputToGameInput(m_iColNo, pn);
 
 	NOTESKIN->SetPlayerNumber( pn );
 	// FIXME?  Does this cause a problem when game inputs on different
@@ -28,7 +28,7 @@ void ReceptorArrow::Load( const PlayerState* pPlayerState, int iColNo )
 	// up in a style that uses two controllers and has a mapping that fits the
 	// requirements. -Kyz
 
-	RString sButton = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->ColToButtonName( iColNo );
+	RString sButton = GAMESTATE->GetCurrentStyle()->ColToButtonName( iColNo );
 	m_pReceptor.Load( NOTESKIN->LoadActor(sButton, "Receptor") );
 	this->AddChild( m_pReceptor );
 

@@ -277,7 +277,7 @@ void StepsDisplayList::SetFromGameState()
 		for (Difficulty const &d : difficulties)
 		{
 			m_Rows[i].m_dc = d;
-			m_Lines[i].m_Meter.SetFromStepsTypeAndMeterAndDifficultyAndCourseType( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType, 0, d, CourseType_Invalid );
+			m_Lines[i].m_Meter.SetFromStepsTypeAndMeterAndDifficultyAndCourseType( GAMESTATE->GetCurrentStyle()->m_StepsType, 0, d, CourseType_Invalid );
 			++i;
 		}
 	}

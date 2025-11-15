@@ -810,7 +810,7 @@ void MusicWheel::BuildWheelItemsData(vector<MusicWheelItemData*>& arrayWheelItem
 			}
 
 			// check that this course has at least one song playable in the current style
-			if (!pCourse->IsPlayableIn(GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType))
+			if (!pCourse->IsPlayableIn(GAMESTATE->GetCurrentStyle()->m_StepsType))
 				continue;
 
 			arrayWheelItemDatas.push_back(new MusicWheelItemData(WheelItemDataType_Course, NULL, sThisSection, pCourse, RageColor(1, 1, 1, 1), 0));
@@ -1648,7 +1648,7 @@ Song* MusicWheel::GetPreferredSelectionForRandomOrPortal()
 	vector<MusicWheelItemData*> wid;
 	getWheelItemsData(GAMESTATE->m_SortOrder, wid);
 
-	StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
+	StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 
 #define NUM_PROBES 1000
 	for (int i = 0; i < NUM_PROBES; i++)

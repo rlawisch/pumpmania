@@ -126,10 +126,10 @@ ScreenNameEntry::ScreenNameEntry()
 		{
 			ss.m_vpPlayedSongs.push_back( SONGMAN->GetRandomSong() );
 			ss.m_vpPossibleSongs = ss.m_vpPlayedSongs;
-			ss.m_player[PLAYER_1].m_pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+			ss.m_player[PLAYER_1].m_pStyle = GAMESTATE->GetCurrentStyle();
 			ss.m_playMode = GAMESTATE->m_PlayMode;
 			ASSERT( ss.m_vpPlayedSongs[0]->GetAllSteps().size() != 0 );
-			StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
+			StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 
 			FOREACH_PlayerNumber( p )
 			{
@@ -247,7 +247,7 @@ void ScreenNameEntry::Init()
 
 		ASSERT( GAMESTATE->IsHumanPlayer(p) );	// they better be enabled if they made a high score!
 
-		const float fPlayerX = PLAYER_X( p, GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType );
+		const float fPlayerX = PLAYER_X( p, GAMESTATE->GetCurrentStyle()->m_StyleType );
 
 		{
 			LockNoteSkin l( GAMESTATE->m_pPlayerState[p]->m_PlayerOptions.GetCurrent().m_sNoteSkin );
@@ -259,7 +259,7 @@ void ScreenNameEntry::Init()
 			this->AddChild( &m_ReceptorArrowRow[p] );
 		}
 
-		const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		const Style* pStyle = GAMESTATE->GetCurrentStyle();
 		const int iMaxCols = min( int(ABS_MAX_RANKING_NAME_LENGTH), pStyle->m_iColsPerPlayer );
 		m_ColToStringIndex[p].insert(m_ColToStringIndex[p].begin(), pStyle->m_iColsPerPlayer, -1);
 		int CurrentStringIndex = 0;
@@ -272,7 +272,7 @@ void ScreenNameEntry::Init()
 
 			// Find out if this column is associated with the START menu button.
 			vector<GameInput> gi;
-			GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->StyleInputToGameInput( iCol, p );
+			GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iCol, p );
 			bool gi_is_start= false;
 			for(size_t i= 0; i < gi.size(); ++i)
 			{
@@ -345,7 +345,7 @@ bool ScreenNameEntry::Input( const InputEventPlus &input )
 	if( input.type != IET_FIRST_PRESS || !input.GameI.IsValid() )
 		return false; // ignore
 
-	const int iCol = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn( input.GameI );
+	const int iCol = GAMESTATE->GetCurrentStyle()->GameInputToColumn( input.GameI );
 	bool bHandled = false;
 	if( iCol != Column_Invalid && m_bStillEnteringName[input.pn] )
 	{

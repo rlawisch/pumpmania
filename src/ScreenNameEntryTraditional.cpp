@@ -36,8 +36,8 @@ void ScreenNameEntryTraditional::Init()
 
 			FOREACH_PlayerNumber( p )
 			{
-				ss.m_player[p].m_pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
-				StepsType st = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType;
+				ss.m_player[p].m_pStyle = GAMESTATE->GetCurrentStyle();
+				StepsType st = GAMESTATE->GetCurrentStyle()->m_StepsType;
 				Steps *pSteps = ss.m_vpPlayedSongs[0]->GetAllSteps()[0];
 				ss.m_player[p].m_iStepsPlayed = 1;
 				GAMESTATE->m_pCurSteps[p].Set( pSteps );

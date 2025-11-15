@@ -89,8 +89,9 @@ public:
 		m_bNX(false), m_bJudgmentReverse(false),
 		m_bRandomSkin(false), m_bEW(false),
 		m_bAutoNoteskin(false), m_bRouletteNoteskin(false),
-		m_bFreePerformance(false), m_bJudgeByNote(false),
-		m_iJudgment(NORMAL_JUDGMENT), m_bMinis(false)
+		m_bFreePerformance(false), m_bJudgeByNote(true),
+		m_iJudgment(NORMAL_JUDGMENT), m_bMinis(false),
+    m_iAutoVelocity(300)
 	{
 		m_sNoteSkin = "";
 		ZERO( m_fAccels );	ONE( m_SpeedfAccels );
@@ -347,7 +348,7 @@ public:
 
 	float GetReversePercentForColumn( int iCol ) const; // accounts for all Directions
 
-	PlayerNumber m_pn = PlayerNumber_Invalid; // Needed for fetching the style.
+	PlayerNumber m_pn; // Needed for fetching the style.
 
 	LifeType m_LifeType;
 	DrainType m_DrainType;	// only used with LifeBar
@@ -413,20 +414,6 @@ public:
 	 * If an empty string, it means to not change from the default. */
 	RString		m_sNoteSkin;
 
-
-	// StepP1 Revival -- bSilver
-	bool		m_bJudgeByNote = false;
-	bool		m_bNX = false; // NXMode
-	Judgment	m_iJudgment; // Judges
-	bool		m_bFreePerformance = false; // Play double in one side
-	bool		m_bJudgmentReverse = false; // Judgment Reverse
-	bool		m_bEW = false; // Earthworm
-	bool		m_bAutoNoteskin = false; // Auto NoteSkin (Based on Songs Folder)
-	bool		m_bRouletteNoteskin = false; // Select ONE Skin random
-	bool		m_bRandomSkin = false; // Change skins in the gameplay.
-	int			m_iAutoVelocity;
-	bool		m_bMinis = false;
-
 	void NextAccel();
 	void NextEffect();
 	void NextAppearance();
@@ -450,6 +437,18 @@ public:
 	bool IsEasierForSongAndSteps( Song* pSong, Steps* pSteps, PlayerNumber pn ) const;
 	bool IsEasierForCourseAndTrail( Course* pCourse, Trail* pTrail ) const;
 
+	// StepP1 Revival -- bSilver
+	bool		m_bJudgeByNote = false;
+	bool		m_bNX; // NXMode
+	Judgment	m_iJudgment; // Judges
+	bool		m_bFreePerformance; // Play double in one side
+	bool		m_bJudgmentReverse; // Judgment Reverse
+	bool		m_bEW; // Earthworm
+	bool		m_bAutoNoteskin; // Auto NoteSkin (Based on Songs Folder)
+	bool		m_bRouletteNoteskin; // Select ONE Skin random
+	bool		m_bRandomSkin; // Change skins in the gameplay.
+  int     m_iAutoVelocity;
+  bool    m_bMinis;
 };
 
 #define ADD_MULTICOL_METHOD( method_name) \

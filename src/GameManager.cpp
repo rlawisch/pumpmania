@@ -1048,7 +1048,7 @@ static const Game g_Game_KB7 =
 {
 	"kb7",						// m_szName
 	g_apGame_KB7_Styles,				// m_apStyles
-	false,						// m_bCountNotesSeparately
+	true,						// m_bCountNotesSeparately
 	false, // m_bTickHolds
 	false, // m_PlayersHaveSeparateStyles
 	{						// m_InputScheme
@@ -1316,7 +1316,7 @@ static const Game g_Game_Ez2 =
 {
 	"ez2",						// m_szName
 	g_apGame_Ez2_Styles,				// m_apStyles
-	false,						// m_bCountNotesSeparately
+	true,						// m_bCountNotesSeparately
 	false, // m_bTickHolds
 	false, // m_PlayersHaveSeparateStyles
 	{						// m_InputScheme
@@ -1887,7 +1887,7 @@ static const Game g_Game_Beat =
 {
 	"beat",						// m_szName
 	g_apGame_Beat_Styles,				// m_apStyles
-	false,						// m_bCountNotesSeparately
+	true,						// m_bCountNotesSeparately
 	false, // m_bTickHolds
 	false, // m_PlayersHaveSeparateStyles
 	{						// m_InputScheme
@@ -2686,7 +2686,7 @@ static const Game g_Game_Popn =
 {
 	"popn",						// m_szName
 	g_apGame_Popn_Styles,				// m_apStyles
-	false,						// m_bCountNotesSeparately
+	true,						// m_bCountNotesSeparately
 	false, // m_bTickHolds
 	false, // m_PlayersHaveSeparateStyles
 	{						// m_InputScheme
@@ -3179,7 +3179,7 @@ static const Game g_Game_Kickbox =
 {
 	"kickbox", // m_szName
 	g_apGame_Kickbox_Styles, // m_apStyles
-	false, // m_bCountNotesSeparately
+	true, // m_bCountNotesSeparately
 	false, // m_bTickHolds
 	true, // m_PlayersHaveSeparateStyles
 	{ // m_InputScheme

@@ -635,7 +635,7 @@ void ScreenGameplay::Init()
 			GAMESTATE->m_pCurSteps[p].Set( GAMESTATE->m_pCurSteps[human_pn] );
 			if(GAMESTATE->GetCurrentGame()->m_PlayersHaveSeparateStyles)
 			{
-				GAMESTATE->SetCurrentStyle(GAMESTATE->GetCurrentStyle(NUM_PlayerNumber));
+				GAMESTATE->SetCurrentStyle(GAMESTATE->GetCurrentStyle());
 			}
 		}
 
@@ -653,11 +653,11 @@ void ScreenGameplay::Init()
 	STATSMAN->m_CurStageStats.m_playMode = GAMESTATE->m_PlayMode;
 	FOREACH_PlayerNumber(pn)
 	{
-		STATSMAN->m_CurStageStats.m_player[pn].m_pStyle= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		STATSMAN->m_CurStageStats.m_player[pn].m_pStyle= GAMESTATE->GetCurrentStyle();
 	}
 	FOREACH_MultiPlayer(pn)
 	{
-		STATSMAN->m_CurStageStats.m_multiPlayer[pn].m_pStyle= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		STATSMAN->m_CurStageStats.m_multiPlayer[pn].m_pStyle= GAMESTATE->GetCurrentStyle();
 	}
 
 	/* Record combo rollover. */
@@ -743,7 +743,7 @@ void ScreenGameplay::Init()
 			lua_rawseti(L, -2, next_player_slot);
 			++next_player_slot;
 		}
-		Enum::Push(L, GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType);
+		Enum::Push(L, GAMESTATE->GetCurrentStyle()->m_StyleType);
 		RString err= "Error running MarginFunction:  ";
 		if(LuaHelpers::RunScriptOnStack(L, err, 2, 3, true))
 		{
@@ -764,7 +764,7 @@ void ScreenGameplay::Init()
 		RString sName = ssprintf("Player%s", pi->GetName().c_str());
 		pi->m_pPlayer->SetName( sName );
 
-		Style const* style= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		Style const* style= GAMESTATE->GetCurrentStyle();
 		float style_width= style->GetWidth(pi->m_pn);
 		float edge= left_edge[pi->m_pn];
 		float screen_space;
@@ -896,7 +896,7 @@ void ScreenGameplay::Init()
 
 #if !defined(WITHOUT_NETWORKING)
 	// Only used in SMLAN/SMOnline:
-	if( !m_bForceNoNetwork && NSMAN->useSMserver && GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType != StyleType_OnePlayerTwoSides )
+	if( !m_bForceNoNetwork && NSMAN->useSMserver && GAMESTATE->GetCurrentStyle()->m_StyleType != StyleType_OnePlayerTwoSides )
 	{
 		// m_bShowScoreboard = PREFSMAN->m_bEnableScoreboard.Get(); // xMAx
 	  m_bShowScoreboard = false; // xMAx
@@ -1135,7 +1135,7 @@ bool ScreenGameplay::Center1Player() const
 		(bool)ALLOW_CENTER_1_PLAYER &&
 		GAMESTATE->m_PlayMode != PLAY_MODE_BATTLE &&
 		GAMESTATE->m_PlayMode != PLAY_MODE_RAVE &&
-		GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType == StyleType_OnePlayerOneSide;
+		GAMESTATE->GetCurrentStyle()->m_StyleType == StyleType_OnePlayerOneSide;
 }
 
 // fill in m_apSongsQueue, m_vpStepsQueue, m_asModifiersQueue
@@ -1304,7 +1304,7 @@ void ScreenGameplay::SetupSong( int iSongIndex )
 		NoteData originalNoteData;
 		pSteps->GetNoteData( originalNoteData );
 
-		const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		const Style* pStyle = GAMESTATE->GetCurrentStyle();
 		NoteData ndTransformed;
 		pStyle->GetTransformedNoteDataForStyle( pi->GetStepsAndTrailIndex(), originalNoteData, ndTransformed );
 
@@ -1799,10 +1799,10 @@ void ScreenGameplay::StartPlayingSong( float fMinTimeToNotes, float fMinTimeToMu
 	ASSERT( GAMESTATE->m_Position.m_fMusicSeconds > -4000 ); /* make sure the "fake timer" code doesn't trigger */
 	FOREACH_EnabledPlayer(pn)
 	{
-		//if(GAMESTATE->m_pCurSteps[pn])
-		//{
-		//	GAMESTATE->m_pCurSteps[pn]->GetTimingData()->PrepareLookup();
-		//}
+		if(GAMESTATE->m_pCurSteps[pn])
+		{
+			GAMESTATE->m_pCurSteps[pn]->GetTimingData()->PrepareLookup();
+		}
 	}
 }
 
@@ -2580,7 +2580,7 @@ void ScreenGameplay::UpdateLights()
 
 		FOREACH_EnabledPlayerNumberInfo( m_vPlayerInfo, pi )
 		{
-			const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+			const Style* pStyle = GAMESTATE->GetCurrentStyle();
 			const NoteData &nd = pi->m_pPlayer->GetNoteData();
 			for( int t=0; t<nd.GetNumTracks(); t++ )
 			{
@@ -2701,7 +2701,7 @@ void ScreenGameplay::SendCrossedMessages()
 					{
 						FOREACH_EnabledPlayerNumberInfo(m_vPlayerInfo, pi)
 						{
-							const Style *pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+							const Style *pStyle = GAMESTATE->GetCurrentStyle();
 							RString sButton = pStyle->ColToButtonName( t );
 							Message msg( i == 0 ? "NoteCrossed" : "NoteWillCross" );
 							msg.SetParam( "ButtonName", sButton );
@@ -2712,7 +2712,7 @@ void ScreenGameplay::SendCrossedMessages()
 					}
 					else
 					{
-						const Style *pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+						const Style *pStyle = GAMESTATE->GetCurrentStyle();
 						RString sButton = pStyle->ColToButtonName( t );
 						Message msg( i == 0 ? "NoteCrossed" : "NoteWillCross" );
 						msg.SetParam( "ButtonName", sButton );
@@ -2833,7 +2833,7 @@ bool ScreenGameplay::Input( const InputEventPlus &input )
 		 * If this is also a style button, don't do this; pump center is start.
 		 */
 		bool bHoldingGiveUp = false;
-		if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn(input.GameI) == Column_Invalid )
+		if( GAMESTATE->GetCurrentStyle()->GameInputToColumn(input.GameI) == Column_Invalid )
 		{
 			bHoldingGiveUp |= ( START_GIVES_UP && input.MenuI == GAME_BUTTON_START );
 			bHoldingGiveUp |= ( BACK_GIVES_UP && input.MenuI == GAME_BUTTON_BACK );
@@ -2875,7 +2875,7 @@ bool ScreenGameplay::Input( const InputEventPlus &input )
 		/* Only handle GAME_BUTTON_BACK as a regular BACK button if BACK_GIVES_UP is
 		 * disabled. */
 		bool bHoldingBack = false;
-		if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn(input.GameI) == Column_Invalid )
+		if( GAMESTATE->GetCurrentStyle()->GameInputToColumn(input.GameI) == Column_Invalid )
 		{
 			bHoldingBack |= input.MenuI == GAME_BUTTON_BACK && !BACK_GIVES_UP;
 		}
@@ -2907,7 +2907,7 @@ bool ScreenGameplay::Input( const InputEventPlus &input )
 	if( !input.GameI.IsValid() )
 		return false;
 
-	int iCol = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn( input.GameI );
+	int iCol = GAMESTATE->GetCurrentStyle()->GameInputToColumn( input.GameI );
 
 	// Don't pass on any inputs to Player that aren't a press or a release.
 	switch( input.type )
@@ -2960,19 +2960,19 @@ bool ScreenGameplay::Input( const InputEventPlus &input )
 						pi.m_pPlayer->Step( iCol, -1, input.DeviceI.ts, bRelease ); // xMAx
 
           // xMAx ---------------------------------------------------------------------------------
-          if( GAMESTATE->m_pPlayerState[input.pn]->m_PlayerOptions.GetCurrent().m_bFreePerformance && GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType != StyleType_OnePlayerOneSide )
+          if( GAMESTATE->m_pPlayerState[input.pn]->m_PlayerOptions.GetCurrent().m_bFreePerformance && GAMESTATE->GetCurrentStyle()->m_StyleType != StyleType_OnePlayerOneSide )
           {
             InputEventPlus input_tmp = input;
             input_tmp.GameI.controller = input_tmp.GameI.controller == GameController_1? GameController_2 : GameController_1;
 
-            int iCol = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->GameInputToColumn( input_tmp.GameI );
+            int iCol = GAMESTATE->GetCurrentStyle()->GameInputToColumn( input_tmp.GameI );
 
-            if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer == 10 )
+            if( GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer == 10 )
             {
               if( iCol != -1 )
                 pi.m_pPlayer->Step( iCol, -1, input.DeviceI.ts, bRelease );
             }
-            else if( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer == 6 && iCol != -1 )
+            else if( GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer == 6 && iCol != -1 )
             {
               if( iCol == 0 )
                 pi.m_pPlayer->Step( 5, -1, input.DeviceI.ts, bRelease );
@@ -3032,13 +3032,13 @@ void ScreenGameplay::SaveStats()
 
 void ScreenGameplay::SongFinished()
 {
-	//FOREACH_EnabledPlayer(pn)
-	//{
-	//	if(GAMESTATE->m_pCurSteps[pn])
-	//	{
-	//		GAMESTATE->m_pCurSteps[pn]->GetTimingData()->ReleaseLookup();
-	//	}
-	//}
+	FOREACH_EnabledPlayer(pn)
+	{
+		if(GAMESTATE->m_pCurSteps[pn])
+		{
+			GAMESTATE->m_pCurSteps[pn]->GetTimingData()->ReleaseLookup();
+		}
+	}
 	AdjustSync::HandleSongEnd();
 	SaveStats(); // Let subclasses save the stats.
 	/* Extremely important: if we don't remove attacks before moving on to the next
@@ -3491,7 +3491,7 @@ void ScreenGameplay::HandleScreenMessage( const ScreenMessage SM )
   // xMAx - Mines flash ---------------------------------------------------------------------------
 	else if( SM == SM_Player1HitMine || SM == SM_Player2HitMine )
 	{
-		if( (GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType == StyleType_OnePlayerOneSide || GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StyleType == StyleType_TwoPlayersTwoSides) && !Center1Player() )
+		if( (GAMESTATE->GetCurrentStyle()->m_StyleType == StyleType_OnePlayerOneSide || GAMESTATE->GetCurrentStyle()->m_StyleType == StyleType_TwoPlayersTwoSides) && !Center1Player() )
 		{
 			if( SM == SM_Player1HitMine )
 				m_WhiteFlashForMineExplosion.SetXY( SCREEN_WIDTH/4, SCREEN_CENTER_Y );

@@ -146,7 +146,7 @@ void ScreenHowToPlay::Init()
 			loaderSM.LoadFromSimfile( sStepsPath, m_Song, false );
 		m_Song.AddAutoGenNotes();
 
-		const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		const Style* pStyle = GAMESTATE->GetCurrentStyle();
 
 		Steps *pSteps = SongUtil::GetClosestNotes( &m_Song, pStyle->m_StepsType, Difficulty_Beginner );
 		if(pSteps == nullptr)

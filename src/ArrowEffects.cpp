@@ -262,7 +262,7 @@ static void UpdateTipsy(float * tipsy_result, float * tipsy_offset_result, float
 
 void ArrowEffects::Init(PlayerNumber pn)
 {
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	const Style::ColumnInfo* pCols = pStyle->m_ColumnInfo[pn];
 	PerPlayerData &data = g_EffectData[pn];
 	// Init tornado limits.
@@ -322,7 +322,7 @@ void ArrowEffects::Update()
 
 	FOREACH_EnabledPlayer( pn )
 	{
-		const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+		const Style* pStyle = GAMESTATE->GetCurrentStyle();
 		const Style::ColumnInfo* pCols = pStyle->m_ColumnInfo[pn];
 		const SongPosition &position = GAMESTATE->m_bIsUsingStepTiming
 		? GAMESTATE->m_pPlayerState[pn]->m_Position : GAMESTATE->m_Position;
@@ -754,7 +754,7 @@ float ArrowEffects::GetXPos( const PlayerState* pPlayerState, int iColNum, float
 {
 	float fPixelOffsetFromCenter = 0; // fill this in below
 
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	const float* fEffects = curr_options->m_fEffects;
 
 	// TODO: Don't index by PlayerNumber.
@@ -1437,7 +1437,7 @@ float ArrowEffects::GetZoom(const PlayerState* pPlayerState)
 {
 	float fZoom = 1.0f;
 	// FIXME: Move the zoom values into Style
-	if (GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_bNeedsZoomOutWith2Players &&
+	if (GAMESTATE->GetCurrentStyle()->m_bNeedsZoomOutWith2Players &&
 		(GAMESTATE->GetNumSidesJoined() == 2 || GAMESTATE->AnyPlayersAreCpu()))
 		fZoom *= 0.6f;
 

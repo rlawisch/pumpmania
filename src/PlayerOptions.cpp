@@ -239,9 +239,9 @@ void PlayerOptions::GetMods( vector<RString> &AddTo, bool bForceNoteSkin ) const
 
 	if( !m_fTimeSpacing )
 	{
-		if(m_iAutoVelocity)
+		if( m_fMaxScrollBPM )
 		{
-			RString s = ssprintf( "AutoVelocity%d", m_iAutoVelocity );
+			RString s = ssprintf( "m%.0f", m_fMaxScrollBPM );
 			AddTo.push_back( s );
 		}
 		else if( m_bSetScrollSpeed || m_fScrollSpeed != 1 )
@@ -565,8 +565,7 @@ void PlayerOptions::GetMods( vector<RString> &AddTo, bool bForceNoteSkin ) const
   AddPart( AddTo, m_bAutoNoteskin, "AutoNoteskin");
   AddPart( AddTo, m_bRouletteNoteskin, "RouletteNoteskin");
   AddPart( AddTo, m_bNX, "ModNX");
-  //if (m_iAutoVelocity > 0)
-	 // AddTo.push_back(ssprintf("AutoVelocity%d", m_iAutoVelocity));
+  AddPart( AddTo, m_iAutoVelocity, "AutoVelocity%.0f");
   AddPart( AddTo, m_bFreePerformance, "FreePerformance");
   AddPart( AddTo, m_bJudgeByNote, "JudgeByNote");
   AddPart( AddTo, m_bMinis, "Minis");
@@ -675,14 +674,14 @@ bool PlayerOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut
 	}
 	// oITG's m-mods
 	// else if( sscanf( sBit, "m%f", &level ) == 1 ) // StepP1 Revival - bSilver
-	else if( sscanf( sBit, "autovelocity%d", &level ) == 1 ) // StepP1 Revival - bSilver
+	else if( sscanf( sBit, "autovelocity%f", &level ) == 1 ) // StepP1 Revival - bSilver
 	{
 		// OpenITG doesn't have this block:
-		
+		/*
 		if( !isfinite(level) || level <= 0.0f )
 			level = CMOD_DEFAULT;
-		
-		SET_FLOAT( fScrollBPM )
+		*/
+		SET_FLOAT( fMaxScrollBPM )
 		m_fTimeSpacing = 0;
 	}
 
@@ -1155,16 +1154,6 @@ bool PlayerOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut
 	else if( sBit == "cosecant" )				m_bCosecant = on;
 	// deprecated mods/left in for compatibility
 	else if( sBit == "converge" )				SET_FLOAT( fScrolls[SCROLL_CENTERED] )
-
-	// bSilver
-	else if (sBit == "judgebynote")
-	{
-		m_bJudgeByNote = true;
-	}
-	else if (sBit == "normal")
-	{
-		m_iJudgment = NORMAL_JUDGMENT;
-}
 	// end of the list
 	else
 	{
@@ -1351,8 +1340,8 @@ float PlayerOptions::GetReversePercentForColumn( int iCol ) const
 {
 	float f = 0;
 	ASSERT(m_pn == PLAYER_1 || m_pn == PLAYER_2);
-	ASSERT(GAMESTATE->GetCurrentStyle(NUM_PlayerNumber) != nullptr);
-	int iNumCols = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer;
+	ASSERT(GAMESTATE->GetCurrentStyle() != nullptr);
+	int iNumCols = GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer;
 
 	f += m_fScrolls[SCROLL_REVERSE];
 	f += m_fReverse[iCol];
@@ -1374,8 +1363,6 @@ float PlayerOptions::GetReversePercentForColumn( int iCol ) const
 		f = SCALE( f, 1.f, 2.f, 1.f, 0.f );
 	return f;
 }
-
-
 
 bool PlayerOptions::operator==( const PlayerOptions &other ) const
 {
@@ -1620,7 +1607,7 @@ bool PlayerOptions::IsEasierForSongAndSteps( Song* pSong, Steps* pSteps, PlayerN
 		DisplayBpms bpms;
 		if( GAMESTATE->IsCourseMode() )
 		{
-			Trail *pTrail = GAMESTATE->m_pCurCourse->GetTrail( GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_StepsType );
+			Trail *pTrail = GAMESTATE->m_pCurCourse->GetTrail( GAMESTATE->GetCurrentStyle()->m_StepsType );
 			pTrail->GetDisplayBpms( bpms );
 		}
 		else
@@ -2282,7 +2269,7 @@ public:
 	static int GetReversePercentForColumn( T *p, lua_State *L )
 	{
 		const int colNum = IArg(1);
-		const int numColumns = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber)->m_iColsPerPlayer;
+		const int numColumns = GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer;
 
 		// We don't want to go outside the bounds.
 		if(colNum < 0 || colNum > numColumns)

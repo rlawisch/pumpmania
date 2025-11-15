@@ -12,7 +12,7 @@ ReceptorArrowRow::ReceptorArrowRow()
 	m_pPlayerState = nullptr;
 	// m_fYReverseOffsetPixels = 0; // xMAx
 	m_fFadeToFailPercent = 0;
-	//m_renderers= nullptr;
+	m_renderers= nullptr;
 }
 
 // void ReceptorArrowRow::Load( const PlayerState* pPlayerState, float fYReverseOffset ) // xMAx
@@ -21,7 +21,7 @@ void ReceptorArrowRow::Load( const PlayerState* pPlayerState ) // xMAx
 	m_pPlayerState = pPlayerState;
 	// m_fYReverseOffsetPixels = fYReverseOffset; // xMAx
 
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 
 	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ )
 	{
@@ -31,16 +31,16 @@ void ReceptorArrowRow::Load( const PlayerState* pPlayerState ) // xMAx
 		this->AddChild( m_ReceptorArrow[c] );
 	}
 }
-// Review after - bSilver
-//void ReceptorArrowRow::SetColumnRenderers(vector<NoteColumnRenderer>& renderers)
-//{
-//	ASSERT_M(renderers.size() == m_ReceptorArrow.size(), "Notefield has different number of columns than receptor row.");
-//	for(size_t c= 0; c < m_ReceptorArrow.size(); ++c)
-//	{
-//		m_ReceptorArrow[c]->SetFakeParent(&(renderers[c]));
-//	}
-//	m_renderers= &renderers;
-//}
+
+void ReceptorArrowRow::SetColumnRenderers(vector<NoteColumnRenderer>& renderers)
+{
+	ASSERT_M(renderers.size() == m_ReceptorArrow.size(), "Notefield has different number of columns than receptor row.");
+	for(size_t c= 0; c < m_ReceptorArrow.size(); ++c)
+	{
+		m_ReceptorArrow[c]->SetFakeParent(&(renderers[c]));
+	}
+	m_renderers= &renderers;
+}
 
 ReceptorArrowRow::~ReceptorArrowRow()
 {
@@ -66,7 +66,9 @@ void ReceptorArrowRow::Update( float fDeltaTime )
 	for( unsigned c=0; c<m_ReceptorArrow.size(); c++ )
 	{
 		// m_fDark==1 or m_fFadeToFailPercent==1 should make fBaseAlpha==0
-		float fBaseAlpha = (1 - m_pPlayerState->m_PlayerOptions.GetCurrent().m_fDark);
+		float fBaseAlpha = (1 - m_pPlayerState->m_PlayerOptions.GetCurrent().m_fDark
+			- m_pPlayerState->m_PlayerOptions.GetCurrent().m_fDarks[c]
+		);
 		if( m_fFadeToFailPercent != -1 )
 		{
 			fBaseAlpha *= (1 - m_fFadeToFailPercent);
@@ -75,37 +77,24 @@ void ReceptorArrowRow::Update( float fDeltaTime )
 		// m_ReceptorArrow[c]->SetBaseAlpha( fBaseAlpha ); // xMAx - Hide only the receptor of the press, not the effector
 		m_ReceptorArrow[c]->SetReceptorAlpha( fBaseAlpha ); // xMAx
 
-		//if(m_renderers != nullptr)
-		//{
-		//	// set arrow XYZ
-		//	(*m_renderers)[c].UpdateReceptorGhostStuff(m_ReceptorArrow[c]);
-		//}
-		//else
-		//{
+		if(m_renderers != nullptr)
+		{
+			// set arrow XYZ
+			(*m_renderers)[c].UpdateReceptorGhostStuff(m_ReceptorArrow[c]);
+		}
+		else
+		{
 			// ScreenNameEntry uses ReceptorArrowRow but doesn't have or need
 			// column renderers.  Just do the lazy thing and offset x. -Kyz
-			//const Style* style= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
-			//m_ReceptorArrow[c]->SetX(style->m_ColumnInfo[m_pPlayerState->m_PlayerNumber][c].fXOffset);
-		//}
-				// set arrow XYZ
-		float fX = ArrowEffects::GetXPos(m_pPlayerState, c, 0);
-		const float fY = ArrowEffects::GetYPos(c, 0);
-		const float fZ = ArrowEffects::GetZPos(c, 0);
-		m_ReceptorArrow[c]->SetX(fX);
-		m_ReceptorArrow[c]->SetY(fY);
-		m_ReceptorArrow[c]->SetZ(fZ);
-
-		const float fRotation = ArrowEffects::ReceptorGetRotationZ(m_pPlayerState);
-		m_ReceptorArrow[c]->SetRotationZ(fRotation);
-
-		const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
-		m_ReceptorArrow[c]->SetZoom(fZoom);
+			const Style* style= GAMESTATE->GetCurrentStyle();
+			m_ReceptorArrow[c]->SetX(style->m_ColumnInfo[m_pPlayerState->m_PlayerNumber][c].fXOffset);
+		}
 	}
 }
 
 void ReceptorArrowRow::DrawPrimitives()
 {
-	const Style* pStyle = GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 	for( unsigned i=0; i<m_ReceptorArrow.size(); i++ )
 	{
 		const int c = pStyle->m_iColumnDrawOrder[i];
