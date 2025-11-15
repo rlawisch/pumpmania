@@ -725,15 +725,21 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 	if( m_aBGChanges.size() == 0 )
 		return;
 
-	TimingData::GetBeatArgs beat_info;
+	/*TimingData::GetBeatArgs beat_info;
 	beat_info.elapsed_time= fCurrentTime;
-	pSong->m_SongTiming.GetBeatAndBPSFromElapsedTime(beat_info);
+	pSong->m_SongTiming.GetBeatAndBPSFromElapsedTime(beat_info);*/
+	float fBeat, fBPS, fThrowAway;
+	bool bFreeze;
+	int iThrowAway;
+	pSong->m_SongTiming.GetBeatAndBPSFromElapsedTime(fCurrentTime, fBeat, fBPS, bFreeze, bFreeze, iThrowAway, fThrowAway);
+
 
 	// Calls to Update() should *not* be scaled by music rate unless RateModsAffectFGChanges is enabled; fCurrentTime is. Undo it.
 	const float fRate = PREFSMAN->m_bRateModsAffectTweens ? 1.0f : GAMESTATE->m_SongOptions.GetCurrent().m_fMusicRate;
 
 	// Find the BGSegment we're in
-	const int i = FindBGSegmentForBeat(beat_info.beat);
+	//const int i = FindBGSegmentForBeat(beat_info.beat);
+	const int i = FindBGSegmentForBeat(fBeat);
 
 	float fDeltaTime = fCurrentTime - fLastMusicSeconds;
 	if( i != -1  &&  i != m_iCurBGChangeIndex )	// we're changing backgrounds

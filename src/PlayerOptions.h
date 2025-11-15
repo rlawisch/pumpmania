@@ -89,7 +89,7 @@ public:
 		m_bNX(false), m_bJudgmentReverse(false),
 		m_bRandomSkin(false), m_bEW(false),
 		m_bAutoNoteskin(false), m_bRouletteNoteskin(false),
-		m_bFreePerformance(false), m_bJudgeByNote(true),
+		m_bFreePerformance(false), m_bJudgeByNote(false),
 		m_iJudgment(NORMAL_JUDGMENT), m_bMinis(false),
     m_iAutoVelocity(300)
 	{

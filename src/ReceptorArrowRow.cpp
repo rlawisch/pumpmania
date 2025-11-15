@@ -12,111 +12,122 @@ ReceptorArrowRow::ReceptorArrowRow()
 	m_pPlayerState = nullptr;
 	// m_fYReverseOffsetPixels = 0; // xMAx
 	m_fFadeToFailPercent = 0;
-	m_renderers= nullptr;
+	//m_renderers= nullptr;
 }
 
 // void ReceptorArrowRow::Load( const PlayerState* pPlayerState, float fYReverseOffset ) // xMAx
-void ReceptorArrowRow::Load( const PlayerState* pPlayerState ) // xMAx
+void ReceptorArrowRow::Load(const PlayerState* pPlayerState) // xMAx
 {
 	m_pPlayerState = pPlayerState;
 	// m_fYReverseOffsetPixels = fYReverseOffset; // xMAx
 
 	const Style* pStyle = GAMESTATE->GetCurrentStyle();
 
-	for( int c=0; c<pStyle->m_iColsPerPlayer; c++ )
+	for (int c = 0; c < pStyle->m_iColsPerPlayer; c++)
 	{
-		m_ReceptorArrow.push_back( new ReceptorArrow );
-		m_ReceptorArrow[c]->SetName( "ReceptorArrow" );
-		m_ReceptorArrow[c]->Load( m_pPlayerState, c );
-		this->AddChild( m_ReceptorArrow[c] );
+		m_ReceptorArrow.push_back(new ReceptorArrow);
+		m_ReceptorArrow[c]->SetName("ReceptorArrow");
+		m_ReceptorArrow[c]->Load(m_pPlayerState, c);
+		this->AddChild(m_ReceptorArrow[c]);
 	}
 }
-
-void ReceptorArrowRow::SetColumnRenderers(vector<NoteColumnRenderer>& renderers)
-{
-	ASSERT_M(renderers.size() == m_ReceptorArrow.size(), "Notefield has different number of columns than receptor row.");
-	for(size_t c= 0; c < m_ReceptorArrow.size(); ++c)
-	{
-		m_ReceptorArrow[c]->SetFakeParent(&(renderers[c]));
-	}
-	m_renderers= &renderers;
-}
+// Review after - bSilver
+//void ReceptorArrowRow::SetColumnRenderers(vector<NoteColumnRenderer>& renderers)
+//{
+//	ASSERT_M(renderers.size() == m_ReceptorArrow.size(), "Notefield has different number of columns than receptor row.");
+//	for(size_t c= 0; c < m_ReceptorArrow.size(); ++c)
+//	{
+//		m_ReceptorArrow[c]->SetFakeParent(&(renderers[c]));
+//	}
+//	m_renderers= &renderers;
+//}
 
 ReceptorArrowRow::~ReceptorArrowRow()
 {
-	for( unsigned i = 0; i < m_ReceptorArrow.size(); ++i )
+	for (unsigned i = 0; i < m_ReceptorArrow.size(); ++i)
 		delete m_ReceptorArrow[i];
 }
 
-void ReceptorArrowRow::Update( float fDeltaTime )
+void ReceptorArrowRow::Update(float fDeltaTime)
 {
-	ActorFrame::Update( fDeltaTime );
+	ActorFrame::Update(fDeltaTime);
 
-  /* xMAx - This must be on Player::Update
-	// If we're on gameplay, then the notefield will take care of updating
-	// ArrowEffects.  But if we're on ScreenNameEntry, there is no notefield,
-	// Checking whether m_renderers is null is a proxy for checking whether
-	// there is a notefield. -Kyz
-	if(m_renderers == nullptr)
-	{
-		ArrowEffects::Update();
-	}
-  */
+	/* xMAx - This must be on Player::Update
+	  // If we're on gameplay, then the notefield will take care of updating
+	  // ArrowEffects.  But if we're on ScreenNameEntry, there is no notefield,
+	  // Checking whether m_renderers is null is a proxy for checking whether
+	  // there is a notefield. -Kyz
+	  if(m_renderers == nullptr)
+	  {
+		  ArrowEffects::Update();
+	  }
+	*/
 
-	for( unsigned c=0; c<m_ReceptorArrow.size(); c++ )
+	for (unsigned c = 0; c < m_ReceptorArrow.size(); c++)
 	{
 		// m_fDark==1 or m_fFadeToFailPercent==1 should make fBaseAlpha==0
-		float fBaseAlpha = (1 - m_pPlayerState->m_PlayerOptions.GetCurrent().m_fDark
-			- m_pPlayerState->m_PlayerOptions.GetCurrent().m_fDarks[c]
-		);
-		if( m_fFadeToFailPercent != -1 )
+		float fBaseAlpha = (1 - m_pPlayerState->m_PlayerOptions.GetCurrent().m_fDark);
+		if (m_fFadeToFailPercent != -1)
 		{
 			fBaseAlpha *= (1 - m_fFadeToFailPercent);
 		}
-		CLAMP( fBaseAlpha, 0.0f, 1.0f );
+		CLAMP(fBaseAlpha, 0.0f, 1.0f);
 		// m_ReceptorArrow[c]->SetBaseAlpha( fBaseAlpha ); // xMAx - Hide only the receptor of the press, not the effector
-		m_ReceptorArrow[c]->SetReceptorAlpha( fBaseAlpha ); // xMAx
+		m_ReceptorArrow[c]->SetReceptorAlpha(fBaseAlpha); // xMAx
 
-		if(m_renderers != nullptr)
-		{
-			// set arrow XYZ
-			(*m_renderers)[c].UpdateReceptorGhostStuff(m_ReceptorArrow[c]);
-		}
-		else
-		{
+		//if(m_renderers != nullptr)
+		//{
+		//	// set arrow XYZ
+		//	(*m_renderers)[c].UpdateReceptorGhostStuff(m_ReceptorArrow[c]);
+		//}
+		//else
+		//{
 			// ScreenNameEntry uses ReceptorArrowRow but doesn't have or need
 			// column renderers.  Just do the lazy thing and offset x. -Kyz
-			const Style* style= GAMESTATE->GetCurrentStyle();
-			m_ReceptorArrow[c]->SetX(style->m_ColumnInfo[m_pPlayerState->m_PlayerNumber][c].fXOffset);
-		}
+			//const Style* style= GAMESTATE->GetCurrentStyle(NUM_PlayerNumber);
+			//m_ReceptorArrow[c]->SetX(style->m_ColumnInfo[m_pPlayerState->m_PlayerNumber][c].fXOffset);
+		//}
+				// set arrow XYZ
+		float fX = ArrowEffects::GetXPos(m_pPlayerState, c, 0);
+		const float fY = ArrowEffects::GetYPos(c, 0);
+		const float fZ = ArrowEffects::GetZPos(c, 0);
+		m_ReceptorArrow[c]->SetX(fX);
+		m_ReceptorArrow[c]->SetY(fY);
+		m_ReceptorArrow[c]->SetZ(fZ);
+
+		const float fRotation = ArrowEffects::ReceptorGetRotationZ(m_pPlayerState);
+		m_ReceptorArrow[c]->SetRotationZ(fRotation);
+
+		const float fZoom = ArrowEffects::GetZoom(m_pPlayerState);
+		m_ReceptorArrow[c]->SetZoom(fZoom);
 	}
 }
 
 void ReceptorArrowRow::DrawPrimitives()
 {
 	const Style* pStyle = GAMESTATE->GetCurrentStyle();
-	for( unsigned i=0; i<m_ReceptorArrow.size(); i++ )
+	for (unsigned i = 0; i < m_ReceptorArrow.size(); i++)
 	{
 		const int c = pStyle->m_iColumnDrawOrder[i];
 		m_ReceptorArrow[c]->Draw();
 	}
 }
 
-void ReceptorArrowRow::Step( int iCol, TapNoteScore score )
+void ReceptorArrowRow::Step(int iCol, TapNoteScore score)
 {
-	ASSERT( iCol >= 0  &&  iCol < (int) m_ReceptorArrow.size() );
-	m_ReceptorArrow[iCol]->Step( score );
+	ASSERT(iCol >= 0 && iCol < (int)m_ReceptorArrow.size());
+	m_ReceptorArrow[iCol]->Step(score);
 }
 
-void ReceptorArrowRow::SetPressed( int iCol )
+void ReceptorArrowRow::SetPressed(int iCol)
 {
-	ASSERT( iCol >= 0  &&  iCol < (int) m_ReceptorArrow.size() );
+	ASSERT(iCol >= 0 && iCol < (int)m_ReceptorArrow.size());
 	m_ReceptorArrow[iCol]->SetPressed();
 }
 
-void ReceptorArrowRow::SetNoteUpcoming( int iCol, bool b )
+void ReceptorArrowRow::SetNoteUpcoming(int iCol, bool b)
 {
-	ASSERT( iCol >= 0  &&  iCol < (int) m_ReceptorArrow.size() );
+	ASSERT(iCol >= 0 && iCol < (int)m_ReceptorArrow.size());
 	m_ReceptorArrow[iCol]->SetNoteUpcoming(b);
 }
 

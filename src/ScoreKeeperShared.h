@@ -20,7 +20,8 @@ public:
 
 	virtual void OnNextSong( int iSongInCourseIndex, const Steps* pSteps, const NoteData* pNoteData );
 	virtual void HandleTapScore( const TapNote &tn );
-	virtual void HandleTapRowScore( const NoteData &nd, int iRow );
+	//virtual void HandleTapRowScore( const NoteData &nd, int iRow );
+	virtual void HandleTapRowScore(const NoteData& nd, int iRow, TapNoteScore tns);
 	virtual void HandleHoldScore( const TapNote &tn );
 	virtual void HandleHoldActiveSeconds( float fMusicSecondsHeld );
 	virtual void HandleHoldCheckpointScore( const NoteData &nd, int iRow, int iNumHoldsHeldThisRow, int iNumHoldsMissedThisRow );

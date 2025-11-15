@@ -19,46 +19,46 @@ class NoteField : public ActorFrame
 public:
 	NoteField();
 	~NoteField();
-	virtual void Update( float fDeltaTime );
+	virtual void Update(float fDeltaTime);
 	virtual void DrawPrimitives();
 	void CalcPixelsBeforeAndAfterTargets();
 	void DrawBoardPrimitive();
 
-	virtual void Init( const PlayerState* pPlayerState, float fYReverseOffsetPixels, bool use_states_zoom= true );
+	virtual void Init(const PlayerState* pPlayerState, float fYReverseOffsetPixels, bool use_states_zoom = true);
 	virtual void Load(
 		const NoteData* pNoteData,
 		int iDrawDistanceAfterTargetsPixels,
 		int iDrawDistanceBeforeTargetsPixels,
-    bool bIsDoublePerformance // xMAx
-   );
+		bool bIsDoublePerformance // xMAx
+	);
 	virtual void Unload();
 
 	void ensure_note_displays_have_skin();
 	void InitColumnRenderers();
 
-	virtual void HandleMessage( const Message &msg );
+	virtual void HandleMessage(const Message& msg);
 
 	// This is done automatically by Init(), but can be re-called explicitly if the
 	// note skin changes.
 	void CacheAllUsedNoteSkins();
 	void FadeToFail();
 
-	void Step(int col, TapNoteScore score, bool from_lua= false);
-	void SetPressed(int col, bool from_lua= false);
-	void DidTapNote(int col, TapNoteScore score, bool bright, bool from_lua= false);
-	void DidHoldNote(int col, HoldNoteScore score, bool bright, bool from_lua= false);
+	void Step(int iCol, TapNoteScore score);
+	void SetPressed(int iCol);
+	void DidTapNote(int iCol, TapNoteScore score, bool bBright);
+	void DidHoldNote(int iCol, HoldNoteScore score, bool bBright);
 
-	virtual void PushSelf( lua_State *L );
+	//virtual void PushSelf( lua_State *L );
 
 	// Allows the theme to modify the parameters to Step, SetPressed,
 	// DidTapNote, and DidHoldNote before they pass on to the ghost arrows or
 	// receptors. -Kyz
-	LuaReference m_StepCallback;
-	LuaReference m_SetPressedCallback;
-	LuaReference m_DidTapNoteCallback;
-	LuaReference m_DidHoldNoteCallback;
+	//LuaReference m_StepCallback;
+	//LuaReference m_SetPressedCallback;
+	//LuaReference m_DidTapNoteCallback;
+	//LuaReference m_DidHoldNoteCallback;
 
-	const PlayerState *GetPlayerState() const { return m_pPlayerState; }
+	const PlayerState* GetPlayerState() const { return m_pPlayerState; }
 
 	int	m_iBeginMarker, m_iEndMarker;	// only used with MODE_EDIT
 
@@ -69,10 +69,10 @@ public:
 	void UpdateHoldBody(TapNote* tn); // xMAx
 
 protected:
-	void CacheNoteSkin( const RString &sNoteSkin );
-	void UncacheNoteSkin( const RString &sNoteSkin );
+	void CacheNoteSkin(const RString& sNoteSkin);
+	void UncacheNoteSkin(const RString& sNoteSkin);
 
-	bool IsOnScreen( float fBeat, int iCol, int iDrawDistanceAfterTargetsPixels, int iDrawDistanceBeforeTargetsPixels ) const;
+	bool IsOnScreen(float fBeat, int iCol, int iDrawDistanceAfterTargetsPixels, int iDrawDistanceBeforeTargetsPixels) const;
 
 	void DrawBoard(int iDrawDistanceAfterTargetsPixels, int iDrawDistanceBeforeTargetsPixels);
 
@@ -95,11 +95,11 @@ protected:
 	void DrawBGChangeText(const float fBeat, const RString sNewBGName);
 	float GetWidth() const;
 
-	const NoteData *m_pNoteData;
+	const NoteData* m_pNoteData;
 
 	float			m_fPercentFadeToFail;	// -1 if not fading to fail
 
-	const PlayerState*	m_pPlayerState;
+	const PlayerState* m_pPlayerState;
 	int			m_iDrawDistanceAfterTargetsPixels;	// this should be a negative number
 	int			m_iDrawDistanceBeforeTargetsPixels;	// this should be a positive number
 	float		m_fYReverseOffsetPixels;
@@ -110,20 +110,20 @@ protected:
 	// color arrows
 	struct NoteDisplayCols
 	{
-		NoteDisplay		*display;
+		NoteDisplay* display;
 		ReceptorArrowRow	m_ReceptorArrowRow;
 		GhostArrowRow		m_GhostArrowRow;
-		NoteDisplayCols( int iNumCols ) { display = new NoteDisplay[iNumCols]; }
-		~NoteDisplayCols() { delete [] display; }
+		NoteDisplayCols(int iNumCols) { display = new NoteDisplay[iNumCols]; }
+		~NoteDisplayCols() { delete[] display; }
 	};
 
 	NoteFieldRenderArgs m_FieldRenderArgs;
 
 	/* All loaded note displays, mapped by their name. */
-	map<RString, NoteDisplayCols *> m_NoteDisplays;
-	NoteDisplayCols		*m_pCurDisplay;
+	map<RString, NoteDisplayCols*> m_NoteDisplays;
+	NoteDisplayCols* m_pCurDisplay;
 	// NoteDisplayCols		*m_pDisplays[NUM_PlayerNumber]; // xMAx
-	NoteDisplayCols*	m_pDisplays[4];	//xMAx
+	NoteDisplayCols* m_pDisplays[4];	//xMAx
 	BitmapText			m_textNoteTypeWord; // xMAx
 
 	// decorations, mostly used in MODE_EDIT
@@ -141,15 +141,15 @@ protected:
 	vector<RString> asSkinNames;
 	bool	m_bUseRandomSkin;
 	bool	m_bIsRoutine;
-	NoteDisplayCols		*m_pReceptorDisplay;
+	NoteDisplayCols* m_pReceptorDisplay;
 	struct NoteDrawData
 	{
 		float fYPos;
 		float fAlpha;
 	};
 
-	map<int,NoteDrawData> m_NoteDrawData;
-  // ----------------------------------------------------------------------------------------------
+	map<int, NoteDrawData> m_NoteDrawData;
+	// ----------------------------------------------------------------------------------------------
 };
 
 #endif

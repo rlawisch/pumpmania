@@ -50,11 +50,18 @@ void ScoreKeeperShared::HandleTapScore( const TapNote &tn )
 	ScoreKeeperNormal::HandleTapScore( tn );
 }
 
-void ScoreKeeperShared::HandleTapRowScore( const NoteData &nd, int iRow )
+//void ScoreKeeperShared::HandleTapRowScore( const NoteData &nd, int iRow )
+//{
+//	if( m_pPlayerState->m_PlayerNumber != GAMESTATE->GetMasterPlayerNumber() )
+//		return;
+//	ScoreKeeperNormal::HandleTapRowScore( nd, iRow );
+//}
+
+void ScoreKeeperShared::HandleTapRowScore(const NoteData& nd, int iRow, TapNoteScore tns)
 {
-	if( m_pPlayerState->m_PlayerNumber != GAMESTATE->GetMasterPlayerNumber() )
+	if (m_pPlayerState->m_PlayerNumber != GAMESTATE->GetMasterPlayerNumber())
 		return;
-	ScoreKeeperNormal::HandleTapRowScore( nd, iRow );
+	ScoreKeeperNormal::HandleTapRowScore(nd, iRow, tns);
 }
 
 void ScoreKeeperShared::HandleHoldScore( const TapNote &tn )

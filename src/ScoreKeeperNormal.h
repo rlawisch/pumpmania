@@ -70,7 +70,7 @@ public:
 	void OnNextSong( int iSongInCourseIndex, const Steps* pSteps, const NoteData* pNoteData );
 
 	void HandleTapScore( const TapNote &tn );
-	void HandleTapRowScore( const NoteData &nd, int iRow );
+	//void HandleTapRowScore( const NoteData &nd, int iRow );
 	void HandleTapRowScore( const NoteData &nd, int iRow, TapNoteScore tns ); // StepP1 Revival - bSilver
 	void HandleHoldScore( const TapNote &tn );
 	void HandleHoldActiveSeconds( float /* fMusicSecondsHeld */ ) {};

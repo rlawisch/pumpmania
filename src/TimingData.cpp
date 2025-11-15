@@ -752,10 +752,17 @@ bool TimingData::DoesLabelExist( const RString& sLabel ) const
 	return false;
 }
 
-void TimingData::GetBeatAndBPSFromElapsedTime(GetBeatArgs& args) const
+//void TimingData::GetBeatAndBPSFromElapsedTime(GetBeatArgs& args) const
+//{
+//	args.elapsed_time += GAMESTATE->m_SongOptions.GetCurrent().m_fMusicRate * PREFSMAN->m_fGlobalOffsetSeconds;
+//	GetBeatAndBPSFromElapsedTimeNoOffset(args);
+//}
+
+void TimingData::GetBeatAndBPSFromElapsedTime(float fElapsedTime, float& fBeatOut, float& fBPSOut, bool& bFreezeOut, bool& bDelayOut, int& iWarpBeginOut, float& fWarpLengthOut) const
 {
-	args.elapsed_time += GAMESTATE->m_SongOptions.GetCurrent().m_fMusicRate * PREFSMAN->m_fGlobalOffsetSeconds;
-	GetBeatAndBPSFromElapsedTimeNoOffset(args);
+	fElapsedTime += PREFSMAN->m_fGlobalOffsetSeconds;
+
+	GetBeatAndBPSFromElapsedTimeNoOffset(fElapsedTime, fBeatOut, fBPSOut, bFreezeOut, bDelayOut, iWarpBeginOut, fWarpLengthOut);
 }
 
 enum
@@ -912,18 +919,152 @@ void TimingData::GetBeatInternal(GetBeatStarts& start, GetBeatArgs& args,
 	args.bps_out= bps;
 }
 
-void TimingData::GetBeatAndBPSFromElapsedTimeNoOffset(GetBeatArgs& args) const
+//void TimingData::GetBeatAndBPSFromElapsedTimeNoOffset(GetBeatArgs& args) const
+//{
+//	GetBeatStarts start;
+//	start.last_time= -m_fBeat0OffsetInSeconds;
+//	beat_start_lookup_t::const_iterator looked_up_start=
+//		FindEntryInLookup(m_beat_start_lookup, args.elapsed_time);
+//	if(looked_up_start != m_beat_start_lookup.end())
+//	{
+//		start= looked_up_start->second;
+//	}
+//	GetBeatInternal(start, args, INT_MAX);
+//}
+
+void TimingData::GetBeatAndBPSFromElapsedTimeNoOffset(float fElapsedTime, float& fBeatOut, float& fBPSOut, bool& bFreezeOut, bool& bDelayOut, int& iWarpBeginOut, float& fWarpDestinationOut) const
 {
-	GetBeatStarts start;
-	start.last_time= -m_fBeat0OffsetInSeconds;
-	beat_start_lookup_t::const_iterator looked_up_start=
-		FindEntryInLookup(m_beat_start_lookup, args.elapsed_time);
-	if(looked_up_start != m_beat_start_lookup.end())
+	const std::vector<TimingSegment*>* segs = m_avpTimingSegments.data();
+	vector<TimingSegment*>::const_iterator itBPMS = segs[SEGMENT_BPM].begin();
+	vector<TimingSegment*>::const_iterator itWS = segs[SEGMENT_WARP].begin();
+	vector<TimingSegment*>::const_iterator itSS = segs[SEGMENT_STOP].begin();
+	vector<TimingSegment*>::const_iterator itDS = segs[SEGMENT_DELAY].begin();
+
+	bFreezeOut = false;
+	bDelayOut = false;
+
+	iWarpBeginOut = -1;
+
+	int iLastRow = 0;
+	float fLastTime = -m_fBeat0OffsetInSeconds;
+	float fBPS = GetBPMAtRow(0) / 60.0f;
+
+	float bIsWarping = false;
+	float fWarpDestination = 0;
+
+	for (;; )
 	{
-		start= looked_up_start->second;
+		int iEventRow = INT_MAX;
+		int iEventType = NOT_FOUND;
+		if (bIsWarping && BeatToNoteRow(fWarpDestination) < iEventRow)
+		{
+			iEventRow = BeatToNoteRow(fWarpDestination);
+			iEventType = FOUND_WARP_DESTINATION;
+		}
+		if (itBPMS != segs[SEGMENT_BPM].end() &&
+			(*itBPMS)->GetRow() < iEventRow)
+		{
+			iEventRow = (*itBPMS)->GetRow();
+			iEventType = FOUND_BPM_CHANGE;
+		}
+		if (itDS != segs[SEGMENT_DELAY].end() &&
+			(*itDS)->GetRow() < iEventRow)
+		{
+			iEventRow = (*itDS)->GetRow();
+			iEventType = FOUND_DELAY;
+		}
+		if (itSS != segs[SEGMENT_STOP].end() &&
+			(*itSS)->GetRow() < iEventRow) // && iEventType != FOUND_DELAY )
+		{
+			int tmpRow = iEventRow;
+			iEventRow = (*itSS)->GetRow();
+			iEventType = (tmpRow == iEventRow) ? FOUND_STOP_DELAY : FOUND_STOP;
+		}
+		if (itWS != segs[SEGMENT_WARP].end() &&
+			(*itWS)->GetRow() < iEventRow)
+		{
+			iEventRow = (*itWS)->GetRow();
+			iEventType = FOUND_WARP;
+		}
+		if (iEventType == NOT_FOUND)
+		{
+			break;
+		}
+		float fTimeToNextEvent = bIsWarping ? 0 : NoteRowToBeat(iEventRow - iLastRow) / fBPS;
+		float fNextEventTime = fLastTime + fTimeToNextEvent;
+		if (fElapsedTime < fNextEventTime)
+		{
+			break;
+		}
+		fLastTime = fNextEventTime;
+		switch (iEventType)
+		{
+		case FOUND_WARP_DESTINATION:
+			bIsWarping = false;
+			break;
+		case FOUND_BPM_CHANGE:
+			fBPS = ToBPM(*itBPMS)->GetBPS();
+			itBPMS++;
+			break;
+		case FOUND_DELAY:
+		case FOUND_STOP_DELAY:
+		{
+			const DelaySegment* ss = ToDelay(*itDS);
+			fTimeToNextEvent = ss->GetPause();
+			fNextEventTime = fLastTime + fTimeToNextEvent;
+			if (fElapsedTime < fNextEventTime)
+			{
+				bFreezeOut = false;
+				bDelayOut = true;
+				fBeatOut = ss->GetBeat();
+				fBPSOut = fBPS;
+				return;
+			}
+			fLastTime = fNextEventTime;
+			itDS++;
+			if (iEventType == FOUND_DELAY)
+				break;
+		}
+		case FOUND_STOP:
+		{
+			const StopSegment* ss = ToStop(*itSS);
+			fTimeToNextEvent = ss->GetPause();
+			fNextEventTime = fLastTime + fTimeToNextEvent;
+			if (fElapsedTime < fNextEventTime)
+			{
+				bFreezeOut = true;
+				bDelayOut = false;
+				fBeatOut = ss->GetBeat();
+				fBPSOut = fBPS;
+				return;
+			}
+			fLastTime = fNextEventTime;
+			itSS++;
+			break;
+		}
+		case FOUND_WARP:
+		{
+			bIsWarping = true;
+			const WarpSegment* ws = ToWarp(*itWS);
+			float fWarpSum = ws->GetLength() + ws->GetBeat();
+			if (fWarpSum > fWarpDestination)
+			{
+				fWarpDestination = fWarpSum;
+			}
+			iWarpBeginOut = iEventRow;
+			fWarpDestinationOut = fWarpDestination;
+			itWS++;
+			break;
+		}
+		}
+		iLastRow = iEventRow;
 	}
-	GetBeatInternal(start, args, INT_MAX);
+
+	fBeatOut = NoteRowToBeat(iLastRow) + (fElapsedTime - fLastTime) * fBPS;
+	fBPSOut = fBPS;
+
 }
+
 
 float TimingData::GetElapsedTimeInternal(GetBeatStarts& start, float beat,
 	unsigned int max_segment) const

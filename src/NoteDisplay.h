@@ -40,8 +40,8 @@ enum NoteColorType
 	NUM_NoteColorType,
 	NoteColorType_Invalid
 };
-const RString& NoteColorTypeToString( NoteColorType nct );
-NoteColorType StringToNoteColorType( const RString& s );
+const RString& NoteColorTypeToString(NoteColorType nct);
+NoteColorType StringToNoteColorType(const RString& s);
 
 struct NoteResource;
 
@@ -49,20 +49,20 @@ struct NoteColorActor
 {
 	NoteColorActor();
 	~NoteColorActor();
-	void Load( const RString &sButton, const RString &sElement );
-	Actor *Get();
+	void Load(const RString& sButton, const RString& sElement);
+	Actor* Get();
 private:
-	NoteResource *m_p;
+	NoteResource* m_p;
 };
 
 struct NoteColorSprite
 {
 	NoteColorSprite();
 	~NoteColorSprite();
-	void Load( const RString &sButton, const RString &sElement );
-	Sprite *Get();
+	void Load(const RString& sButton, const RString& sElement);
+	Sprite* Get();
 private:
-	NoteResource *m_p;
+	NoteResource* m_p;
 };
 /** @brief What types of holds are there? */
 enum HoldType
@@ -75,7 +75,7 @@ enum HoldType
 };
 /** @brief Loop through each HoldType. */
 #define FOREACH_HoldType( i ) FOREACH_ENUM( HoldType, i )
-const RString &HoldTypeToString( HoldType ht );
+const RString& HoldTypeToString(HoldType ht);
 
 enum ActiveType
 {
@@ -86,7 +86,7 @@ enum ActiveType
 };
 /** @brief Loop through each ActiveType. */
 #define FOREACH_ActiveType( i ) FOREACH_ENUM( ActiveType, i )
-const RString &ActiveTypeToString( ActiveType at );
+const RString& ActiveTypeToString(ActiveType at);
 
 enum NoteColumnSplineMode
 {
@@ -130,11 +130,11 @@ struct NCSplineHandler
 	NCSplineHandler()
 	{
 		m_spline.redimension(3);
-		m_spline.m_owned_by_actor= true;
-		m_spline_mode= NCSM_Disabled;
-		m_receptor_t= 0.0f;
-		m_beats_per_t= 1.0f;
-		m_subtract_song_beat_from_curr= true;
+		m_spline.m_owned_by_actor = true;
+		m_spline_mode = NCSM_Disabled;
+		m_receptor_t = 0.0f;
+		m_beats_per_t = 1.0f;
+		m_subtract_song_beat_from_curr = true;
 	}
 	float BeatToTValue(float song_beat, float note_beat) const;
 	void EvalForBeat(float song_beat, float note_beat, RageVector3& ret) const;
@@ -179,13 +179,13 @@ public:
 	NoteDisplay();
 	~NoteDisplay();
 
-  // xMAx
-	// void Load( int iColNum, const PlayerState* pPlayerState, float fYReverseOffsetPixels );
-	void Load( int iColNum, const PlayerState* pPlayerState );
+	// xMAx
+	  // void Load( int iColNum, const PlayerState* pPlayerState, float fYReverseOffsetPixels );
+	void Load(int iColNum, const PlayerState* pPlayerState);
 
-	static void Update( float fDeltaTime );
+	static void Update(float fDeltaTime);
 
-	bool IsOnScreen( float fBeat, int iCol, int iDrawDistanceAfterTargetsPixels, int iDrawDistanceBeforeTargetsPixels ) const;
+	bool IsOnScreen(float fBeat, int iCol, int iDrawDistanceAfterTargetsPixels, int iDrawDistanceBeforeTargetsPixels) const;
 
 	bool DrawHoldsInRange(const NoteFieldRenderArgs& field_args,
 		const NoteColumnRenderArgs& column_args,
@@ -207,13 +207,13 @@ public:
 	 * @param fDrawDistanceBeforeTargetsPixels how much ot draw before the receptors.
 	 * @param fFadeInPercentOfDrawFar when to start fading in. */
 
-	// 5.1 adapted
-	//void DrawTap(const TapNote& tn, const NoteFieldRenderArgs& field_args,
-	//	const NoteColumnRenderArgs& column_args, float fBeat,
-	//	bool bOnSameRowAsHoldStart,
-	//	bool bOnSameRowAsRollBeat, bool bIsAddition, float fPercentFadeToFail,
- //   // xMAx - Added
- //   float fCenterLine, float fYOffset = -1
+	 // 5.1 adapted
+	 //void DrawTap(const TapNote& tn, const NoteFieldRenderArgs& field_args,
+	 //	const NoteColumnRenderArgs& column_args, float fBeat,
+	 //	bool bOnSameRowAsHoldStart,
+	 //	bool bOnSameRowAsRollBeat, bool bIsAddition, float fPercentFadeToFail,
+  //   // xMAx - Added
+  //   float fCenterLine, float fYOffset = -1
 
 	void DrawTap(const TapNote& tn, int iCol, float fBeat,
 		bool bOnSameRowAsHoldStart, bool bOnSameRowAsRollBeat,
@@ -235,10 +235,10 @@ public:
 	bool DrawRollHeadForTapsOnSameRow() const;
 
 private:
-	void SetActiveFrame( float fNoteBeat, Actor &actorToSet, float fAnimationLength, bool bVivid );
-	Actor *GetTapActor( NoteColorActor &nca, NotePart part, float fNoteBeat );
-	Actor *GetHoldActor( NoteColorActor nca[NUM_HoldType][NUM_ActiveType], NotePart part, float fNoteBeat, bool bIsRoll, bool bIsBeingHeld );
-	Sprite *GetHoldSprite( NoteColorSprite ncs[NUM_HoldType][NUM_ActiveType], NotePart part, float fNoteBeat, bool bIsRoll, bool bIsBeingHeld );
+	void SetActiveFrame(float fNoteBeat, Actor& actorToSet, float fAnimationLength, bool bVivid);
+	Actor* GetTapActor(NoteColorActor& nca, NotePart part, float fNoteBeat);
+	Actor* GetHoldActor(NoteColorActor nca[NUM_HoldType][NUM_ActiveType], NotePart part, float fNoteBeat, bool bIsRoll, bool bIsBeingHeld);
+	Sprite* GetHoldSprite(NoteColorSprite ncs[NUM_HoldType][NUM_ActiveType], NotePart part, float fNoteBeat, bool bIsRoll, bool bIsBeingHeld);
 
 	struct draw_hold_part_args
 	{
@@ -268,10 +268,10 @@ private:
 		const float head_minus_top, const float tail_plus_bottom,
 		const float y_head, const float y_tail, const float top_beat,
 		const float bottom_beat, bool glow,
-    // xMAx - added bIsHidden & fYHoldHead & Force conditions
-    bool bIsHidden, float fYHoldHead,
-    float fCenterLine, bool bForceSudden, bool bForceVanish
-  );
+		// xMAx - added bIsHidden & fYHoldHead & Force conditions
+		bool bIsHidden, float fYHoldHead,
+		float fCenterLine, bool bForceSudden, bool bForceVanish
+	);
 	void DrawHoldBody(const TapNote& tn, int iCol, float fBeat, bool bIsBeingHeld, float fYHead, float fYTail, bool bIsAddition, float fPercentFadeToFail,
 		float fColorScale,
 		bool bGlow, float fDrawDistanceAfterTargetsPixels, float fDrawDistanceBeforeTargetsPixels, float fFadeInPercentOfDrawFar, float fCenterLine);
@@ -283,18 +283,18 @@ private:
 		float fCenterLine, bool bForceSudden, bool bForceVanish);	// xMAx added bIsHidden & fYHoldHead & Force conditions
 
 
-	const PlayerState	*m_pPlayerState;	// to look up PlayerOptions
-	NoteMetricCache_t	*cache;
+	const PlayerState* m_pPlayerState;	// to look up PlayerOptions
+	NoteMetricCache_t* cache;
 
 	NoteColorActor		m_TapNote;
 	NoteColorActor		m_TapMine;
 	NoteColorActor		m_TapLift;
-  // xMAx -----------------------------------------------------------------------------------------
-	// NoteColorActor		m_TapFake;
+	// xMAx -----------------------------------------------------------------------------------------
+	  // NoteColorActor		m_TapFake;
 	NoteColorActor		m_TapNoteP1;
 	NoteColorActor		m_TapNoteP2;
 	NoteColorActor		m_TapNoteP3;
-  // ----------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------
 	NoteColorActor		m_HoldHead[NUM_HoldType][NUM_ActiveType];
 	NoteColorSprite		m_HoldTopCap[NUM_HoldType][NUM_ActiveType];
 	NoteColorSprite		m_HoldBody[NUM_HoldType][NUM_ActiveType];
@@ -315,7 +315,7 @@ private:
 
 struct NoteColumnRenderer : public Actor
 {
-	NoteDisplay* m_displays[PLAYER_INVALID+1];
+	NoteDisplay* m_displays[PLAYER_INVALID + 1];
 	NoteFieldRenderArgs* m_field_render_args;
 	NoteColumnRenderArgs m_column_render_args;
 	int m_column;
@@ -323,7 +323,7 @@ struct NoteColumnRenderer : public Actor
 	// UpdateReceptorGhostStuff takes care of the logic for making the ghost
 	// and receptor positions follow the splines.  It's called by their row
 	// update functions. -Kyz
-	void UpdateReceptorGhostStuff(Actor* receptor) const;
+	//void UpdateReceptorGhostStuff(Actor* receptor) const;
 	virtual void DrawPrimitives();
 	virtual void PushSelf(lua_State* L);
 
@@ -341,10 +341,14 @@ struct NoteColumnRenderer : public Actor
 
 	NCR_TweenState& NCR_DestTweenState()
 	{
-		if(NCR_Tweens.empty())
-		{ return NCR_current; }
+		if (NCR_Tweens.empty())
+		{
+			return NCR_current;
+		}
 		else
-		{ return NCR_Tweens.back(); }
+		{
+			return NCR_Tweens.back();
+		}
 	}
 	const NCR_TweenState& NCR_DestTweenState() const { return const_cast<NoteColumnRenderer*>(this)->NCR_DestTweenState(); }
 
@@ -359,7 +363,7 @@ struct NoteColumnRenderer : public Actor
 	NCSplineHandler* GetRotHandler() { return &NCR_DestTweenState().m_rot_handler; }
 	NCSplineHandler* GetZoomHandler() { return &NCR_DestTweenState().m_zoom_handler; }
 
-	private:
+private:
 	vector<NCR_TweenState> NCR_Tweens;
 	NCR_TweenState NCR_current;
 	NCR_TweenState NCR_start;

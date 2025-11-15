@@ -356,24 +356,48 @@ public:
 		unsigned int max_segment) const;
 	float GetElapsedTimeInternal(GetBeatStarts& start, float beat,
 		unsigned int max_segment) const;
-	void GetBeatAndBPSFromElapsedTime(GetBeatArgs& args) const;
-	float GetBeatFromElapsedTime(float elapsed_time) const	// shortcut for places that care only about the beat
+	//void GetBeatAndBPSFromElapsedTime(GetBeatArgs& args) const;
+	void GetBeatAndBPSFromElapsedTime(float fElapsedTime, float& fBeatOut, float& fBPSOut, bool& bFreezeOut, bool& bDelayOut, int& iWarpBeginOut, float& fWarpLengthOut) const;
+
+	//float GetBeatFromElapsedTime(float elapsed_time) const	// shortcut for places that care only about the beat
+	//{
+	//	GetBeatArgs args;
+	//	args.elapsed_time= elapsed_time;
+	//	GetBeatAndBPSFromElapsedTime(args);
+	//	return args.beat;
+	//}
+
+
+	float GetBeatFromElapsedTime(float fElapsedTime) const	// shortcut for places that care only about the beat
 	{
-		GetBeatArgs args;
-		args.elapsed_time= elapsed_time;
-		GetBeatAndBPSFromElapsedTime(args);
-		return args.beat;
+		float fBeat, fThrowAway, fThrowAway2;
+		bool bThrowAway, bThrowAway2;
+		int iThrowAway;
+		GetBeatAndBPSFromElapsedTime(fElapsedTime, fBeat, fThrowAway, bThrowAway, bThrowAway2, iThrowAway, fThrowAway2);
+		return fBeat;
 	}
+
 	float GetElapsedTimeFromBeat( float fBeat ) const;
 
-	void GetBeatAndBPSFromElapsedTimeNoOffset(GetBeatArgs& args) const;
-	float GetBeatFromElapsedTimeNoOffset(float elapsed_time) const	// shortcut for places that care only about the beat
+	//void GetBeatAndBPSFromElapsedTimeNoOffset(GetBeatArgs& args) const;
+	//float GetBeatFromElapsedTimeNoOffset(float elapsed_time) const	// shortcut for places that care only about the beat
+	//{
+	//	GetBeatArgs args;
+	//	args.elapsed_time= elapsed_time;
+	//	GetBeatAndBPSFromElapsedTimeNoOffset(args);
+	//	return args.beat;
+	//}
+
+	void GetBeatAndBPSFromElapsedTimeNoOffset(float fElapsedTime, float& fBeatOut, float& fBPSOut, bool& bFreezeOut, bool& bDelayOut, int& iWarpBeginOut, float& fWarpDestinationOut) const;
+	float GetBeatFromElapsedTimeNoOffset(float fElapsedTime) const	// shortcut for places that care only about the beat
 	{
-		GetBeatArgs args;
-		args.elapsed_time= elapsed_time;
-		GetBeatAndBPSFromElapsedTimeNoOffset(args);
-		return args.beat;
+		float fBeat, fThrowAway, fThrowAway2;
+		bool bThrowAway, bThrowAway2;
+		int iThrowAway;
+		GetBeatAndBPSFromElapsedTimeNoOffset(fElapsedTime, fBeat, fThrowAway, bThrowAway, bThrowAway2, iThrowAway, fThrowAway2);
+		return fBeat;
 	}
+
 	float GetElapsedTimeFromBeatNoOffset( float fBeat ) const;
 	float GetDisplayedBeat( float fBeat ) const;
 
