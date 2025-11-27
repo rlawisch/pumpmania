@@ -1,9 +1,7 @@
-# StepP1 Revival --- StepPNX Initial
+# Pumpmania - (StepP1 Revival)
 
-- StepP1 original code by xMAx Phoenix
-- Theme by Team Phyrebird
-
-You will need the "Fiesta 2" Theme Folder from some StepP1 original theme (StepP1-plus or Phyrebird works fine)
+- StepP1 original code (recovery) by xMAx Phoenix
+- Phoenix Theme by Team Phyrebird
 
 Advanced cross-platform rhythm game.
 
