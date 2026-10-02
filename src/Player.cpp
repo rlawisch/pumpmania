@@ -2738,6 +2738,10 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 		}
 	}
 
+	// The press refreshed a roll; don't also judge it as a tap (xMAx)
+	if( bFoundRoll )
+		return;
+
   /* StepP1 Revival - Thequila
 	// Count calories for this step, unless we're being called because a button
 	// is held over a mine or being released.
@@ -3483,7 +3487,7 @@ void Player::UpdateTapNotesMissedOlderThan( float fMissIfOlderThanSeconds )
 			};
 
 			//if( iNumTapsFoundInRow != 0 && (m_bCountNotesSeparately || NoteDataWithScoring::IsRowCompletelyJudgedWithAtLeastOneMiss(m_NoteData, iRow))  )
-			if( NoteDataWithScoring::IsRowCompletelyJudged(m_NoteData, iRow, tn.playerNoteSkin) || (m_bCountNotesSeparately && iNoteIsMissed != 0) )
+			if( NoteDataWithScoring::IsRowCompletelyJudgedWithAtLeastOneMiss(m_NoteData, iRow, tn.playerNoteSkin) || (m_bCountNotesSeparately && iNoteIsMissed != 0) )
 			{
 				// Update life, scoring and send judgement messages
 				HandleTapRowScore( iRow, TNS_Miss );
@@ -3869,6 +3873,10 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 				break;
 		}
 	}
+
+	// Check if theres any holds to update
+	if( vHoldNotesToUpdate.empty() )
+		return;
 
 	// Update the life of every active hold, every frame (xMAx)
 	for( unsigned i=0; i<vHoldNotesToUpdate.size(); i++ )

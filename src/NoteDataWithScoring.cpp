@@ -154,6 +154,12 @@ bool NoteDataWithScoring::IsRowCompletelyJudged( const NoteData &in, unsigned ro
 	return MinTapNoteScore( in, row, playerNoteSkin, plnum ) >= TNS_Miss;
 }
 
+// Every note in the row is judged and the worst of them is a miss.
+bool NoteDataWithScoring::IsRowCompletelyJudgedWithAtLeastOneMiss( const NoteData &in, unsigned row, TapNotePlayerNoteSkin playerNoteSkin, PlayerNumber plnum )
+{
+	return MinTapNoteScore( in, row, playerNoteSkin, plnum ) == TNS_Miss;
+}
+
 namespace
 {
 // Return the ratio of actual combo to max combo.

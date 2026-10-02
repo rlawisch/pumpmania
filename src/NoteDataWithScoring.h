@@ -20,6 +20,7 @@ namespace NoteDataWithScoring
 	 * @plnum If valid, only consider notes for that PlayerNumber
 	 * @return true if it has been completley judged, or false otherwise. */
 	bool IsRowCompletelyJudged( const NoteData &in, unsigned iRow, TapNotePlayerNoteSkin playerNoteSkin, PlayerNumber plnum = PlayerNumber_Invalid ); // xMAx
+	bool IsRowCompletelyJudgedWithAtLeastOneMiss( const NoteData &in, unsigned iRow, TapNotePlayerNoteSkin playerNoteSkin, PlayerNumber plnum = PlayerNumber_Invalid ); // xMAx
 	TapNoteScore MinTapNoteScore( const NoteData &in, unsigned iRow, int iPlayerNoteSkin, PlayerNumber plnum = PlayerNumber_Invalid ); // xMAx
 	const TapNote &LastTapNoteWithResult( const NoteData &in, unsigned iRow, PlayerNumber plnum = PlayerNumber_Invalid );
 
