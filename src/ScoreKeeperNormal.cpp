@@ -712,6 +712,31 @@ void ScoreKeeperNormal::HandleTapRowScore(const NoteData& nd, int iRow, TapNoteS
 		m_pPlayerStageStats->m_iTapNoteScores[TNS_W5],
 		m_pPlayerStageStats->m_iTapNoteScores[TNS_Miss]);
 }
+
+// Hold checkpoint (xMAx): Player::HandleHoldCheckpoint() reports every tick of
+// the active holds here. A held tick adds to the combo (times the #COMBOS
+// multiplier) and a released one breaks it and feeds the miss combo.
+void ScoreKeeperNormal::HandleTapRowScore(const NoteData& nd, int iRow, TapNoteScore tns, bool bCheckpoint, int iNumNotes)
+{
+	if (!bCheckpoint)
+	{
+		HandleTapRowScore(nd, iRow, tns);
+		return;
+	}
+
+	const bool bHit = tns == TNS_CheckpointHit;
+	HandleTapNoteScoreInternal(tns, TNS_CheckpointHit, iRow);
+	HandleComboInternal(bHit ? iNumNotes : 0, 0, bHit ? 0 : iNumNotes, iRow);
+
+	if (m_pPlayerState->m_PlayerNumber != PLAYER_INVALID)
+		MESSAGEMAN->Broadcast(enum_add2(Message_CurrentComboChangedP1, m_pPlayerState->m_PlayerNumber));
+
+	Message msg("ScoreChanged");
+	msg.SetParam("PlayerNumber", m_pPlayerState->m_PlayerNumber);
+	msg.SetParam("MultiPlayer", m_pPlayerState->m_mp);
+	msg.SetParam("ToastyCombo", m_cur_toasty_combo);
+	MESSAGEMAN->Broadcast(msg);
+}
 // ------------------------------------------------------------------------------------------------
 
 void ScoreKeeperNormal::HandleHoldScore(const TapNote& tn)

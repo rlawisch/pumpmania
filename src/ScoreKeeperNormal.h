@@ -72,6 +72,7 @@ public:
 	void HandleTapScore( const TapNote &tn );
 	//void HandleTapRowScore( const NoteData &nd, int iRow );
 	void HandleTapRowScore( const NoteData &nd, int iRow, TapNoteScore tns ); // StepP1 Revival - bSilver
+	void HandleTapRowScore( const NoteData &nd, int iRow, TapNoteScore tns, bool bCheckpoint, int iNumNotes ); // xMAx hold checkpoints
 	void HandleHoldScore( const TapNote &tn );
 	void HandleHoldActiveSeconds( float /* fMusicSecondsHeld */ ) {};
 	void HandleHoldCheckpointScore( const NoteData &nd, int iRow, int iNumHoldsHeldThisRow, int iNumHoldsMissedThisRow );
