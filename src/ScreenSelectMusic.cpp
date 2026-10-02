@@ -1331,6 +1331,11 @@ bool ScreenSelectMusic::MenuStart(const InputEventPlus& input)
 	switch (m_SelectionState)
 	{
 		DEFAULT_FAIL(m_SelectionState);
+	case SelectionState_Finalized:
+		// Already confirmed and fading out; extra Start presses are ignored.
+		// (The upstream early-return for this state in Input() is disabled
+		// for StepP1, so the press reaches us here.)
+		return false;
 	case SelectionState_SelectingSong:
 		// If false, we don't have a selection just yet.
 		if (!m_MusicWheel.Select())
