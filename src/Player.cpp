@@ -832,7 +832,7 @@ void Player::Load()
   // xMAx
 	// Remove cached holds and rolls (added for the editor)
 	// TODO: Update the hold notes list when start from a different point than the start of the song (for the editor)
-	// vHoldNotesToUpdate.clear(); // StepP1 Revival - Thequila - Not needed
+	vHoldNotesToUpdate.clear();
 
 	// The editor can start playing in the middle of the song.
 	const int iNoteRow = BeatToNoteRowNotRounded( m_pPlayerState->m_Position.m_fSongBeat );
@@ -3836,64 +3836,7 @@ void Player::CrossedRows( int iLastRowCrossed, const RageTimer &now )
 	}
 
 
-	/* Update hold checkpoints
-	 *
-	 * TODO: Move this to a separate function. */
-	if( m_bTickHolds && m_pPlayerState->m_PlayerController != PC_AUTOPLAY )
-	{
-		// Few rows typically cross per update. Easier to check all crossed rows
-		// than to calculate from timing segments.
-		for( int r = m_iFirstUncrossedRow; r <= iLastRowCrossed; ++r )
-		{
-			int tickCurrent = m_Timing->GetTickcountAtRow( r );
-
-			// There is a tick count at this row
-			if( tickCurrent > 0 && r % ( ROWS_PER_BEAT / tickCurrent ) == 0 )
-			{
-
-				vector<int> viColsWithHold;
-				int iNumHoldsHeldThisRow = 0;
-				int iNumHoldsMissedThisRow = 0;
-
-				// start at r-1 so that we consider holds whose end rows are equal to the checkpoint row
-				NoteData::all_tracks_iterator nIter = m_NoteData.GetTapNoteRangeAllTracks( r-1, r, true );
-				for( ; !nIter.IsAtEnd(); ++nIter )
-				{
-					TapNote &tn = *nIter;
-					if( tn.type != TapNoteType_HoldHead )
-						continue;
-
-					int iTrack = nIter.Track();
-					viColsWithHold.push_back( iTrack );
-
-					if( tn.HoldResult.fLife > 0 )
-					{
-						++iNumHoldsHeldThisRow;
-						++tn.HoldResult.iCheckpointsHit;
-					}
-					else
-					{
-						++iNumHoldsMissedThisRow;
-						++tn.HoldResult.iCheckpointsMissed;
-					}
-				}
-				GAMESTATE->SetProcessedTimingData(this->m_Timing);
-
-				// TODO: Find a better way of handling hold checkpoints with other taps.
-				// if( !viColsWithHold.empty() && ( CHECKPOINTS_TAPS_SEPARATE_JUDGMENT || m_NoteData.GetNumTapNotesInRow( r ) == 0 ) ) // xMAx
-				if( !viColsWithHold.empty() && m_NoteData.GetNumTapNotesInRow( r ) == 0 ) // xMAx
-				{
-					HandleHoldCheckpoint(r,
-								 iNumHoldsHeldThisRow,
-								 iNumHoldsMissedThisRow,
-								 viColsWithHold,
-                 true ); // xMAx
-				}
-			}
-		}
-	}
-
-	m_iFirstUncrossedRow = iLastRowCrossed+1;
+	// Hold checkpoints are judged in CrossedHoldsRows() (xMAx), as in STEP_P1.exe.
 }
 
 // xMAx -------------------------------------------------------------------------------------------
@@ -3937,9 +3880,9 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 						m_NoteData.SetTapNote( iTrack, iRow + tn.iDuration, tail );
 					}*/
 
+					// Keep the hold in the list so its life is updated every frame until judged
 					TrackRowTapNote trtn = { iTrack, iRow, &tn };
-					// vHoldNotesToUpdate.push_back( trtn ); // StepP1 Revival - Thequila
-		      UpdateHoldNote( iLastRowCrossed, fDeltaTime, trtn );  // StepP1 Revival - Thequila
+					vHoldNotesToUpdate.push_back( trtn );
 					//LOG->Trace( "Player::TRTN added at row %d, track %d", iRow, iTrack );
 				};
 			}; break;
@@ -3949,17 +3892,9 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 		}
 	}
 
-  /* StepP1 Revival - Thequila
-	// Check if theres any holds to update
-	if( vHoldNotesToUpdate.empty() )
-		return;
-
-	// Update holds life
-	for( unsigned i =0; i<vHoldNotesToUpdate.size(); i++ )
-	{
+	// Update the life of every active hold, every frame (xMAx)
+	for( unsigned i=0; i<vHoldNotesToUpdate.size(); i++ )
 		UpdateHoldNote( iLastRowCrossed, fDeltaTime, vHoldNotesToUpdate[i] );
-	}
-  */
 
 	// Update holds checkpoints
 	if( m_pPlayerState->m_PlayerController != PC_AUTOPLAY )
@@ -4136,23 +4071,10 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 	}
 	m_iFirstUncrossedRow = iLastRowCrossed+1;
 
-  /* StepP1 Revival - Thequila - Not needed
-	// Update ended holds
-	for( unsigned i =0; i<vHoldNotesToUpdate.size(); i++ )
-	{
-		// Check for judged holds
-		TrackRowTapNote &trtn = vHoldNotesToUpdate[i];
-		if( (trtn.pTN)->HoldResult.hns != HNS_None )
-		{
-			const vector<TrackRowTapNote>::iterator iter = find( vHoldNotesToUpdate.begin(), vHoldNotesToUpdate.end(), trtn );
-			if( iter != vHoldNotesToUpdate.end() )
-			{
-				vHoldNotesToUpdate.erase( iter );
-				//LOG->Trace( "Player::TRTN deleted at row %d track %d. There're %d holds now", trtn.iRow, trtn.iTrack, vHoldNotesToUpdate.size() );
-			}
-		}
-	}
-  */
+	// Drop holds that have been judged
+	vHoldNotesToUpdate.erase( remove_if( vHoldNotesToUpdate.begin(), vHoldNotesToUpdate.end(),
+		[]( const TrackRowTapNote &t ) { return t.pTN->HoldResult.hns != HNS_None; } ),
+		vHoldNotesToUpdate.end() );
 }
 // ------------------------------------------------------------------------------------------------
 
