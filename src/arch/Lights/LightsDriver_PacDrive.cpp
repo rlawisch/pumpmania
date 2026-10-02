@@ -18,10 +18,8 @@ typedef void (WINAPI PacShutdown)(void);
 PacShutdown* m_pacdone = nullptr;
 typedef bool (WINAPI PacSetLEDStates)(int, short int);
 PacSetLEDStates* m_pacset = nullptr;
-int iLightingOrder = 0;
 
 //Adds new preference to allow for different light wiring setups
-static Preference<RString> g_sPacDriveLightOrdering("PacDriveLightOrdering", "minimaid");
 
 
 LightsDriver_PacDrive::LightsDriver_PacDrive()
@@ -54,10 +52,6 @@ LightsDriver_PacDrive::LightsDriver_PacDrive()
 	{
 		PacDriveConnected = true; // set connected
 		m_pacset(0, 0x0);  // clear all lights for device i
-		RString lightOrder = g_sPacDriveLightOrdering.Get();
-		if (lightOrder.CompareNoCase("lumenar") == 0 || lightOrder.CompareNoCase("openitg") == 0) {
-			iLightingOrder = 1;
-		}
 	}
 }
 
@@ -74,48 +68,19 @@ LightsDriver_PacDrive::~LightsDriver_PacDrive()
 
 void LightsDriver_PacDrive::Set(const LightsState *ls)
 {
+	// Pump layout: 5 pad panels per player, then marquee and bass.
+	static const GameButton pads[] = { PUMP_BUTTON_UPLEFT, PUMP_BUTTON_UPRIGHT, PUMP_BUTTON_CENTER, PUMP_BUTTON_DOWNLEFT, PUMP_BUTTON_DOWNRIGHT };
 	short int outb = 0;
-	switch (iLightingOrder) {
-	case 1:
-		//Sets the cabinet light values to follow LumenAR/OpenITG wiring standards
-
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_LEFT]) outb |= BIT(0);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_RIGHT]) outb |= BIT(1);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_UP]) outb |= BIT(2);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_DOWN]) outb |= BIT(3);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_LEFT]) outb |= BIT(4);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_RIGHT]) outb |= BIT(5);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_UP]) outb |= BIT(6);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_DOWN]) outb |= BIT(7);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT]) outb |= BIT(8);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT]) outb |= BIT(9);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT]) outb |= BIT(10);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT]) outb |= BIT(11);
-		if (ls->m_bGameButtonLights[GameController_1][GAME_BUTTON_START]) outb |= BIT(12);
-		if (ls->m_bGameButtonLights[GameController_2][GAME_BUTTON_START]) outb |= BIT(13);
-		if (ls->m_bCabinetLights[LIGHT_BASS_LEFT] || ls->m_bCabinetLights[LIGHT_BASS_RIGHT]) outb |= BIT(14);
-		break;
-	case 0:
-	default:
-		//If all else fails, falls back to Minimaid order
-
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT]) outb |= BIT(0);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT]) outb |= BIT(1);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT]) outb |= BIT(2);
-		if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT]) outb |= BIT(3);
-		if (ls->m_bCabinetLights[LIGHT_BASS_LEFT] || ls->m_bCabinetLights[LIGHT_BASS_RIGHT]) outb |= BIT(4);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_LEFT]) outb |= BIT(5);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_RIGHT]) outb |= BIT(6);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_UP]) outb |= BIT(7);
-		if (ls->m_bGameButtonLights[GameController_1][DANCE_BUTTON_DOWN]) outb |= BIT(8);
-		if (ls->m_bGameButtonLights[GameController_1][GAME_BUTTON_START]) outb |= BIT(9);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_LEFT]) outb |= BIT(10);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_RIGHT]) outb |= BIT(11);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_UP]) outb |= BIT(12);
-		if (ls->m_bGameButtonLights[GameController_2][DANCE_BUTTON_DOWN]) outb |= BIT(13);
-		if (ls->m_bGameButtonLights[GameController_2][GAME_BUTTON_START]) outb |= BIT(14);
-		break;
+	for (int i = 0; i < 5; ++i)
+	{
+		if (ls->m_bGameButtonLights[GameController_1][pads[i]]) outb |= BIT(i);
+		if (ls->m_bGameButtonLights[GameController_2][pads[i]]) outb |= BIT(5 + i);
 	}
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT]) outb |= BIT(10);
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT]) outb |= BIT(11);
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT]) outb |= BIT(12);
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT]) outb |= BIT(13);
+	if (ls->m_bCabinetLights[LIGHT_BASS_LEFT] || ls->m_bCabinetLights[LIGHT_BASS_RIGHT]) outb |= BIT(14);
 
 	//ensure m_pacset function call was loaded.
 	if (m_pacset)

@@ -222,12 +222,6 @@ if(NOT APPLE)
                 "arch/Lights/LightsDriver_Win32Parallel.h"
                 "arch/Lights/LightsDriver_Win32Serial.h"
                 "arch/Lights/LightsDriver_PacDrive.cpp")
-    if(WITH_MINIMAID)
-      list(APPEND SMDATA_ARCH_LIGHTS_SRC
-                  "arch/Lights/LightsDriver_Win32Minimaid.cpp")
-      list(APPEND SMDATA_ARCH_LIGHTS_HPP
-                  "arch/Lights/LightsDriver_Win32Minimaid.h")
-    endif()
   else() # Unix/Linux TODO: Linux HAVE_PARALLEL_PORT
     if(LINUX)
       list(APPEND SMDATA_LINK_LIB "udev")
@@ -235,29 +229,17 @@ if(NOT APPLE)
                   "arch/Lights/LightsDriver_Linux_Leds.cpp"
                   "arch/Lights/LightsDriver_Linux_PIUIO.cpp"
                   "arch/Lights/LightsDriver_Linux_PIUIO_Leds.cpp"
-                  "arch/Lights/LightsDriver_Linux_PIUIOBTN_Leds.cpp"
-                  "arch/Lights/LightsDriver_Linux_ITGIO.cpp"
-                  "arch/Lights/LightsDriver_Linux_stac.cpp"
-                  "arch/Lights/LightsDriver_LinuxWeedTech.cpp")
+                  "arch/Lights/LightsDriver_Linux_PIUIOBTN_Leds.cpp")
       list(APPEND SMDATA_ARCH_LIGHTS_HPP
                   "arch/Lights/LightsDriver_Linux_Leds.h"
                   "arch/Lights/LightsDriver_Linux_PIUIO.h"
                   "arch/Lights/LightsDriver_Linux_PIUIO_Leds.h"
-                  "arch/Lights/LightsDriver_Linux_PIUIOBTN_Leds.h"
-                  "arch/Lights/LightsDriver_Linux_ITGIO.h"
-                  "arch/Lights/LightsDriver_Linux_stac.h"
-                  "arch/Lights/LightsDriver_LinuxWeedTech.h")
+                  "arch/Lights/LightsDriver_Linux_PIUIOBTN_Leds.h")
       if(WITH_PARALLEL_PORT)
         list(APPEND SMDATA_ARCH_LIGHTS_SRC
                     "arch/Lights/LightsDriver_LinuxParallel.cpp")
         list(APPEND SMDATA_ARCH_LIGHTS_HPP
                     "arch/Lights/LightsDriver_LinuxParallel.h")
-      endif()
-      if(WITH_MINIMAID)
-        list(APPEND SMDATA_ARCH_LIGHTS_SRC
-                    "arch/Lights/LightsDriver_LinuxMinimaid.cpp")
-        list(APPEND SMDATA_ARCH_LIGHTS_HPP
-                    "arch/Lights/LightsDriver_LinuxMinimaid.h")
       endif()
     endif()
   endif(WIN32)
@@ -278,14 +260,12 @@ if(WIN32)
               "arch/InputHandler/InputHandler_DirectInput.cpp"
               "arch/InputHandler/InputHandler_DirectInputHelper.cpp"
               "arch/InputHandler/InputHandler_Win32_MIDI.cpp"
-              "arch/InputHandler/InputHandler_Win32_Para.cpp"
               "arch/InputHandler/InputHandler_Win32_Pump.cpp"
               "arch/InputHandler/InputHandler_Win32_RTIO.cpp")
   list(APPEND SMDATA_ARCH_INPUT_HPP
               "arch/InputHandler/InputHandler_DirectInput.h"
               "arch/InputHandler/InputHandler_DirectInputHelper.h"
               "arch/InputHandler/InputHandler_Win32_MIDI.h"
-              "arch/InputHandler/InputHandler_Win32_Para.h"
               "arch/InputHandler/InputHandler_Win32_Pump.h"
               "arch/InputHandler/InputHandler_Win32_RTIO.h")
   if(NOT MSVC)

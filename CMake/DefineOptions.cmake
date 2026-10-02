@@ -82,7 +82,6 @@ else()
 endif()
 
 if(WIN32)
-  option(WITH_MINIMAID "Build with Minimaid Lights Support." OFF)
   # Developer only option: connect to IRC to report the result. Only use with
   # build servers.
   option(WITH_IRC_POST_HOOK "Report via IRC of the success afterwards." OFF)
@@ -92,7 +91,6 @@ elseif(LINUX)
          "Build with the system's FFMPEG, disabled build with bundled's FFMPEG"
          OFF)
   option(WITH_CRYSTALHD_DISABLED "Build FFMPEG without Crystal HD support." OFF)
-  option(WITH_MINIMAID "Build with Minimaid Lights Support." OFF)
   option(WITH_TTY "Build with Linux TTY Input Support." OFF)
   option(WITH_PROFILING "Build with Profiling Support." OFF)
   option(WITH_GLES2 "Build with OpenGL ES 2.0 Support." ON)
