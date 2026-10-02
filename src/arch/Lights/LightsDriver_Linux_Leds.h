@@ -20,7 +20,6 @@ private:
 protected:
 	LightsState previousLS;
 
-	bool IsDance();
 	bool IsPump();
 
 	void SetLight(const char *filename, bool previous, bool desired);

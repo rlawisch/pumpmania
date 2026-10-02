@@ -15,14 +15,8 @@ function IsGame(str) return CurGameName():lower() == str:lower() end
 -- for songs that should be counted as boss songs.
 function GetExtraColorThreshold()
 	local Modes = {
-		dance = 10,
 		pump = 21,
-		beat = 12,
-		kb7 = 10,
-		para = 10,
-		techno = 10,
 		lights = 10, -- lights shouldn't be playable
-		kickbox= 100, -- extra color is lame
 	}
 	return Modes[CurGameName()] or 10
 end
@@ -93,14 +87,7 @@ end
 -- [en] returns possible modes for ScreenSelectPlayMode
 function GameCompatibleModes()
 	local Modes = {
-		dance = "Single,Double,Solo,Versus,Couple",
 		pump = "Single,Double,HalfDouble,Versus,Couple,Routine",
-		beat = "5Keys,7Keys,10Keys,14Keys,Versus5,Versus7",
-		kb7 = "KB7",
-		para = "Single",
-		maniax = "Single,Double,Versus",
-		-- todo: add versus modes for technomotion
-		techno = "Single4,Single5,Single8,Double4,Double5,Double8",
 		lights = "Single", -- lights shouldn't be playable
 	}
 	return Modes[CurGameName()]
@@ -167,8 +154,6 @@ function SelectProfileKeys()
 	local sGame = CurGameName()
 	if sGame == "pump" then
 		return "Up,Down,Start,Back,Center,DownLeft,DownRight"
-	elseif sGame == "dance" then
-		return "Up,Down,Start,Back,Up2,Down2"
 	else
 		return "Up,Down,Start,Back"
 	end
@@ -190,22 +175,14 @@ end
 -- [en] 
 function ComboContinue()
 	local Continue = {
-		dance = GAMESTATE:GetPlayMode() == "PlayMode_Oni" and "TapNoteScore_W2" or "TapNoteScore_W3",
 		pump = "TapNoteScore_W3",
-		beat = "TapNoteScore_W3",
-		kb7 = "TapNoteScore_W3",
-		para = "TapNoteScore_W4"
 	}
   return Continue[CurGameName()] or "TapNoteScore_W3"
 end
 
 function ComboMaintain()
 	local Maintain = {
-		dance = "TapNoteScore_W3",
 		pump = "TapNoteScore_W4",
-		beat = "TapNoteScore_W3",
-		kb7 = "TapNoteScore_W3",
-		para = "TapNoteScore_W4"
 	}
   return Maintain[CurGameName()] or "TapNoteScore_W3"
 end
@@ -226,12 +203,7 @@ function EvalUsesCheckpointsWithJudgments()
 end
 
 local ComboThresholds = {
-	dance	= { Hit = 2, Miss = 2, Fail = -1 },
 	pump	= { Hit = 4, Miss = 4, Fail = 51 },
-	beat	= { Hit = 1, Miss = 0, Fail = -1 },
-	kb7		= { Hit = 1, Miss = 0, Fail = -1 },
-	para	= { Hit = 2, Miss = 0, Fail = -1 },
-	maniax	= { Hit = 5, Miss = 0, Fail = -1 },
 	-------------------------------------------
 	default	= { Hit = 2, Miss = 2, Fail = -1 }
 }
@@ -265,9 +237,7 @@ function TwoPartSelection()
 end 
 
 local RoutineSkins = {
-	dance	= { P1 = "midi-routine-p1", P2 = "midi-routine-p2" },
 	pump	= { P1 = "cmd-routine-p1", P2 = "cmd-routine-p2" },
-	kb7		= { P1 = "default", P2 = "retrobar" },
 	-------------------------------------------------------------
 	default	= { P1 = "default", P2 = "default" }
 }
@@ -299,33 +269,27 @@ local CodeDetectorCodes = {
 	-- steps
 	PrevSteps1 = {
 		default = "",
-		dance = "Up,Up",
 		pump = "+UpLeft",
 	},
 	PrevSteps2 = {
 		default = "MenuUp,MenuUp",
-		dance = "MenuUp,MenuUp",
 		pump = "",
 	},
 	NextSteps1 = {
 		default = "",
-		dance = "Down,Down",
 		pump = "+UpRight",
 	},
 	NextSteps2 = {
 		default = "MenuDown,MenuDown",
-		dance = "MenuDown,MenuDown",
 		pump = "",
 	},
 	-- group
 	NextGroup = {
 		default = "",
-		dance = "MenuUp,MenuRight,MenuRight",
 		pump = "",
 	},
 	PrevGroup = {
 		default = "",
-		dance = "MenuUp,MenuDown,MenuUp,MenuDown",
 		pump = "",
 	},
 	CloseCurrentFolder = {
@@ -341,28 +305,23 @@ local CodeDetectorCodes = {
 	-- sorts
 	NextSort1 = {
 		default = "@MenuLeft-@MenuRight-Start",
-		dance = "@MenuLeft-@MenuRight-Start",
 		pump = "@MenuLeft-@MenuRight-Start",
 	},
 	NextSort2 = {
 		default = "MenuLeft-MenuRight",
-		dance = "MenuLeft-MenuRight",
 		pump = "MenuLeft-MenuRight",
 	},
 	NextSort3 = {
 		default = "",
-		dance = "@Left-@Right-Start",
 		pump = "@DownLeft-@DownRight-Start",
 	},
 	NextSort4 = {
 		default = "",
-		dance = "Left-Right",
 		pump = "DownLeft-DownRight",
 	},
 	-- modemenu
 	ModeMenu1 = {
 		default = "",
-		dance = "Up,Down,Up,Down",
 	},
 	ModeMenu2 = {
 		default = "MenuUp,MenuDown,MenuUp,MenuDown",
@@ -377,40 +336,32 @@ local CodeDetectorCodes = {
 	-- modifiers section
 	CancelAll = {
 		default = "",
-		dance = "Left,Right,Left,Right,Left,Right,Left,Right",
 	},
 	--- specific modifiers
 	Mirror = {
 		default = "",
-		dance = "",
 		pump = "DownRight,DownLeft,UpRight,UpLeft,DownRight,DownLeft,UpRight,UpLeft,Center",
 	},
 	Left = {
 		default = "",
-		dance = "",
 	},
 	Right = {
 		default = "",
-		dance = "",
 	},
 	Shuffle = {
 		default = "",
-		dance = "",
 		pump = "UpLeft,UpRight,UpLeft,UpRight,DownLeft,DownRight,DownLeft,DownRight,Center", -- random
 	},
 	SuperShuffle = {
 		default = "",
-		dance = "",
 		pump = "UpLeft,UpRight,DownLeft,DownRight,UpLeft,UpRight,DownLeft,DownRight,Center"
 	},
 	Reverse = {
 		default = "",
-		dance = "",
 		pump = "UpLeft,DownLeft,UpRight,DownRight,UpLeft,DownLeft,UpRight,DownRight,DownRight", -- drop
 	},
 	HoldNotes = {
 		default = "",
-		dance = "",
 	},
 	Mines = {
 		default = "",
@@ -432,25 +383,20 @@ local CodeDetectorCodes = {
 	},
 	NextScrollSpeed = {
 		default = "",
-		dance = "",
 		pump = "UpLeft,UpRight,UpLeft,UpRight,Center",
 	},
 	PreviousScrollSpeed = {
 		default = "",
-		dance = "",
 		pump = "UpRight,UpLeft,UpRight,UpLeft,Center",
 	},
 	NextAccel = {
 		default = "",
-		dance = "",
 	},
 	NextEffect = {
 		default = "",
-		dance = "",
 	},
 	NextAppearance = {
 		default = "",
-		dance = "",
 	},
 	NextTurn = {
 		default = "",
@@ -458,7 +404,6 @@ local CodeDetectorCodes = {
 	-- cancel all in player options
 	CancelAllPlayerOptions = {
 		default = "",
-		dance = "Left,Right,Left,Right,Left,Right",
 	},
 };
 

@@ -44,14 +44,6 @@ bool LightsDriver_Linux_Leds::WriteLight(const char *filename, bool state)
 	return true;
 }
 
-bool LightsDriver_Linux_Leds::IsDance()
-{
-	pInput = &GAMESTATE->GetCurrentGame()->m_InputScheme;
-	sInputName = pInput->m_szName;
-
-	return sInputName.EqualsNoCase("dance");
-}
-
 bool LightsDriver_Linux_Leds::IsPump()
 {
 	pInput = &GAMESTATE->GetCurrentGame()->m_InputScheme;
