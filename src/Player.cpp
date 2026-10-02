@@ -2938,12 +2938,17 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 				break;
       // xMAx -------------------------------------------------------------------------------------
 			case TapNoteType_HoldTail:
-				if( BAD_U <= fNoteOffset && fNoteOffset <= PERF_D )
+			{
+				// Exceed: LONG_END is PERFECT anywhere inside its BAD zone
+				float fLongEarly, fLongLate;
+				GetExceedLongWindow( fLongEarly, fLongLate );
+				if( -fLongLate <= fNoteOffset && fNoteOffset <= fLongEarly )
 				{
 					score = TNS_W2;
 					pTN->HoldResult.iCheckpointsHit++;
 				};
 				break;
+			}
       // ------------------------------------------------------------------------------------------
 			case TapNoteType_HoldHead:
         /* Step P1 Revival - Thequila
@@ -2956,7 +2961,10 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 				}
         */
         // xMAx -----------------------------------------------------------------------------------
-				if( (BAD_U <= fNoteOffset && fNoteOffset <= PERF_D) )
+				// Exceed: LONG_START is PERFECT anywhere inside its BAD zone
+				float fLongEarly, fLongLate;
+				GetExceedLongWindow( fLongEarly, fLongLate );
+				if( -fLongLate <= fNoteOffset && fNoteOffset <= fLongEarly )
 				{
 					score = TNS_W2;
 					pTN->HoldResult.iCheckpointsHit++;	// The hold head is counted as a checkpoint
@@ -3847,6 +3855,21 @@ void Player::QueueHoldTick( int iRow, const vector<int> &viTracks, const vector<
 	m_vPendingHoldTicks.push_back( tick );
 }
 
+// Long-note BAD zone of Pump It Up Exceed (playengine.cpp SetJudgeZone), in
+// seconds. Exceed measures it in pixels scaled by BPM/120 on a 60px-per-beat
+// scroll, so 1px is always 500/60 ms. StepP1 EJ = Easy, NJ = Normal, the
+// stricter judges = Hard.
+void Player::GetExceedLongWindow( float &fEarly, float &fLate ) const
+{
+	const float PX = 0.5f / 60.0f;
+	switch( m_pPlayerState->m_PlayerOptions.GetCurrent().m_iJudgment )
+	{
+	case 0:  fEarly = 22 * PX; fLate = 27 * PX; break;	// Easy
+	case 1:  fEarly = 23 * PX; fLate = 22 * PX; break;	// Normal
+	default: fEarly = 18 * PX; fLate = 23 * PX; break;	// Hard
+	}
+}
+
 bool Player::IsHoldTrackPressed( int iTrack ) const
 {
 	if( m_pPlayerState->m_PlayerController != PC_HUMAN )
@@ -3859,8 +3882,8 @@ bool Player::IsHoldTrackPressed( int iTrack ) const
 void Player::ResolveHoldTicks()
 {
 	const float fNow = m_pPlayerState->m_Position.m_fMusicSeconds;
-	const float fLate = -BAD_U;	// seconds after the tick
-	const float fEarly = BAD_D;	// seconds before the tick
+	float fEarly, fLate;	// seconds before / after the tick
+	GetExceedLongWindow( fEarly, fLate );
 
 	for( unsigned i=0; i<m_vPendingHoldTicks.size(); )
 	{

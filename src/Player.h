@@ -311,6 +311,7 @@ protected:
 	void QueueHoldTick( int iRow, const vector<int> &viTracks, const vector<TapNote*> &vpTN );
 	void ResolveHoldTicks();
 	bool IsHoldTrackPressed( int iTrack ) const;
+	void GetExceedLongWindow( float &fEarly, float &fLate ) const;
 	vector<RageSound>	m_vKeysounds;
 
 	// xMAx
