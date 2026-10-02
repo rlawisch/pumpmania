@@ -833,6 +833,9 @@ void Player::Load()
 	// Remove cached holds and rolls (added for the editor)
 	// TODO: Update the hold notes list when start from a different point than the start of the song (for the editor)
 	vHoldNotesToUpdate.clear();
+	m_vPendingHoldTicks.clear();
+	for( int t=0; t<MAX_NOTE_TRACKS; ++t )
+		m_fLastPressSeconds[t] = -1e9f;
 
 	// The editor can start playing in the middle of the song.
 	const int iNoteRow = BeatToNoteRowNotRounded( m_pPlayerState->m_Position.m_fSongBeat );
@@ -2702,6 +2705,10 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
  //     return;
 	//}
 
+	// Remember when each panel was stepped, for the hold tick windows (Pump/Exceed)
+	if( col >= 0 && col < MAX_NOTE_TRACKS && row == -1 && !bRelease )
+		m_fLastPressSeconds[col] = fPositionSeconds;
+
 	// Update holds life/rolls checkpoints
 	bool bFoundRoll = false;
 	if (vHoldNotesToUpdate.size() > 0 && col != -1 && row == -1 && !bRelease)	//Check for row == -1 so we only check when Step() is called by ScreenGameplay or autoplay
@@ -3821,6 +3828,97 @@ void Player::CrossedRows( int iLastRowCrossed, const RageTimer &now )
 	// Hold checkpoints are judged in CrossedHoldsRows() (xMAx), as in STEP_P1.exe.
 }
 
+// Pump/Exceed hold ticks ---------------------------------------------------------------------------
+// Exceed (playengine.cpp JudgeStep) judges every piece of a long note on its
+// own: it is a PERFECT if the button is held once the piece has reached the
+// receptor and before it leaves the late BAD zone, or if the panel is stepped
+// inside the BAD window around it; otherwise it becomes a MISS. There is no
+// grace after letting go, unlike the old DDR-style hold life.
+void Player::QueueHoldTick( int iRow, const vector<int> &viTracks, const vector<TapNote*> &vpTN )
+{
+	if( viTracks.empty() )
+		return;
+	PendingHoldTick tick;
+	tick.iRow = iRow;
+	tick.fSeconds = m_Timing->GetElapsedTimeFromBeat( NoteRowToBeat(iRow) );
+	tick.viTracks = viTracks;
+	tick.vpTN = vpTN;
+	tick.viState.assign( viTracks.size(), 0 );
+	m_vPendingHoldTicks.push_back( tick );
+}
+
+bool Player::IsHoldTrackPressed( int iTrack ) const
+{
+	if( m_pPlayerState->m_PlayerController != PC_HUMAN )
+		return true;
+	PlayerNumber pn = m_pPlayerState->m_PlayerNumber;
+	vector<GameInput> GameI( 1, GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iTrack, pn ) );
+	return INPUTMAPPER->IsBeingPressed( GameI, m_pPlayerState->m_mp );
+}
+
+void Player::ResolveHoldTicks()
+{
+	const float fNow = m_pPlayerState->m_Position.m_fMusicSeconds;
+	const float fLate = -BAD_U;	// seconds after the tick
+	const float fEarly = BAD_D;	// seconds before the tick
+
+	for( unsigned i=0; i<m_vPendingHoldTicks.size(); )
+	{
+		PendingHoldTick &tick = m_vPendingHoldTicks[i];
+		bool bPending = false;
+		for( unsigned j=0; j<tick.viTracks.size(); ++j )
+		{
+			if( tick.viState[j] != 0 )
+				continue;
+			const int iTrack = tick.viTracks[j];
+			const float fPress = m_fLastPressSeconds[iTrack];
+			if( (fNow >= tick.fSeconds && IsHoldTrackPressed(iTrack)) ||
+				(fPress >= tick.fSeconds - fEarly && fPress <= tick.fSeconds + fLate) )
+				tick.viState[j] = 1;
+			else if( fNow > tick.fSeconds + fLate )
+				tick.viState[j] = 2;
+			else
+				bPending = true;
+		}
+		if( bPending )
+		{
+			++i;
+			continue;
+		}
+
+		int iHit = 0, iMissed = 0;
+		for( unsigned j=0; j<tick.viTracks.size(); ++j )
+		{
+			TapNote &tn = *tick.vpTN[j];
+			if( tick.viState[j] == 1 )
+			{
+				++iHit;
+				tn.HoldResult.iCheckpointsHit++;
+				// for random skin - xMAx
+				if( m_pNoteField )
+					m_pNoteField->UpdateHoldBody( &tn );
+				if( GAMESTATE->IsEditing() )
+				{
+					Message msg( "CheckpointsPerfectCount" );
+					msg.SetParam( "cp", tn.HoldResult.iCheckpointsHit );
+					MESSAGEMAN->Broadcast( msg );
+				}
+			}
+			else
+			{
+				++iMissed;
+				tn.HoldResult.iCheckpointsMissed++;
+			}
+		}
+		GAMESTATE->SetProcessedTimingData( this->m_Timing );
+		const int iRow = tick.iRow;
+		const vector<int> viTracks = tick.viTracks;
+		m_vPendingHoldTicks.erase( m_vPendingHoldTicks.begin() + i );
+		HandleHoldCheckpoint( iRow, iHit, iMissed, viTracks, iHit > 0 );
+	}
+}
+// ------------------------------------------------------------------------------------------------
+
 // xMAx -------------------------------------------------------------------------------------------
 void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float fDeltaTime )
 {
@@ -3876,7 +3974,10 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 
 	// Check if theres any holds to update
 	if( vHoldNotesToUpdate.empty() )
+	{
+		ResolveHoldTicks();
 		return;
+	}
 
 	// Update the life of every active hold, every frame (xMAx)
 	for( unsigned i=0; i<vHoldNotesToUpdate.size(); i++ )
@@ -3903,6 +4004,8 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 				bool bFoundAnyHoldTailOrTap = false;
 				int iHeadRowOfFirstUnjudgedHold = -1;
 				int iHeadTrackOfFirstUnjudgedHold = -1;
+				vector<int> viTickTracks;
+				vector<TapNote*> vpTickTN;
 
 				// row a: HH - X - -
 				// row b: hb - - - -
@@ -3967,27 +4070,9 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 										}
 										else
 										{
-											if( tn.HoldResult.fLife > 0 )
-											{
-												iNumHoldsActiveThisRow++;
-												tn.HoldResult.iCheckpointsHit++;
-												bHoldsAreBeingPressed |= tn.HoldResult.bHeld;
-
-												// for random skin - xMAx
-												m_pNoteField->UpdateHoldBody(&tn);
-
-												if( GAMESTATE->IsEditing() )
-												{
-													Message msg( "CheckpointsPerfectCount" );
-													msg.SetParam( "cp", tn.HoldResult.iCheckpointsHit );
-													MESSAGEMAN->Broadcast( msg );
-												}
-											}
-											else
-											{
-												iNumHoldsMissedThisRow++;
-												tn.HoldResult.iCheckpointsMissed++;
-											}
+											// Judged later in ResolveHoldTicks() (Pump/Exceed timing)
+											viTickTracks.push_back( iTrack );
+											vpTickTN.push_back( &tn );
 										}
 									}; break;
 								case TapNoteSubType_Roll:
@@ -4017,10 +4102,12 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 							// Update combo/score and send judgement messages
 							if( bAllHoldsWereJudged && bFoundAnyHold )
 							{
-								HandleHoldCheckpoint( r, iNumHoldsActiveThisRow, iNumHoldsMissedThisRow, viColsWithHold, bHoldsAreBeingPressed );
+								QueueHoldTick( r, viTickTracks, vpTickTN );
 							}
 
 							// Reset local variables
+							viTickTracks.clear();
+							vpTickTN.clear();
 							viColsWithHold.clear();
 							iNumHoldsActiveThisRow = 0;
 							iNumHoldsMissedThisRow = 0;
@@ -4050,12 +4137,14 @@ void Player::CrossedHoldsRows( int iLastRowCrossed, const RageTimer &now, float 
 				// Update combo/score and send judgement messages
 				if( !bFoundAnyHoldTailOrTap && bAllHoldsWereJudged && bFoundAnyHold )
 				{
-					HandleHoldCheckpoint( r, iNumHoldsActiveThisRow, iNumHoldsMissedThisRow, viColsWithHold, bHoldsAreBeingPressed );
+					QueueHoldTick( r, viTickTracks, vpTickTN );
 				}
 			}
 		}
 	}
 	m_iFirstUncrossedRow = iLastRowCrossed+1;
+
+	ResolveHoldTicks();
 
 	// Drop holds that have been judged
 	vHoldNotesToUpdate.erase( remove_if( vHoldNotesToUpdate.begin(), vHoldNotesToUpdate.end(),

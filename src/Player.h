@@ -294,6 +294,23 @@ protected:
 	// vector<bool>	m_vbFretIsDown; // xMAx
 
 	vector<TrackRowTapNote> vHoldNotesToUpdate; // xMAx
+
+	// Pump/Exceed hold ticks: each checkpoint waits until the button is down
+	// between the tick and the late BAD edge (or was freshly stepped inside
+	// the BAD window around it); otherwise it is a MISS.
+	struct PendingHoldTick
+	{
+		int iRow;
+		float fSeconds;
+		vector<int> viTracks;
+		vector<TapNote*> vpTN;
+		vector<int> viState; // 0 pending, 1 hit, 2 miss
+	};
+	vector<PendingHoldTick> m_vPendingHoldTicks;
+	float m_fLastPressSeconds[MAX_NOTE_TRACKS];
+	void QueueHoldTick( int iRow, const vector<int> &viTracks, const vector<TapNote*> &vpTN );
+	void ResolveHoldTicks();
+	bool IsHoldTrackPressed( int iTrack ) const;
 	vector<RageSound>	m_vKeysounds;
 
 	// xMAx
