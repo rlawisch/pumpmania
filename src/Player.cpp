@@ -1356,18 +1356,6 @@ void Player::Update( float fDeltaTime )
 }
 
 // Update a group of holds with shared scoring/life. All of these holds will have the same start row.
-// Seconds a released hold keeps its life: half the interval between checkpoint
-// ticks at iRow, capped by HOLD_TIMING (the old DDR-like grace).
-float Player::GetHoldReleaseGrace( int iRow ) const
-{
-	const int iTicks = m_Timing->GetTickcountAtRow( iRow );
-	const float fBPM = fabsf( m_Timing->GetBPMAtRow( iRow ) );
-	if( iTicks <= 0 || fBPM <= 0 )
-		return HOLD_TIMING;
-	const float fTickSeconds = 60.0f / (fBPM * iTicks);
-	return max( min( HOLD_TIMING, fTickSeconds * 0.5f ), 0.001f );
-}
-
 // void Player::UpdateHoldNotes( int iSongRow, float fDeltaTime, vector<TrackRowTapNote> &vTN ) // xMAx
 void Player::UpdateHoldNote( int iSongRow, float fDeltaTime, TrackRowTapNote &trtn ) // xMAx
 {
@@ -1920,9 +1908,8 @@ void Player::UpdateHoldNote( int iSongRow, float fDeltaTime, TrackRowTapNote &tr
 					}
 					else
 					{
-						// Decrease life. Pump: after letting go, only half a tick of grace
-						// (never more than HOLD_TIMING), so higher tickcounts are stricter.
-						fLife -= (fDeltaTime/GetHoldReleaseGrace(iSongRow))*GAMESTATE->m_SongOptions.GetCurrent().m_fMusicRate;
+						// Decrease life
+						fLife -= (fDeltaTime/HOLD_TIMING)*GAMESTATE->m_SongOptions.GetCurrent().m_fMusicRate; // xMAx
 						fLife = max( fLife, 0 );
 					}
 				};
@@ -2940,8 +2927,7 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 				break;
       // xMAx -------------------------------------------------------------------------------------
 			case TapNoteType_HoldTail:
-				// Exceed: LONG_END is PERFECT anywhere inside the BAD window
-				if( BAD_U <= fNoteOffset && fNoteOffset <= BAD_D )
+				if( BAD_U <= fNoteOffset && fNoteOffset <= PERF_D )
 				{
 					score = TNS_W2;
 					pTN->HoldResult.iCheckpointsHit++;
@@ -2959,8 +2945,7 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 				}
         */
         // xMAx -----------------------------------------------------------------------------------
-				// Exceed: LONG_START is PERFECT anywhere inside the BAD window
-				if( (BAD_U <= fNoteOffset && fNoteOffset <= BAD_D) )
+				if( (BAD_U <= fNoteOffset && fNoteOffset <= PERF_D) )
 				{
 					score = TNS_W2;
 					pTN->HoldResult.iCheckpointsHit++;	// The hold head is counted as a checkpoint

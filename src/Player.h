@@ -94,7 +94,6 @@ public:
 	};
 	// void UpdateHoldNotes( int iSongRow, float fDeltaTime, vector<TrackRowTapNote> &vTN ); xMAx
 	void UpdateHoldNote(int iSongRow, float fDeltaTime, TrackRowTapNote& trtn); // xMAx
-	float GetHoldReleaseGrace( int iRow ) const;
 
 	void Init(
 		const RString& sType,
