@@ -14,7 +14,6 @@
 #include "LocalizedString.h"
 #include "MsdFile.h"
 #include "NoteSkinManager.h"
-#include "NotesLoaderDWI.h"
 #include "NotesLoaderSSC.h"
 #include "NotesLoaderSM.h"
 #include "PrefsManager.h"

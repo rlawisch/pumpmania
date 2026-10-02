@@ -180,7 +180,6 @@ public:
 	/**
 	 * @brief Save the current Song to a DWI file if possible.
 	 * @return its success or failure. */
-	bool SaveToDWIFile();
 
 	void RemoveAutosave();
 	bool WasLoadedFromAutosave() const

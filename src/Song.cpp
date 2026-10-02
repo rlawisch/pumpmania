@@ -28,7 +28,6 @@
 #include "NotesLoader.h"
 #include "NotesLoaderSM.h"
 #include "NotesLoaderSSC.h"
-#include "NotesWriterDWI.h"
 #include "NotesWriterJson.h"
 #include "NotesWriterSM.h"
 #include "NotesWriterSSC.h"
@@ -1303,7 +1302,6 @@ void Song::Save(bool autosave)
 	{
 		SaveToSMFile();
 	}
-	//SaveToDWIFile();
 
 	/* We've safely written our files and created backups. Rename non-SM and
 	 * non-DWI files to avoid confusion. */
@@ -1445,18 +1443,6 @@ bool Song::SaveToCacheFile()
 	SONGINDEX->AddCacheIndex(m_sSongDir, GetHashForDirectory(m_sSongDir));
 	const RString sPath = GetCacheFilePath();
 	return SaveToSSCFile(sPath, true);
-}
-
-bool Song::SaveToDWIFile()
-{
-	const RString sPath = SetExtension( GetSongFilePath(), "dwi" );
-	LOG->Trace( "Song::SaveToDWIFile(%s)", sPath.c_str() );
-
-	// If the file exists, make a backup.
-	if( IsAFile(sPath) )
-		FileCopy( sPath, sPath + ".old" );
-
-	return NotesWriterDWI::Write( sPath, *this );
 }
 
 void Song::RemoveAutosave()

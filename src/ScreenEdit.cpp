@@ -5435,11 +5435,7 @@ void ScreenEdit::HandleAlterMenuChoice(AlterMenuChoice c, const vector<int> &ans
 						nTap.pn = nPN;
 						StepsType curType = GAMESTATE->m_pCurSteps[PLAYER_1]->m_StepsType;
 						// TODO: Find a better way to do this.
-						if (curType == StepsType_dance_routine)
-						{
-							nTrack = tracks - t - 1;
-						}
-						else if (curType == StepsType_pump_routine)
+						if (curType == StepsType_pump_routine)
 						{
 							switch (t)
 							{

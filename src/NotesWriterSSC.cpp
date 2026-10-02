@@ -631,7 +631,7 @@ RString NotesWriterSSC::GetEditFileName( const Song *pSong, const Steps *pSteps 
 	RString sFile = pSong->GetTranslitFullTitle() + " - " + pSteps->GetDescription();
 
 	// HACK:
-	if( pSteps->m_StepsType == StepsType_dance_double )
+	if( pSteps->m_StepsType == StepsType_pump_double )
 		sFile += " (doubles)";
 
 	sFile += ".edit";

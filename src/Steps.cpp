@@ -25,9 +25,7 @@
 #include "NotesLoaderSSC.h"
 #include "NotesLoaderSM.h"
 #include "NotesLoaderSMA.h"
-#include "NotesLoaderDWI.h"
 #include "NotesLoaderKSF.h"
-#include "NotesLoaderBMS.h"
 #include <algorithm>
 
 /* register DisplayBPM with StringConversion */
@@ -146,17 +144,9 @@ bool Steps::GetNoteDataFromSimfile()
 		SMALoader loader;
 		return loader.LoadNoteDataFromSimfile(stepFile, *this);
 	}
-	else if (extension == "dwi")
-	{
-		return DWILoader::LoadNoteDataFromSimfile(stepFile, *this);
-	}
 	else if (extension == "ksf")
 	{
 		return KSFLoader::LoadNoteDataFromSimfile(stepFile, *this);
-	}
-	else if (extension == "bms" || extension == "bml" || extension == "bme" || extension == "pms")
-	{
-		return BMSLoader::LoadNoteDataFromSimfile(stepFile, *this);
 	}
 	else if (extension == "edit")
 	{
@@ -367,12 +357,6 @@ void Steps::Decompress() const
 	const_cast<Steps *>(this)->Decompress();
 }
 
-bool stepstype_is_kickbox(StepsType st)
-{
-	return st == StepsType_kickbox_human || st == StepsType_kickbox_quadarm ||
-		st == StepsType_kickbox_insect || st == StepsType_kickbox_arachnid;
-}
-
 void Steps::Decompress()
 {
 	if( m_bNoteDataIsFilled )
@@ -394,24 +378,9 @@ void Steps::Decompress()
 		}
 		else
 		{
-			// Special case so that kickbox can have autogen steps that are playable.
-			// Hopefully I'll replace this with a good generalized autogen system
-			// later.  -Kyz
-			if(stepstype_is_kickbox(this->m_StepsType))
-			{
-				// Number of notes seems like a useful "random" input so that charts
-				// from different sources come out different, but autogen always
-				// makes the same thing from one source. -Kyz
-				NoteDataUtil::AutogenKickbox(notedata, *m_pNoteData, *GetTimingData(),
-					this->m_StepsType,
-					static_cast<int>(GetRadarValues(PLAYER_1)[RadarCategory_TapsAndHolds]));
-			}
-			else
-			{
-				NoteDataUtil::LoadTransformedSlidingWindow( notedata, *m_pNoteData, iNewTracks );
+			NoteDataUtil::LoadTransformedSlidingWindow( notedata, *m_pNoteData, iNewTracks );
 
-				NoteDataUtil::RemoveStretch( *m_pNoteData, m_StepsType );
-			}
+			NoteDataUtil::RemoveStretch( *m_pNoteData, m_StepsType );
 		}
 		return;
 	}
