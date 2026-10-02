@@ -1677,8 +1677,7 @@ void ScreenEdit::Update( float fDeltaTime )
 
 		for( int t=0; t<GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer; t++ )	// for each track
 		{
-			vector<GameInput> GameI;
-			GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( t, PLAYER_1 );
+			vector<GameInput> GameI( 1, GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( t, PLAYER_1 ) );
 			float fSecsHeld= 0.0f;
 			for(size_t i= 0; i < GameI.size(); ++i)
 			{
@@ -1737,8 +1736,7 @@ void ScreenEdit::Update( float fDeltaTime )
 		bool bButtonIsBeingPressed = false;
 		for( int t=0; t<GAMESTATE->GetCurrentStyle()->m_iColsPerPlayer; t++ )	// for each track
 		{
-			vector<GameInput> GameI;
-			GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( t, PLAYER_1 );
+			vector<GameInput> GameI( 1, GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( t, PLAYER_1 ) );
 			if( INPUTMAPPER->IsBeingPressed(GameI) )
 				bButtonIsBeingPressed = true;
 		}

@@ -271,8 +271,7 @@ void ScreenNameEntry::Init()
 				break; // We have enough columns.
 
 			// Find out if this column is associated with the START menu button.
-			vector<GameInput> gi;
-			GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iCol, p );
+			vector<GameInput> gi( 1, GAMESTATE->GetCurrentStyle()->StyleInputToGameInput( iCol, p ) );
 			bool gi_is_start= false;
 			for(size_t i= 0; i < gi.size(); ++i)
 			{
