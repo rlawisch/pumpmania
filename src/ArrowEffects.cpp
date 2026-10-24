@@ -464,6 +464,22 @@ static float GetDisplayedBeat( const PlayerState* pPlayerState, float beat )
 
 /* For visibility testing: if bAbsolute is false, random modifiers must return
  * the minimum possible scroll speed. */
+// PIU NX2 CalcScreenY: AC and DC bend the scrolled distance (in pixels at
+// 60px per beat) instead of adding SM's boost/brake.
+static float NX2AccelDecel( const float *fAccels, float y )
+{
+	if( fAccels[PlayerOptions::ACCEL_BRAKE] != 0 )
+		return y * y * y / 1600.f;
+	if( fAccels[PlayerOptions::ACCEL_BOOST] != 0 )
+	{
+		const float fConst = 50000.f, fBase = 600.f;
+		if( y <= -(fConst / fBase) + 1 )
+			return -16384.f;
+		return -fConst / (y + fConst / fBase) + fBase;
+	}
+	return y;
+}
+
 float ArrowEffects::GetYOffset( const PlayerState* pPlayerState, int iCol, float fNoteBeat, float &fPeakYOffsetOut, bool &bIsPastPeakOut, bool bAbsolute )
 {
 	// Default values that are returned if boomerang is off.
@@ -521,7 +537,7 @@ float ArrowEffects::GetYOffset( const PlayerState* pPlayerState, int iCol, float
 	// don't mess with the arrows after they've crossed 0
 	if( fYOffset < 0 )
 	{
-		return fYOffset * fScrollSpeed;
+		return NX2AccelDecel( curr_options->m_fAccels, fYOffset * fScrollSpeed );
 	}
 
 	const float* fAccels = curr_options->m_fAccels;
@@ -532,7 +548,7 @@ float ArrowEffects::GetYOffset( const PlayerState* pPlayerState, int iCol, float
 
 	float fYAdjust = 0;	// fill this in depending on PlayerOptions
 
-	if( fAccels[PlayerOptions::ACCEL_BOOST] != 0 )
+	if( false && fAccels[PlayerOptions::ACCEL_BOOST] != 0 )	// NX2 formula applied below
 	{
 		float fEffectHeight = GetNoteFieldHeight();
 		float fNewYOffset = fYOffset * 1.5f / ((fYOffset+fEffectHeight/1.2f)/fEffectHeight);
@@ -541,7 +557,7 @@ float ArrowEffects::GetYOffset( const PlayerState* pPlayerState, int iCol, float
 		CLAMP( fAccelYAdjust, BOOST_MOD_MIN_CLAMP, BOOST_MOD_MAX_CLAMP );
 		fYAdjust += fAccelYAdjust;
 	}
-	if( fAccels[PlayerOptions::ACCEL_BRAKE] != 0 )
+	if( false && fAccels[PlayerOptions::ACCEL_BRAKE] != 0 )	// NX2 formula applied below
 	{
 		float fEffectHeight = GetNoteFieldHeight();
 		float fScale = SCALE( fYOffset, 0.f, fEffectHeight, 0, 1.f );
@@ -645,7 +661,7 @@ float ArrowEffects::GetYOffset( const PlayerState* pPlayerState, int iCol, float
 	}
 
 
-	fYOffset *= fScrollSpeed;
+	fYOffset = NX2AccelDecel( fAccels, fYOffset * fScrollSpeed );
 	fPeakYOffsetOut *= fScrollSpeed;
 
 	return fYOffset;

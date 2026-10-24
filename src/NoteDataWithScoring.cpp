@@ -139,7 +139,7 @@ TapNoteScore NoteDataWithScoring::MinTapNoteScore( const NoteData &in, unsigned 
 			tn.type == TapNoteType_Mine ||
 			// tn.type == TapNoteType_Fake || // xMAx
 			tn.type == TapNoteType_AutoKeysound ||
-      (playerNoteSkin != TapNotePlayerNoteSkin_Invalid && tn.pn != playerNoteSkin) || // xMAx
+      (playerNoteSkin != TapNotePlayerNoteSkin_Invalid && tn.playerNoteSkin != playerNoteSkin) || // xMAx
 			( plnum != PlayerNumber_Invalid && tn.pn != plnum ) )
 			continue;
 		score = min( score, tn.result.tns );

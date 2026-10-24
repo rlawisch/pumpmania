@@ -243,6 +243,38 @@ Grade PlayerStageStats::GetGrade() const
 	return grade;
 }
 
+// Recreated from STEP_P1.exe (0x4a6020): 0 SSS, 1 SS, 2 S, 3 A, 4 B, 5 C,
+// 6 D, 7 F, 20 when the stage was failed.
+int PlayerStageStats::GetGradeInt() const
+{
+	if( m_bFailed )
+		return 20;
+	const int iPerfects = m_iTapNoteScores[TNS_W2] + m_iTapNoteScores[TNS_CheckpointHit];
+	const int iMisses = m_iTapNoteScores[TNS_Miss] + m_iTapNoteScores[TNS_CheckpointMiss];
+	const int iNotPerfectGreat = m_iTapNoteScores[TNS_W4] + m_iTapNoteScores[TNS_W5] + iMisses;
+	const int iTotal = iPerfects + m_iTapNoteScores[TNS_W3] + iNotPerfectGreat;
+	if( iTotal == 0 )
+		return 7;
+	const float f = ( m_iMaxCombo * 0.05f
+		+ m_iTapNoteScores[TNS_W4] * 0.6f
+		+ iPerfects * 1.2f
+		+ m_iTapNoteScores[TNS_W3] * 0.9f
+		- m_iTapNoteScores[TNS_W5] * 0.45f
+		- iMisses * 0.9f
+		- m_iTapNoteScores[TNS_CheckpointHit] * 0.2f ) / iTotal;
+	if( iPerfects == iTotal )
+		return 0;
+	if( iNotPerfectGreat == 0 && f > 0.95f )
+		return 1;
+	if( iMisses == 0 && f > 0.95f )
+		return 2;
+	if( f >= 0.95f ) return 3;
+	if( f >= 0.9f ) return 4;
+	if( f >= 0.85f ) return 5;
+	if( f >= 0.75f ) return 6;
+	return 7;
+}
+
 float PlayerStageStats::MakePercentScore( int iActual, int iPossible )
 {
 	if( iPossible == 0 )
@@ -760,6 +792,7 @@ public:
 	DEFINE_METHOD( MaxCombo,					GetMaxCombo().m_cnt )
 	DEFINE_METHOD( GetCurrentLife,				GetCurrentLife() )
 	DEFINE_METHOD( GetGrade,					GetGrade() )
+	DEFINE_METHOD( GetGradeInt,					GetGradeInt() )
 	DEFINE_METHOD( GetActualDancePoints,		m_iActualDancePoints )
 	DEFINE_METHOD( GetPossibleDancePoints,		m_iPossibleDancePoints )
 	DEFINE_METHOD( GetCurrentPossibleDancePoints,		m_iCurPossibleDancePoints )
@@ -921,6 +954,7 @@ public:
 		ADD_METHOD( MaxCombo );
 		ADD_METHOD( GetCurrentLife );
 		ADD_METHOD( GetGrade );
+		ADD_METHOD( GetGradeInt );
 		ADD_METHOD( GetHighScore );
 		ADD_METHOD( GetActualDancePoints );
 		ADD_METHOD( GetPossibleDancePoints );

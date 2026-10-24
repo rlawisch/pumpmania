@@ -38,9 +38,9 @@ WheelItemBase::WheelItemBase( const WheelItemBase &cpy ):
 WheelItemBase::WheelItemBase(RString sType)
 {
 	SetName( sType );
-	m_pData = nullptr;
+	m_pData = NULL;
 	m_bExpanded = false;
-	m_pGrayBar = nullptr;
+	m_pGrayBar = NULL;
 	Load(sType);
 }
 
@@ -51,7 +51,7 @@ void WheelItemBase::Load( RString sType )
 
 void WheelItemBase::LoadFromWheelItemData( const WheelItemBaseData* pWID, int iIndex, bool bHasFocus, int iDrawIndex )
 {
-	ASSERT( pWID != nullptr );
+	ASSERT( pWID != NULL );
 	m_pData = pWID;
 }
 
@@ -76,48 +76,23 @@ void WheelItemBase::DrawPrimitives()
 {
 	ActorFrame::DrawPrimitives();
 
-	if( m_pGrayBar != nullptr )
+	if( m_pGrayBar != NULL )
 		DrawGrayBar( *m_pGrayBar );
 }
 
 // lua start
-// #include "LuaBinding.h" // xMAx
+//#include "LuaBinding.h"
 
-/** @brief Allow Lua to have access to the WheelItemBase. */
-/* xMAx
+/** @brief Allow Lua to have access to the WheelItemBase. */ 
+/*
 class LunaWheelItemBase: public Luna<WheelItemBase>
 {
 public:
-#define IS_LOADED_CHECK \
-	if(!p->IsLoaded()) \
-	{ \
-		luaL_error(L, "Wheel item is not loaded yet.  Use WheelItem:IsLoaded() to check."); \
-	}
-
-	static int GetColor(T* p, lua_State *L)
-	{
-		IS_LOADED_CHECK;
-		LuaHelpers::Push(L, p->GetColor());
-		return 1;
-	}
-
-	static int GetText(T* p, lua_State *L)
-	{
-		IS_LOADED_CHECK;
-		LuaHelpers::Push(L, p->GetText());
-		return 1;
-	}
-
-	static int GetType(T* p, lua_State *L)
-	{
-		IS_LOADED_CHECK;
-		lua_pushnumber(L, p->GetType());
-		return 1;
-	}
-
-	static int IsLoaded(T* p, lua_State *L)
-	{
-		lua_pushboolean(L, p->IsLoaded());
+	DEFINE_METHOD( GetColor, GetColor() )
+	DEFINE_METHOD( GetText, GetText() )
+	
+	static int GetType( T* p, lua_State *L ) {
+		lua_pushnumber( L, p->GetType() );
 		return 1;
 	}
 
@@ -126,17 +101,16 @@ public:
 		ADD_METHOD( GetColor );
 		ADD_METHOD( GetText );
 		ADD_METHOD( GetType );
-		ADD_METHOD( IsLoaded );
 	}
 };
 LUA_REGISTER_DERIVED_CLASS( WheelItemBase, ActorFrame )
-*/
+*/ //xMAx
 // lua end
 
 /*
  * (c) 2001-2004 Chris Danford, Chris Gomez, Glenn Maynard, Josh Allen
  * All rights reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -146,7 +120,7 @@ LUA_REGISTER_DERIVED_CLASS( WheelItemBase, ActorFrame )
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

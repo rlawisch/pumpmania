@@ -323,6 +323,12 @@ RageTextureID ImageCache::LoadCachedImage( RString sImageDir, RString sImagePath
 	return ID;
 }
 
+/* STEP_P1 (BannerCache::CacheBannerInternal 0x480cfb): every song banner
+ * (disc) is cached at 256x256 and reports a fixed 310x176 source size, so all
+ * discs show at the same size on the wheel. */
+static const int DISC_CACHE_SIZE = 256;
+static const int DISC_SOURCE_WIDTH = 310, DISC_SOURCE_HEIGHT = 176;
+
 static inline int closest( int num, int n1, int n2 )
 {
 	if( abs(num - n1) > abs(num - n2) )
@@ -355,6 +361,10 @@ void ImageCache::CacheImage( RString sImageDir, RString sImagePath )
 			if( ImageData.GetValue( sImagePath, "FullHash", CurFullHash ) && CurFullHash == FullHash )
 				bCacheUpToDate = true;
 		}
+		// Banners cached before the STEP_P1 disc size must be redone.
+		int iCachedWidth = 0;
+		if( sImageDir == "Banner" && (!ImageData.GetValue( sImagePath, "Width", iCachedWidth ) || iCachedWidth != DISC_SOURCE_WIDTH) )
+			bCacheUpToDate = false;
 
 		if( bCacheUpToDate )
 		{
@@ -381,7 +391,9 @@ void ImageCache::CacheImageInternal( RString sImageDir, RString sImagePath )
 		return;
 	}
 
-	const int iSourceWidth = pImage->w, iSourceHeight = pImage->h;
+	const bool bDisc = (sImageDir == "Banner");
+	const int iSourceWidth = bDisc ? DISC_SOURCE_WIDTH : pImage->w;
+	const int iSourceHeight = bDisc ? DISC_SOURCE_HEIGHT : pImage->h;
 
 	int iWidth = pImage->w / 2, iHeight = pImage->h / 2;
 //	int iWidth = pImage->w, iHeight = pImage->h;
@@ -397,6 +409,8 @@ void ImageCache::CacheImageInternal( RString sImageDir, RString sImagePath )
 
 	//RageSurfaceUtils::ApplyHotPinkColorKey( pImage );
 
+	if( bDisc )
+		iWidth = iHeight = DISC_CACHE_SIZE;
 	RageSurfaceUtils::Zoom( pImage, iWidth, iHeight );
 
 	/*

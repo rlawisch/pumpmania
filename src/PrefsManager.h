@@ -232,6 +232,17 @@ public:
 	Preference<int>	m_iMusicWheelSwitchSpeed;
 	Preference<AllowW1>	m_AllowW1; // this should almost always be on, given use cases. -aj
 	Preference<bool>	m_bEventMode;
+	// STEP_P1 preferences
+	Preference<bool>	m_bEnablePIUCodes;
+	Preference<bool>	m_bUseFAV;
+	Preference<bool>	m_bUseBasicMode;
+	Preference<bool>	m_bShowGradeStats;
+	Preference<bool>	m_bExtendedStepsList;
+	Preference<bool>	m_bShowBGAOffByDefault;
+	Preference<bool>	m_bShowNormalGameplayTag;
+	Preference<bool>	m_bSaveProfilesOnEvaluation;
+	Preference<bool>	m_bAllowSyncInGameplay;
+	Preference<bool>	m_bEnableAsianCharset;
 	Preference<int>	m_iCoinsPerCredit;
 	Preference<int>	m_iSongsPerPlay;
 	Preference<bool>	m_bDelayedCreditsReconcile; // zuh?

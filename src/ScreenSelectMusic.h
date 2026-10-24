@@ -4,23 +4,20 @@
 #define SCREEN_SELECT_MUSIC_H
 
 #include "ScreenWithMenuElements.h"
-#include "Sprite.h"
-#include "BitmapText.h"
 #include "GameConstantsAndTypes.h"
 #include "MusicWheel.h"
-#include "FadingBanner.h"
-#include "RageUtil_BackgroundLoader.h"
+#include "Banner.h"
 #include "ThemeMetric.h"
 #include "RageTexturePreloader.h"
-#include "TimingData.h"
 #include "GameInput.h"
 #include "OptionsList.h"
-#include "ModIcon.h" // StepP1 Revival - bSilver
+#include "ModIconsList.h"
+#include "Song.h"
 
+// Recreated from STEP_P1.exe: the screen goes channel (group) -> song -> steps -> finalized.
 enum SelectionState
 {
-	SelectionState_SelectingSubGroup, // StepP1 Revival - bSilver
-	SelectionState_SelectingGroup, // StepP1 Revival - bSilver
+	SelectionState_SelectingGroup,
 	SelectionState_SelectingSong,
 	SelectionState_SelectingSteps,
 	SelectionState_Finalized,
@@ -31,6 +28,7 @@ const RString& SelectionStateToString( SelectionState ss );
 class ScreenSelectMusic : public ScreenWithMenuElements
 {
 public:
+	ScreenSelectMusic();
 	virtual ~ScreenSelectMusic();
 	virtual void Init();
 	virtual void BeginScreen();
@@ -44,185 +42,91 @@ public:
 	virtual bool MenuStart( const InputEventPlus &input );
 	virtual bool MenuBack( const InputEventPlus &input );
 
-	// ScreenWithMenuElements override: never play music here; we do it ourself.
-	virtual void StartPlayingMusic() { }
-
-	bool GetGoToOptions() const { return m_bGoToOptions; }
 	MusicWheel *GetMusicWheel() { return &m_MusicWheel; }
 
-	void OpenOptionsList( PlayerNumber pn );
-	void OnConfirmSongDeletion();
+	virtual RString NextChannel();
+	virtual RString PrevChannel();
 
-
-	void NextGroup();
-	void PrevGroup();
-	void ApplyGroupSelection(const RString& groupName, int dir);
-	vector<RString> m_GroupsAndSorts;
-
-	bool can_open_options_list(PlayerNumber pn);
-
-	// Lua
 	virtual void PushSelf( lua_State *L );
 
-	// StepP1 Revival - bSilver ---------------------------------------------------------------------
-	bool	b_PlayerIsReady[NUM_PLAYERS];
-	int		m_iSelection[NUM_PLAYERS];
-	bool	m_bInOptionList;
-
-	virtual void CodeMessageReceived( const Message &msg );
-  // ----------------------------------------------------------------------------------------------
+	// Lua
+	int GetWheelCurrentIndex() { return m_MusicWheel.GetCurrentIndex(); }
+	int GetWheelNumItems() { return m_MusicWheel.GetNumItems(); }
+	const vector<RString> &GetChannels() const { return m_vChannels; }
+	bool IsPlayerReady( PlayerNumber pn ) const { return m_bStepsChosen[pn]; }
+	RString GetCurrentGroup() const { return m_vChannels[m_iCurChannel]; }
+	const vector<Steps*> &GetPlayableSteps() const { return m_vpSteps; }
+	const vector<Trail*> &GetPlayableTrails() const { return m_vpTrails; }
+	int GetSelection( PlayerNumber pn ) const { return m_iSelection[pn]; }
+	int GetCurrentGroupIndex() const { return m_iCurChannel; }
 
 protected:
-	virtual bool GenericTweenOn() const { return true; }
-	virtual bool GenericTweenOff() const { return true; }
-	void UpdateSelectButton( PlayerNumber pn, bool bBeingPressed );
-
 	void ChangeSteps( PlayerNumber pn, int dir );
 	void AfterStepsOrTrailChange( const vector<PlayerNumber> &vpns );
-	void SwitchToPreferredDifficulty();
 	void AfterMusicChange();
+	void UpdateCategory();
+	void UpdatePreview( bool bForce );
+	void OpenOptionsList( PlayerNumber pn );
+	bool LeaveBasicMode( const InputEventPlus &input );
+	void PickRandomChannelSong();
+	void ChangeChannel( int iDir );
+	SelectionState GetNextSelectionState() const;
+	SelectionState GetPrevSelectionState( bool &bValid ) const;
 
-	void CheckBackgroundRequests( bool bForce );
-	bool DetectCodes( const InputEventPlus &input );
-
-	vector<Steps*>		m_vpSteps;
-	vector<Trail*>		m_vpTrails;
-	 //int					m_iSelection[NUM_PLAYERS]; // StepP1 Revival - bSilver - Moved to public (Revisar depois)
-
-	 void NextChannel();
-	 void PrevChannel();
-
-	RageTimer		m_timerIdleComment;
-	ThemeMetric<float> IDLE_COMMENT_SECONDS;
-
-	ThemeMetric<float>		SAMPLE_MUSIC_DELAY_INIT;
-	ThemeMetric<float>		SAMPLE_MUSIC_DELAY;
-	ThemeMetric<bool>		SAMPLE_MUSIC_LOOPS;
-	ThemeMetric<SampleMusicPreviewMode> SAMPLE_MUSIC_PREVIEW_MODE;
-	ThemeMetric<float>		SAMPLE_MUSIC_FALLBACK_FADE_IN_SECONDS;
-	ThemeMetric<float>		SAMPLE_MUSIC_FADE_OUT_SECONDS;
-	ThemeMetric<bool>		DO_ROULETTE_ON_MENU_TIMER;
-	ThemeMetric<float>		ROULETTE_TIMER_SECONDS;
-	ThemeMetric<bool>		ALIGN_MUSIC_BEATS;
 	ThemeMetric<RString>	CODES;
-	ThemeMetric<RString>	MUSIC_WHEEL_TYPE;
-	ThemeMetric<bool>		OPTIONS_MENU_AVAILABLE;
-	ThemeMetric<bool>		SELECT_MENU_AVAILABLE;
-	ThemeMetric<bool>		MODE_MENU_AVAILABLE;
-	ThemeMetric<bool>		USE_OPTIONS_LIST;
-	ThemeMetric<float>		OPTIONS_LIST_TIMEOUT;
-	ThemeMetric<bool>		USE_PLAYER_SELECT_MENU;
-	ThemeMetric<RString>	SELECT_MENU_NAME;
-	ThemeMetric<bool>		SELECT_MENU_CHANGES_DIFFICULTY;
-	ThemeMetric<bool>		TWO_PART_SELECTION;
-	ThemeMetric<bool>		TWO_PART_CONFIRMS_ONLY;
-	ThemeMetric<float>		TWO_PART_TIMER_SECONDS;
-	ThemeMetric<bool>		WRAP_CHANGE_STEPS;
-	ThemeMetric<bool>		CHANGE_STEPS_WITH_GAME_BUTTONS;
-	ThemeMetric<bool>		CHANGE_GROUPS_WITH_GAME_BUTTONS;
-	ThemeMetric<RString>	NULL_SCORE_STRING;
-	ThemeMetric<bool>		PLAY_SOUND_ON_ENTERING_OPTIONS_MENU;
 
-	bool CanChangeSong() const { return m_SelectionState == SelectionState_SelectingSong; }
-	// bool CanChangeSteps() const { return TWO_PART_SELECTION ? m_SelectionState == SelectionState_SelectingSteps : m_SelectionState == SelectionState_SelectingSong; } // StepP1 Revival - bSilver
-	bool CanChangeSteps() const { return m_SelectionState == SelectionState_SelectingSteps; } // StepP1 Revival - bSilver
-  bool CanChangeGroup() const { return m_SelectionState == SelectionState_SelectingGroup; } // StepP1 Revival - bSilver
-	SelectionState GetNextSelectionState() const
-	{
-		switch( m_SelectionState )
-		{
-			case SelectionState_SelectingGroup: // StepP1 Revival - bSilver
-				return SelectionState_SelectingSong;
-		case SelectionState_SelectingSong:
-			// return TWO_PART_SELECTION ? SelectionState_SelectingSteps : SelectionState_Finalized; // StepP1 Revival - bSilver
-			return SelectionState_SelectingSteps; // StepP1 Revival - bSilver
-		case SelectionState_SelectingSteps:
-			return SelectionState_Finalized;
-		DEFAULT_FAIL( m_SelectionState );
-		}
-	}
-
-	GameButton m_GameButtonPreviousSong;
-	GameButton m_GameButtonNextSong;
-	GameButton m_GameButtonPreviousDifficulty;
-	GameButton m_GameButtonNextDifficulty;
-	GameButton m_GameButtonPreviousGroup;
-	GameButton m_GameButtonNextGroup;
-	GameButton m_GameButtonCancelTwoPart1;
-	GameButton m_GameButtonCancelTwoPart2;
-
-	RString m_sSectionMusicPath;
-	RString m_sSortMusicPath;
-	RString m_sRouletteMusicPath;
-	RString m_sRandomMusicPath;
-	RString m_sCourseMusicPath;
-	RString m_sLoopMusicPath;
-	RString m_sFallbackCDTitlePath;
-
-	FadingBanner	m_Banner;
-	Sprite			m_sprCDTitleFront, m_sprCDTitleBack;
-	AutoActor		m_sprHighScoreFrame[NUM_PLAYERS];
-	BitmapText		m_textHighScore[NUM_PLAYERS];
+	RString			m_sCurChannel;
+	vector<RString>	m_vChannels;
+	int				m_iCurChannel;
+	bool			m_bStepsChosen[NUM_PLAYERS];	// first Start press on a chart
+	Banner			m_Preview;
+	vector<Steps*>	m_vpSteps;
+	vector<Trail*>	m_vpTrails;
+	int				m_iSelection[NUM_PLAYERS];
 	MusicWheel		m_MusicWheel;
 	OptionsList		m_OptionsList[NUM_PLAYERS];
+	ModIconsList	m_ModList[NUM_PLAYERS];
+	bool			m_bAllowOptionsList[NUM_PLAYERS];
 
 	SelectionState	m_SelectionState;
-	bool			m_bStepsChosen[NUM_PLAYERS];	// only used in SelectionState_SelectingSteps
-	bool			m_bGoToOptions;
 	RString			m_sSampleMusicToPlay;
-	TimingData		*m_pSampleMusicTimingData;
-	float			m_fSampleStartSeconds, m_fSampleLengthSeconds;
-	bool			m_bAllowOptionsMenu, m_bAllowOptionsMenuRepeat;
-	bool			m_bSelectIsDown[NUM_PLAYERS];
-	bool			m_bAcceptSelectRelease[NUM_PLAYERS];
+	float			m_fSampleStartSeconds;
+	float			m_fSampleLengthSeconds;
+	int				m_iSampleVolume;
+	bool			m_bSongChosen[NUM_PLAYERS];
+	bool			m_bQuestMode;	// SO_QUEST / 04-SKILLUP ZONE channel
+	bool			m_bBattleMode;
+	bool			m_bGoToPlayModeBranch;
 
+	RageSound		m_soundOut;			// Sounds/OUT
+	RageSound		m_soundBack;		// Sounds/S_BACK
+	RageSound		m_soundSongMove;	// Sounds/MOVE
+	RageSound		m_soundUnlock;		// Sounds/N_TO_M
+	RageSound		m_soundJoin;		// Sounds/JOIN
+	RageSound		m_soundCategory[NUM_SongCategory];	// Categories/<name>
+	RageSound		m_soundCommandSet;	// CW/S_CMD_SET
+	RageSound		m_soundCheat;		// Sounds/CHEAT
+	RageSound		m_soundGroupMove;	// Sounds/MOVE
+	RageSound		m_soundSelect;		// Sounds/SELECT
+	RageSound		m_soundStepsMove;	// Sounds/D_MOVE
+	RageSound		m_soundBad;			// Sounds/BAD
 
-	// StepP1 Revival - bSilver ---------------------------------------------------------------------
-	RageSound		m_soundEndSelect; 	/* Sounds/OUT */
-	RageSound		m_soundSongMoving;	/* Sounds/MOVE */
-	RageSound		m_soundUnlockCommand;	/* Sounds/N_TO_M */
-	RageSound		m_soundNewPlayer;	/* Sounds/JOIN */
-	RageSound		m_commandWindowInOut;	/* CW/S_CMD_INOUT */
-	RageSound		m_commandWindowBack;	/* CW/S_CMD_CHG */
-	RageSound		m_commandWindowMove;	/* CW/S_CMD_MOVE */
-	RageSound		m_commandWindowSet;	/* CW/S_CMD_SET */
-	RageSound		m_soundOldCodeEntered;	/* Sounds/CHEAT */
-	RageSound		m_soundGroupMoving;	/* Sounds/MOVE */
-	RageSound		m_soundEnterGroupSelect;/* Sounds/S_BACK */
-	RageSound		m_soundStepsMoving;	/* Sounds/D_MOVE */
-	RageSound		m_soundLockedAction;	/* Sounds/BAD */
-	RageSound		m_soundBackFromSteps;
+	SongCategory	m_CurCategory;
+	RString			m_sPreviewPath;
+	RString			m_sCategoryName;
+	int				m_iGroupScrollDir;
+	int				m_iGroupScrollSpeed;
+	bool			m_bGroupFastScroll;
+	bool			m_bGroupHeld;
+	bool			m_bPreviewPending;
+	bool			m_bBackButtonsHeld;
+	bool			m_bBackSoundPlayed;
 
-  // OptionList Things
-	AutoActor		m_OptionList;
-	AutoActor		m_OptionListMenu;
-	AutoActor		m_OptionListTexts;
-	ModIcon			m_OptionListIcons;
-  // ----------------------------------------------------------------------------------------------
-
-	RageSound		m_soundStart;
-
-  /* StepP1 Revival - bSilver
-	RageSound		m_soundDifficultyEasier;
-	RageSound		m_soundDifficultyHarder;
-	RageSound		m_soundOptionsChange;
-	RageSound		m_soundLocked;
-  */
-
-	BackgroundLoader	m_BackgroundLoader;
+	GameButton		m_GameButtonPreviousSong;
+	GameButton		m_GameButtonNextSong;
+	GameButton		m_GameButtonPrevState1;
+	GameButton		m_GameButtonPrevState2;
 	RageTexturePreloader	m_TexturePreload;
-
-	Song* m_pSongAwaitingDeletionConfirmation;
-
-	private:
-		int m_iCurrentGroupIndex; // Índice do grupo atual
-		vector<RString> m_vAvailableGroups; // Lista de grupos (SO_ALLTUNES, SO_ORIGINAL, etc.)
-
-
-		public:
-			// Adicione métodos públicos para acessar/modificar o índice
-			int GetCurrentGroupIndex() const { return m_iCurrentGroupIndex; }
-			void SetCurrentGroupIndex(int index) { m_iCurrentGroupIndex = index; }
 };
 
 #endif

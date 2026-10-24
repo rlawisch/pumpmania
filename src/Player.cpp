@@ -2939,12 +2939,10 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
       // xMAx -------------------------------------------------------------------------------------
 			case TapNoteType_HoldTail:
 			{
-				// Exceed: LONG_END is PERFECT anywhere inside its BAD zone
-				float fLongEarly, fLongLate;
-				GetExceedLongWindow( fLongEarly, fLongLate );
-				if( -fLongLate <= fNoteOffset && fNoteOffset <= fLongEarly )
+				// NX2 CStep::Judge: LONG_END is judged while held in (-(Delay+Interval+Perfect), Perfect)
+				if( GREAT_U <= fNoteOffset && fNoteOffset <= PERF_D )
 				{
-					score = TNS_W2;
+					score = PERF_U <= fNoteOffset ? TNS_W2 : TNS_W3;
 					pTN->HoldResult.iCheckpointsHit++;
 				};
 				break;
@@ -2961,12 +2959,10 @@ void Player::Step( int col, int row, const RageTimer &tm, bool bRelease ) // xMA
 				}
         */
         // xMAx -----------------------------------------------------------------------------------
-				// Exceed: LONG_START is PERFECT anywhere inside its BAD zone
-				float fLongEarly, fLongLate;
-				GetExceedLongWindow( fLongEarly, fLongLate );
-				if( -fLongLate <= fNoteOffset && fNoteOffset <= fLongEarly )
+				// NX2 CStep::Judge: LONG_START is judged while held in (-(Delay+Interval+Perfect), Perfect)
+				if( GREAT_U <= fNoteOffset && fNoteOffset <= PERF_D )
 				{
-					score = TNS_W2;
+					score = PERF_U <= fNoteOffset ? TNS_W2 : TNS_W3;
 					pTN->HoldResult.iCheckpointsHit++;	// The hold head is counted as a checkpoint
 
 					// Search for taps over the hold that were not judged, only when the player actually step the hold (not when its being held)
@@ -3666,10 +3662,66 @@ void Player::UpdateJudgedRows()
 */
 
 // void Player::FlashGhostRow( int iRow ) // xMAx
-void Player::FlashGhostRow( int iRow, int iPlayerNoteSkin ) // xMAx
+void Player::FlashGhostRow( int iRow, int iPlayerNoteSkin, bool bForce ) // xMAx
 {
+	// NX2: long notes crossing this line belong to it; wait until they are held.
+	if( !bForce && m_pPlayerState->m_PlayerController == PC_HUMAN )
+	{
+		vector<int> viHolds;
+		GetHoldsCrossingRow( iRow, viHolds );
+		if( !viHolds.empty() )
+		{
+			for( unsigned i=0; i<m_vPendingTapRows.size(); ++i )
+				if( m_vPendingTapRows[i].iRow == iRow )
+					return;
+			PendingTapRow pr;
+			pr.iRow = iRow;
+			pr.iPlayerNoteSkin = iPlayerNoteSkin;
+			pr.fSeconds = m_Timing->GetElapsedTimeFromBeat( NoteRowToBeat(iRow) );
+			pr.viHoldTracks = viHolds;
+			m_vPendingTapRows.push_back( pr );
+			ResolvePendingTapRows();
+			return;
+		}
+	}
+
 	// TapNoteScore lastTNS = NoteDataWithScoring::LastTapNoteWithResult( m_NoteData, iRow ).result.tns; // xMAx
 	TapNoteScore lastTNS = NoteDataWithScoring::MinTapNoteScore( m_NoteData, iRow, iPlayerNoteSkin ); // xMAx
+
+	// PIU NX2 CStep::Judge: a line is judged once, by the average distance of
+	// its tap notes (long notes don't add to it), through GetJudgeRegion.
+	if( lastTNS > TNS_Miss )
+	{
+		const float fDelay = -PERF_U - PERF_D;
+		const float fInterval = GREAT_D - PERF_D;
+		float fSum = 0;
+		int iTaps = 0;
+		for( int iTrack = 0; iTrack < m_NoteData.GetNumTracks(); ++iTrack )
+		{
+			const TapNote &tn = m_NoteData.GetTapNote( iTrack, iRow );
+			if( tn.type != TapNoteType_Tap || tn.result.tns == TNS_None || tn.judge == TapNoteJudge_Fake )
+				continue;
+			if( iPlayerNoteSkin >= 0 && tn.playerNoteSkin != static_cast<TapNotePlayerNoteSkin>(iPlayerNoteSkin) )
+				continue;
+			const float fEarly = -tn.result.fTapNoteOffset;	// > 0: stepped before the note
+			fSum += fEarly >= 0 ? fEarly : max( 0.0f, -fEarly - fDelay );
+			++iTaps;
+		}
+		if( iTaps > 0 )
+		{
+			const float fDist = fSum / iTaps;
+			int iRegion = fDist <= PERF_D ? 0 : int( (fDist - PERF_D) / fInterval ) + 1;
+			CLAMP( iRegion, 0, 3 );
+			static const TapNoteScore RegionToTNS[4] = { TNS_W2, TNS_W3, TNS_W4, TNS_W5 };
+			lastTNS = RegionToTNS[iRegion];
+			for( int iTrack = 0; iTrack < m_NoteData.GetNumTracks(); ++iTrack )
+			{
+				NoteData::iterator it = m_NoteData.FindTapNote( iTrack, iRow );
+				if( it != m_NoteData.end(iTrack) && it->second.type == TapNoteType_Tap && it->second.result.tns != TNS_None )
+					it->second.result.tns = lastTNS;
+			}
+		}
+	}
 	//const bool bBlind = (m_pPlayerState->m_PlayerOptions.GetCurrent().m_fBlind != 0);
 	// const bool bBright = ( m_pPlayerStageStats && m_pPlayerStageStats->m_iCurCombo > (unsigned int)BRIGHT_GHOST_COMBO_THRESHOLD ) || bBlind; // xMAx
 
@@ -3855,19 +3907,12 @@ void Player::QueueHoldTick( int iRow, const vector<int> &viTracks, const vector<
 	m_vPendingHoldTicks.push_back( tick );
 }
 
-// Long-note BAD zone of Pump It Up Exceed (playengine.cpp SetJudgeZone), in
-// seconds. Exceed measures it in pixels scaled by BPM/120 on a 60px-per-beat
-// scroll, so 1px is always 500/60 ms. StepP1 EJ = Easy, NJ = Normal, the
-// stricter judges = Hard.
-void Player::GetExceedLongWindow( float &fEarly, float &fLate ) const
+// Long-note window of PIU NX2 (CStep::Judge): a long note is judged while
+// held from Perfect before it until Delay+Interval+Perfect after it.
+void Player::GetLongWindow( float &fEarly, float &fLate ) const
 {
-	const float PX = 0.5f / 60.0f;
-	switch( m_pPlayerState->m_PlayerOptions.GetCurrent().m_iJudgment )
-	{
-	case 0:  fEarly = 22 * PX; fLate = 27 * PX; break;	// Easy
-	case 1:  fEarly = 23 * PX; fLate = 22 * PX; break;	// Normal
-	default: fEarly = 18 * PX; fLate = 23 * PX; break;	// Hard
-	}
+	fEarly = PERF_D;
+	fLate = -GREAT_U;
 }
 
 bool Player::IsHoldTrackPressed( int iTrack ) const
@@ -3879,11 +3924,82 @@ bool Player::IsHoldTrackPressed( int iTrack ) const
 	return INPUTMAPPER->IsBeingPressed( GameI, m_pPlayerState->m_mp );
 }
 
-void Player::ResolveHoldTicks()
+// Tracks whose hold body (not its head row) crosses iRow.
+void Player::GetHoldsCrossingRow( int iRow, vector<int> &viTracks ) const
+{
+	viTracks.clear();
+	for( int t = 0; t < m_NoteData.GetNumTracks(); ++t )
+	{
+		int iHeadRow;
+		if( !m_NoteData.IsHoldNoteAtRow( t, iRow, &iHeadRow ) || iHeadRow >= iRow )
+			continue;
+		const TapNote &head = m_NoteData.GetTapNote( t, iHeadRow );
+		if( head.judge == TapNoteJudge_Fake )
+			continue;
+		viTracks.push_back( t );
+	}
+}
+
+bool Player::RowHasTapOrHead( int iRow, const vector<int> &viIgnoreTracks ) const
+{
+	for( int t = 0; t < m_NoteData.GetNumTracks(); ++t )
+	{
+		if( find( viIgnoreTracks.begin(), viIgnoreTracks.end(), t ) != viIgnoreTracks.end() )
+			continue;
+		const TapNote &tn = m_NoteData.GetTapNote( t, iRow );
+		if( (tn.type == TapNoteType_Tap || tn.type == TapNoteType_HoldHead) && tn.judge != TapNoteJudge_Fake )
+			return true;
+	}
+	return false;
+}
+
+// NX2 CStep::Judge: a long middle is satisfied while held from Perfect before
+// the line to Delay+Interval+Perfect after it. When every long of the line is
+// satisfied the line is judged; if one can't be anymore, the whole line misses.
+void Player::ResolvePendingTapRows()
 {
 	const float fNow = m_pPlayerState->m_Position.m_fMusicSeconds;
+	float fEarly, fLate;
+	GetLongWindow( fEarly, fLate );
+	for( unsigned i=0; i<m_vPendingTapRows.size(); )
+	{
+		PendingTapRow &pr = m_vPendingTapRows[i];
+		for( unsigned j=0; j<pr.viHoldTracks.size(); )
+		{
+			if( fNow >= pr.fSeconds - fEarly && IsHoldTrackPressed(pr.viHoldTracks[j]) )
+				pr.viHoldTracks.erase( pr.viHoldTracks.begin() + j );
+			else
+				++j;
+		}
+		const int iRow = pr.iRow, iSkin = pr.iPlayerNoteSkin;
+		if( pr.viHoldTracks.empty() )
+		{
+			m_vPendingTapRows.erase( m_vPendingTapRows.begin() + i );
+			FlashGhostRow( iRow, iSkin, true );
+			continue;
+		}
+		if( fNow > pr.fSeconds + fLate )
+		{
+			m_vPendingTapRows.erase( m_vPendingTapRows.begin() + i );
+			for( int t = 0; t < m_NoteData.GetNumTracks(); ++t )
+			{
+				NoteData::iterator it = m_NoteData.FindTapNote( t, iRow );
+				if( it != m_NoteData.end(t) && it->second.type != TapNoteType_Mine && it->second.result.tns != TNS_None )
+					it->second.result.tns = TNS_Miss;
+			}
+			HandleTapRowScore( iRow, TNS_Miss );
+			continue;
+		}
+		++i;
+	}
+}
+
+void Player::ResolveHoldTicks()
+{
+	ResolvePendingTapRows();
+	const float fNow = m_pPlayerState->m_Position.m_fMusicSeconds;
 	float fEarly, fLate;	// seconds before / after the tick
-	GetExceedLongWindow( fEarly, fLate );
+	GetLongWindow( fEarly, fLate );
 
 	for( unsigned i=0; i<m_vPendingHoldTicks.size(); )
 	{
@@ -3895,7 +4011,7 @@ void Player::ResolveHoldTicks()
 				continue;
 			const int iTrack = tick.viTracks[j];
 			const float fPress = m_fLastPressSeconds[iTrack];
-			if( (fNow >= tick.fSeconds && IsHoldTrackPressed(iTrack)) ||
+			if( (fNow >= tick.fSeconds - fEarly && IsHoldTrackPressed(iTrack)) ||
 				(fPress >= tick.fSeconds - fEarly && fPress <= tick.fSeconds + fLate) )
 				tick.viState[j] = 1;
 			else if( fNow > tick.fSeconds + fLate )
@@ -3937,7 +4053,9 @@ void Player::ResolveHoldTicks()
 		const int iRow = tick.iRow;
 		const vector<int> viTracks = tick.viTracks;
 		m_vPendingHoldTicks.erase( m_vPendingHoldTicks.begin() + i );
-		HandleHoldCheckpoint( iRow, iHit, iMissed, viTracks, iHit > 0 );
+		// NX2: a tick on a line with taps is judged together with them.
+		if( !RowHasTapOrHead( iRow, viTracks ) )
+			HandleHoldCheckpoint( iRow, iHit, iMissed, viTracks, iHit > 0 );
 	}
 }
 // ------------------------------------------------------------------------------------------------

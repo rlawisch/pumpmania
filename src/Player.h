@@ -205,7 +205,7 @@ protected:
 	void UpdateTapNotesMissedOlderThan(float fMissIfOlderThanThisBeat);
 	// void UpdateJudgedRows(); // xMAx
 	// void FlashGhostRow( int iRow );
-	void FlashGhostRow(int iRow, int iPlayerNoteSkin); // xMAx - added iPlayerNoteSkin
+	void FlashGhostRow(int iRow, int iPlayerNoteSkin, bool bForce = false); // xMAx - added iPlayerNoteSkin
 	void HandleTapRowScore(unsigned row, TapNoteScore tns); // xMAx - added tns
 	// void HandleHoldScore( const TapNote &tn ); // xMAx
 	void HandleHoldCheckpoint(int iRow, int iNumHoldsHeldThisRow, int iNumHoldsMissedThisRow, const vector<int>& viColsWithHold, bool bHoldsAreBeingPressed); // xMAx - added bHoldsAreBeingPressed
@@ -307,11 +307,24 @@ protected:
 		vector<int> viState; // 0 pending, 1 hit, 2 miss
 	};
 	vector<PendingHoldTick> m_vPendingHoldTicks;
+	// NX2: a line holds its taps and the long notes crossing it, so a tap row
+	// inside a hold body waits until that hold is down (else the line misses).
+	struct PendingTapRow
+	{
+		int iRow;
+		int iPlayerNoteSkin;
+		float fSeconds;
+		vector<int> viHoldTracks;
+	};
+	vector<PendingTapRow> m_vPendingTapRows;
+	void GetHoldsCrossingRow( int iRow, vector<int> &viTracks ) const;
+	bool RowHasTapOrHead( int iRow, const vector<int> &viIgnoreTracks ) const;
+	void ResolvePendingTapRows();
 	float m_fLastPressSeconds[MAX_NOTE_TRACKS];
 	void QueueHoldTick( int iRow, const vector<int> &viTracks, const vector<TapNote*> &vpTN );
 	void ResolveHoldTicks();
 	bool IsHoldTrackPressed( int iTrack ) const;
-	void GetExceedLongWindow( float &fEarly, float &fLate ) const;
+	void GetLongWindow( float &fEarly, float &fLate ) const;
 	vector<RageSound>	m_vKeysounds;
 
 	// xMAx

@@ -67,6 +67,8 @@ void PlayerOptions::Init()
 	m_fMaxScrollBPM = 0;		m_SpeedfMaxScrollBPM = 1.0f;
 	m_fTimeSpacing = 0;		m_SpeedfTimeSpacing = 1.0f;
 	m_fScrollSpeed = 1.0f;		m_SpeedfScrollSpeed = 1.0f;
+	m_iNoteSkinIndex = -1;
+	m_iAutoVelocity = 0;
 	m_fScrollBPM = CMOD_DEFAULT;		m_SpeedfScrollBPM = 1.0f;
 	ZERO( m_fAccels );		ONE( m_SpeedfAccels );
 	ZERO( m_fEffects );		ONE( m_SpeedfEffects );
@@ -565,7 +567,6 @@ void PlayerOptions::GetMods( vector<RString> &AddTo, bool bForceNoteSkin ) const
   AddPart( AddTo, m_bAutoNoteskin, "AutoNoteskin");
   AddPart( AddTo, m_bRouletteNoteskin, "RouletteNoteskin");
   AddPart( AddTo, m_bNX, "ModNX");
-  AddPart( AddTo, m_iAutoVelocity, "AutoVelocity%.0f");
   AddPart( AddTo, m_bFreePerformance, "FreePerformance");
   AddPart( AddTo, m_bJudgeByNote, "JudgeByNote");
   AddPart( AddTo, m_bMinis, "Minis");
@@ -660,6 +661,7 @@ bool PlayerOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut
 		SET_FLOAT( fTimeSpacing )
 		m_fTimeSpacing = 0;
 		m_fMaxScrollBPM = 0;
+		m_iAutoVelocity = 0;
 	}
 	else if( sscanf( sBit, "c%f", &level ) == 1 )
 	{
@@ -674,8 +676,10 @@ bool PlayerOptions::FromOneModString( const RString &sOneMod, RString &sErrorOut
 	}
 	// oITG's m-mods
 	// else if( sscanf( sBit, "m%f", &level ) == 1 ) // StepP1 Revival - bSilver
-	else if( sscanf( sBit, "autovelocity%f", &level ) == 1 ) // StepP1 Revival - bSilver
+	// GetString writes AV as "m400"; accept both spellings.
+	else if( sscanf( sBit, "autovelocity%f", &level ) == 1 || sscanf( sBit, "m%f", &level ) == 1 ) // StepP1 Revival - bSilver
 	{
+		m_iAutoVelocity = (int)level;
 		// OpenITG doesn't have this block:
 		/*
 		if( !isfinite(level) || level <= 0.0f )
@@ -1716,6 +1720,7 @@ void PlayerOptions::ResetPrefs( ResetPrefsType type )
 		CPY( m_fScrollSpeed );
 		CPY( m_fScrollBPM );
 		CPY( m_fMaxScrollBPM );
+		CPY( m_iAutoVelocity );
 		break;
 	case saved_prefs_invalid_for_course:
 		break;

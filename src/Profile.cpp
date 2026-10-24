@@ -124,6 +124,8 @@ void Profile::InitEditableData()
 	m_BirthYear= 0;
 	m_IgnoreStepCountCalories= false;
 	m_IsMale= true;
+	m_iLevel = 1;
+	m_iAvatarID = 1;
 }
 
 void Profile::ClearStats()
@@ -675,6 +677,32 @@ bool Profile::HasPassedAnyStepsInSong( const Song* pSong ) const
 	});
 }
 
+bool Profile::HasGoodGradeInSongDir( RString sSongDir, int iMinMonth, int iMinYear ) const
+{
+	SongID songID;
+	songID.FromString( sSongDir );
+	if( !songID.IsValid() )
+		return false;
+
+	const HighScoresForASong *hsSong = GetHighScoresForASong( songID );
+	if( hsSong == nullptr )
+		return false;
+
+	for( auto const &it : hsSong->m_StepsHighScores )
+	{
+		const HighScore &hs = it.second.hsl.GetTopScore();
+		if( hs.GetGrade() >= Grade_Tier05 )
+			continue;
+		// STEP_P1 compares the raw DateTime fields, so tm_year (years since 1900)
+		// never reaches iMinYear and only the month test matters.
+		DateTime dt = hs.GetDateTime();
+		if( dt.tm_year < iMinYear && dt.tm_mon < iMinMonth )
+			continue;
+		return true;
+	}
+	return false;
+}
+
 void Profile::IncrementStepsPlayCount( const Song* pSong, const Steps* pSteps )
 {
 	DateTime now = DateTime::GetNowDate();
@@ -964,6 +992,8 @@ void Profile::swap(Profile& other)
 	SWAP_GENERAL(m_BirthYear);
 	SWAP_GENERAL(m_IgnoreStepCountCalories);
 	SWAP_GENERAL(m_IsMale);
+	SWAP_GENERAL(m_iLevel);
+	SWAP_GENERAL(m_iAvatarID);
 	SWAP_STR_MEMBER(m_sGuid);
 	SWAP_GENERAL(m_iCurrentCombo);
 	SWAP_GENERAL(m_iTotalSessions);
@@ -1097,6 +1127,8 @@ void Profile::HandleStatsPrefixChange(RString dir, bool require_signature)
 	int birth_year= m_BirthYear;
 	bool ignore_step_cal= m_IgnoreStepCountCalories;
 	bool male= m_IsMale;
+	int level= m_iLevel;
+	int avatar_id= m_iAvatarID;
 	ProfileType type= m_Type;
 	int priority= m_ListPriority;
 	RString guid= m_sGuid;
@@ -1130,6 +1162,8 @@ void Profile::HandleStatsPrefixChange(RString dir, bool require_signature)
 	m_BirthYear= birth_year;
 	m_IgnoreStepCountCalories= ignore_step_cal;
 	m_IsMale= male;
+	m_iLevel= level;
+	m_iAvatarID= avatar_id;
 	m_Type= type;
 	m_ListPriority= priority;
 	m_sGuid= guid;
@@ -1358,6 +1392,8 @@ ProfileLoadResult Profile::LoadStatsXmlFromNode( const XNode *xml, bool bIgnoreE
 	int BirthYear= m_BirthYear;
 	bool IgnoreStepCountCalories= m_IgnoreStepCountCalories;
 	bool IsMale= m_IsMale;
+	int iLevel = m_iLevel;
+	int iAvatarID = m_iAvatarID;
 
 	LOAD_NODE( GeneralData );
 	LOAD_NODE( SongScores );
@@ -1376,6 +1412,8 @@ ProfileLoadResult Profile::LoadStatsXmlFromNode( const XNode *xml, bool bIgnoreE
 		m_BirthYear= BirthYear;
 		m_IgnoreStepCountCalories= IgnoreStepCountCalories;
 		m_IsMale= IsMale;
+		m_iLevel = iLevel;
+		m_iAvatarID = iAvatarID;
 	}
 
 	return ProfileLoadResult_Success;
@@ -1516,6 +1554,8 @@ void Profile::SaveEditableDataToDir( RString sDir ) const
 	ini.SetValue( "Editable", "BirthYear", m_BirthYear );
 	ini.SetValue( "Editable", "IgnoreStepCountCalories", m_IgnoreStepCountCalories );
 	ini.SetValue( "Editable", "IsMale", m_IsMale );
+	ini.SetValue( "Editable", "Level", m_iLevel );
+	ini.SetValue( "Editable", "AvatarID", m_iAvatarID );
 
 	ini.WriteFile( sDir + EDITABLE_INI );
 }
@@ -1535,6 +1575,8 @@ XNode* Profile::SaveGeneralDataCreateNode() const
 	pGeneralDataNode->AppendChild( "BirthYear", m_BirthYear );
 	pGeneralDataNode->AppendChild( "IgnoreStepCountCalories", m_IgnoreStepCountCalories );
 	pGeneralDataNode->AppendChild( "IsMale", m_IsMale );
+	pGeneralDataNode->AppendChild( "Level", m_iLevel );
+	pGeneralDataNode->AppendChild( "AvatarID", m_iAvatarID );
 
 	pGeneralDataNode->AppendChild( "IsMachine",			IsMachine() );
 
@@ -1702,6 +1744,8 @@ ProfileLoadResult Profile::LoadEditableDataFromDir( RString sDir )
 	ini.GetValue( "Editable", "BirthYear", m_BirthYear );
 	ini.GetValue( "Editable", "IgnoreStepCountCalories", m_IgnoreStepCountCalories );
 	ini.GetValue( "Editable", "IsMale", m_IsMale );
+	ini.GetValue( "Editable", "Level", m_iLevel );
+	ini.GetValue( "Editable", "AvatarID", m_iAvatarID );
 
 	// This is data that the user can change, so we have to validate it.
 	wstring wstr = RStringToWstring(m_sDisplayName);
@@ -1730,6 +1774,8 @@ void Profile::LoadGeneralDataFromNode( const XNode* pNode )
 	pNode->GetChildValue( "BirthYear", m_BirthYear );
 	pNode->GetChildValue( "IgnoreStepCountCalories", m_IgnoreStepCountCalories );
 	pNode->GetChildValue( "IsMale", m_IsMale );
+	pNode->GetChildValue( "Level", m_iLevel );
+	pNode->GetChildValue( "AvatarID", m_iAvatarID );
 	pNode->GetChildValue( "Guid",					m_sGuid );
 	pNode->GetChildValue( "SortOrder",				s );	m_SortOrder = StringToSortOrder( s );
 	pNode->GetChildValue( "LastDifficulty",				s );	m_LastDifficulty = StringToDifficulty( s );
@@ -2659,6 +2705,9 @@ public:
 	DEFINE_METHOD(GetBirthYear, m_BirthYear);
 	DEFINE_METHOD(GetIgnoreStepCountCalories, m_IgnoreStepCountCalories);
 	DEFINE_METHOD(GetIsMale, m_IsMale);
+	static int GetLevel( T* p, lua_State *L )			{ lua_pushnumber(L, p->m_iLevel ); return 1; }
+	static int GetAvatarID( T* p, lua_State *L )		{ lua_pushnumber(L, p->m_iAvatarID ); return 1; }
+	static int SetAvatarID( T* p, lua_State *L )		{ p->m_iAvatarID = IArg(1); return 0; }
 	static int SetVoomax( T* p, lua_State *L )
 	{
 		p->m_Voomax= FArg(1);
@@ -2850,6 +2899,9 @@ public:
 		ADD_METHOD( GetLastPlayedSong );
 		ADD_METHOD( GetLastPlayedCourse );
 		ADD_METHOD( GetGUID );
+		ADD_METHOD( GetLevel );
+		ADD_METHOD( GetAvatarID );
+		ADD_METHOD( SetAvatarID );
 		ADD_METHOD(get_songs);
 	}
 };

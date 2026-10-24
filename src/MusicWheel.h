@@ -20,68 +20,62 @@ class MusicWheel : public WheelBase
 
 public:
 	virtual ~MusicWheel();
-	virtual void Load(RString sType);
+	virtual void Load( RString sType );
 	void BeginScreen();
-	void StartSelectingStepsAnimation();
-	void GoBackSelectingSongAnimation();
 
-	bool ChangeSort(SortOrder new_so, bool allowSameSort = false);	// return true if change successful
+	bool ChangeSort( SortOrder new_so, bool allowSameSort = false );	// return true if change successful
 	bool NextSort();						// return true if change successful
 	void StartRoulette();
 	void StartRandom();
 	bool IsRouletting() const;
 
 	virtual bool Select();				// return true if this selection ends the screen
-	WheelItemDataType	GetSelectedType() { return GetCurWheelItemData(m_iSelection)->m_Type; }
-	Song* GetSelectedSong();
-	Course* GetSelectedCourse() { return GetCurWheelItemData(m_iSelection)->m_pCourse; }
-	RString			GetSelectedSection() { return GetCurWheelItemData(m_iSelection)->m_sText; }
+	WheelItemDataType	GetSelectedType()	{ return GetCurWheelItemData(m_iSelection)->m_Type; }
+	Song			*GetSelectedSong();
+	Course			*GetSelectedCourse()	{ return GetCurWheelItemData(m_iSelection)->m_pCourse; }
+	RString			GetSelectedSection()	{ return GetCurWheelItemData(m_iSelection)->m_sText; }
 
-	Song* GetPreferredSelectionForRandomOrPortal();
+	Song *GetPreferredSelectionForRandomOrPortal();
 
-	bool SelectSong(const Song* p);
-	bool SelectCourse(const Course* p);
-	bool SelectSection(const RString& SectionName);
-	void SetOpenSection(RString group);
+	bool SelectSong( const Song *p );
+	bool SelectCourse( const Course *p );
+	bool SelectSection( const RString & SectionName );
+	void SetOpenSection( RString group );
 	SortOrder GetSortOrder() const { return m_SortOrder; }
-	virtual void ChangeMusic(int dist); /* +1 or -1 */ //CHECK THIS
-	//virtual void ChangeGroup(int dir); /* +1 or -1 */ //Maybe here or ScreenSelectMusic? (bsilver) 
+	virtual void ChangeMusic( int dist ); /* +1 or -1 */ //CHECK THIS
 	void FinishChangingSorts();
 	void PlayerJoined();
 	// sm-ssc additions
 	RString JumpToNextGroup();
 	RString JumpToPrevGroup();
-	const MusicWheelItemData* GetCurWheelItemData(int i) { return (const MusicWheelItemData*)m_CurWheelItemData[i]; }
+	const MusicWheelItemData *GetCurWheelItemData( int i ) { return (const MusicWheelItemData *) m_CurWheelItemData[i]; }
 
-	virtual void ReloadSongList();
-
-	//void GetCurrentSections(vector<RString> &sections);
 	// Lua
-	void PushSelf(lua_State* L);
-
-	// xMAx
+	//void PushSelf( lua_State *L ); //xMAx
+	
+	// xMAx ---------------------------------
 	void ReleaseWheelItems();
-	void OpenGroupOrChangeSort(RString Channel);
+	void OpenGroupOrChangeSort( RString Channel );
 	void CheckCurrentSongOnWheel();
+	bool bLastRouletterMoveWasToTheRight;
 	MusicWheelItemData* dummyMWID;
 
 protected:
-	MusicWheelItem* MakeItem();
+	MusicWheelItem *MakeItem();
 
-	// void GetSongList( vector<Song*> &arraySongs, SortOrder so ); // xMAx
-	void GetSongList(vector<Song*>& arraySongs, SortOrder so, RString SongGroup = ""); // xMAx
+	//void GetSongList( vector<Song*> &arraySongs, SortOrder so );
+	void GetSongList( vector<Song*> &arraySongs, SortOrder so, RString SongGroup = "");
 	bool SelectSongOrCourse();
 	bool SelectModeMenuItem();
 
 	virtual void UpdateSwitch();
 
 	//vector<MusicWheelItemData *> & getWheelItemsData(SortOrder so);
-	void getWheelItemsData(SortOrder so, vector<MusicWheelItemData*>& out);
-	void getWheelChannelItemsData(RString group, vector<MusicWheelItemData*>& out);	//xMAx - use this to get normal channels (non automatic) items
+	void getWheelItemsData(SortOrder so,vector<MusicWheelItemData *> &out);
+	void getWheelChannelItemsData(RString group,vector<MusicWheelItemData *> &out);	//xMAx - use this to get normal channels (non automatic) items
 	void readyWheelItemsData(SortOrder so);
-	void readyWheelChannelItemsData(RString group);	//xMAx - use this to make a cache for normal channels items
-	void FilterItems(vector<MusicWheelItemData*> arrayWheelItemDatas, vector<MusicWheelItemData*>& out, SortOrder so);
-
+	void readyWheelChanelItemsData(RString group);	//xMAx - use this to make a cache for normal channels items
+	void FilterItems(vector<MusicWheelItemData *> arrayWheelItemDatas, vector<MusicWheelItemData *> &out, SortOrder so);
 
 	RString				m_sLastModeMenuItem;
 	SortOrder			m_SortOrder;
@@ -108,7 +102,6 @@ protected:
 	// sm-ssc additions:
 	ThemeMetric<bool>		USE_SECTIONS_WITH_PREFERRED_GROUP;
 	ThemeMetric<bool>		HIDE_INACTIVE_SECTIONS;
-	ThemeMetric<bool>		HIDE_ACTIVE_SECTION_TITLE;
 	ThemeMetric<bool>		REMIND_WHEEL_POSITIONS;
 	ThemeMetric<RageColor>	ROULETTE_COLOR;
 	ThemeMetric<RageColor>	RANDOM_COLOR;
@@ -121,15 +114,20 @@ protected:
 
 private:
 	//use getWheelItemsData instead of touching this one
-	enum { INVALID, NEEDREFILTER, VALID } m_WheelItemDatasStatus[NUM_SortOrder];
-	vector<MusicWheelItemData*> m_WheelItemsData[NUM_SortOrder];
-	vector<MusicWheelItemData*> m_UnfilteredWheelItemsData[NUM_SortOrder];
+	enum {INVALID,NEEDREFILTER,VALID} m_WheelItemDatasStatus[NUM_SortOrder];
+	
+	vector<MusicWheelItemData*> m__WheelItemDatas[NUM_SortOrder];
+	//vector<MusicWheelItemData *> m__UnFilteredWheelItemDatas[NUM_SortOrder]; //xMAx - no se utiliza
+	
+	//xMAx - to precache groups
+	//vector<MusicWheelItemData *> m__UnFilteredWheelItemDatasForGroups[20]; //xMAx - no se utiliza
+	//vector< const vector<MusicWheelItemData *> > m__WheelItemDatasForGroups; //now we're trying a map instead of a vector
+	map<RString,vector<MusicWheelItemData *>> m__WheelItemDatasForGroups;
+	//vector<MusicWheelItemData *> m__WheelItemDatasForGroups[20];	
 
-	map<RString, vector<MusicWheelItemData*>> m_WheelItemsDataForGroups; // xMAx
-
-	// void BuildWheelItemsData( vector<MusicWheelItemData *> &arrayWheelItems, SortOrder so ); // xMAx
-	void BuildWheelItemsData(vector<MusicWheelItemData*>& arrayWheelItems, SortOrder so, RString SongGroup = "");
-	void FilterWheelItemsData(vector<MusicWheelItemData*>& aUnfilteredItemsData, vector<MusicWheelItemData*>& aFilteredData, SortOrder so);
+	//void BuildWheelItemDatas( vector<MusicWheelItemData *> &arrayWheelItems, SortOrder so );
+	void BuildWheelItemDatas( vector<MusicWheelItemData *> &arrayWheelItems, SortOrder so, RString SongGroup = "");
+	//void FilterWheelItemDatas(vector<MusicWheelItemData *> &aUnFilteredDatas, vector<MusicWheelItemData *> &aFilteredData, SortOrder so ); //xMAx - no se utiliza
 };
 
 #endif
@@ -137,7 +135,7 @@ private:
 /*
  * (c) 2001-2004 Chris Danford, Chris Gomez, Glenn Maynard
  * All rights reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -147,7 +145,7 @@ private:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

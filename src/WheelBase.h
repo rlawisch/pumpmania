@@ -16,8 +16,8 @@
 
 enum WheelState {
 	STATE_SELECTING,
-	STATE_FLYING_OFF_BEFORE_NEXT_SORT,
-	STATE_FLYING_ON_AFTER_NEXT_SORT,
+	STATE_FLYING_OFF_BEFORE_NEXT_SORT, 
+	STATE_FLYING_ON_AFTER_NEXT_SORT, 
 	STATE_ROULETTE_SPINNING,
 	STATE_ROULETTE_SLOWING_DOWN,
 	STATE_RANDOM_SPINNING,
@@ -49,21 +49,19 @@ public:
 	bool IsSettled() const;
 
 	void GetItemPosition( float fPosOffsetsFromMiddle, float& fX_out, float& fY_out, float& fZ_out, float& fRotationX_out );
-	void SetItemPosition(Actor &item, int item_index, float offset_from_middle);
+	void SetItemPosition( Actor &item, float fPosOffsetsFromMiddle );
 
 	virtual bool Select();	// return true if this selection can end the screen
 
 	WheelState GetWheelState() { return m_WheelState; }
 	bool WheelIsLocked() { return (m_WheelState == STATE_LOCKED ? true : false); }
 	void RebuildWheelItems( int dist = INT_MAX );	// INT_MAX = refresh all
-	// Update the list of songs to match whatever songs are indexed by the song manager (SONGMAN)
-	virtual void ReloadSongList() {}
 
 	virtual unsigned int GetNumItems() const { return m_CurWheelItemData.size(); }
 	bool IsEmpty() { return m_bEmpty; }
 	WheelItemBaseData* GetItem(unsigned int index);
 	WheelItemBaseData* LastSelected();
-	WheelItemBase *GetWheelItem( int i ) { if( i < 0 || i >= (int) m_WheelBaseItems.size() ) return nullptr; return m_WheelBaseItems[i]; }
+	WheelItemBase *GetWheelItem( int i ) { if( i < 0 || i >= (int) m_WheelBaseItems.size() ) return NULL; return m_WheelBaseItems[i]; }
 	RString GetExpandedSectionName() { return m_sExpandedSectionName; }
 	int GetCurrentIndex() { return m_iSelection; }
 
@@ -72,7 +70,7 @@ public:
 	// Lua
 	void PushSelf( lua_State *L );
 
-	// xMAx -----------------------------------------------------------------------------------------
+	// xMAx -------------------------------------------------------
 	void StopWheel( void );
 	inline void StopMusicChangeSound() { m_soundChangeMusic.Stop(); };
 	int m_iTimesBeforeStartSpin;
@@ -81,29 +79,10 @@ public:
 	vector<Actor::TweenState> wheel_init_positions;
 	void OpenUpWheel( bool bOpenCenter = true );
 	void CloseUpWheel( bool bCloseCenter = true );
-  // ----------------------------------------------------------------------------------------------
-
-	// bSilver - PhoenixWheel animations
-	WheelItemBase* m_pLastCenterItem = nullptr; // StepP1 Revival - bSilver (For PhoenixWheel)
-	bool m_bIsSelectingSteps; // If true, Wheel not reset animation. 
-	bool m_bIsBeginScreen; 
-	bool m_bIsSelectingGroups; 
-	float m_fSelectingStepsAnimTime; // i think no used
-	float m_fSelectingStepsDuration; // i think no used
-	std::vector<Actor::TweenState> m_InitialTweenStates;
-	void AnimateToEnterScreen(); // First animation when Screen load.
-	void AnimateToSelectingSteps(); // Animation when enter in State SelectingSteps
-	void AnimateFromSelectingSteps(); // Return from SelectingSteps
-	void AnimateToSelectingGroup(); // Animation when enter in State SelectingGroup
-	void AnimateFromSelectingGroup(); // Return from SelectingGroup
-	void NotResetWheelYet(); // The name xD
-
-	// The 5 animations are diferents, so we can't re-use animations.
-
-
+	
 	// Messages
 	virtual void HandleMessageOver( const Message &msg );
-
+	
 protected:
 	void TweenOnScreenForSort();
 	void TweenOffScreenForSort();
@@ -111,26 +90,26 @@ protected:
 	virtual WheelItemBase *MakeItem() = 0;
 	virtual void UpdateSwitch();
 	virtual bool MoveSpecific(int n);
-	// void SetPositions(); // xMAx
-	void SetPositions(int dir = 0); // xMAx
+	//void SetPositions();
+	void SetPositions(int dir=0);
 
 	int FirstVisibleIndex();
 
-	// ScrollBar	m_ScrollBar; // xMAx
-	// AutoActor	m_sprHighlight; // xMAx
+	//ScrollBar	m_ScrollBar;
+	//AutoActor	m_sprHighlight;
 
 	vector<WheelItemBaseData *> m_CurWheelItemData;
 	vector<WheelItemBase *> m_WheelBaseItems;
 	WheelItemBaseData* m_LastSelection;
-
+	
 	bool		m_bEmpty;
-	int		m_iSelection;		// index into m_CurWheelItemBaseData
+	int			m_iSelection;		// index into m_CurWheelItemBaseData
 	RString		m_sExpandedSectionName;
 
 	int			m_iSwitchesLeftInSpinDown;
 	float		m_fLockedWheelVelocity;
 	// 0 = none; -1 or 1 = up/down
-	int		m_Moving;
+	int			m_Moving;
 	RageTimer	m_MovingSoundTimer;
 	float		m_TimeBeforeMovingBegins;
 	float		m_SpinSpeed;
@@ -145,7 +124,7 @@ protected:
 	RageSound m_soundLocked;
 
 //	bool WheelItemIsVisible(int n);
-	// void UpdateScrollbar(); // xMAx
+	//void UpdateScrollbar();
 
 	ThemeMetric<float>	SWITCH_SECONDS;
 	ThemeMetric<float>	LOCKED_INITIAL_VELOCITY;
@@ -160,7 +139,7 @@ protected:
 /*
  * (c) 2001-2004 Chris Danford, Chris Gomez, Glenn Maynard, Josh Allen
  * All rights reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -170,7 +149,7 @@ protected:
  * copyright notice(s) and this permission notice appear in all copies of
  * the Software and that both the above copyright notice(s) and this
  * permission notice appear in supporting documentation.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF

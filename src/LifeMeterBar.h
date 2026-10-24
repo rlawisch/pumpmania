@@ -75,6 +75,14 @@ private:
 
 	float		m_fLifePercentage;
 
+	// PIU NX2 CGauge: life 0..m_iLimit, shown against 1000.
+	bool		m_bFlashFrame = false;
+	float		m_fFlashTimer = 0;
+	int			m_iNX2Life;
+	int			m_iNX2Limit;
+	int			m_iNX2FactorMin, m_iNX2FactorMax, m_iNX2FactorMiss, m_iNX2Factor;
+	void		SyncNX2Life();
+
 	float		m_fPassingAlpha;
 	float		m_fHotAlpha;
 

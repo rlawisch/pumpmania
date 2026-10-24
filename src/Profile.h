@@ -279,6 +279,9 @@ public:
 	DateTime GetSongLastPlayedDateTime( const Song* pSong ) const;
 	bool HasPassedSteps( const Song* pSong, const Steps* pSteps ) const;
 	bool HasPassedAnyStepsInSong( const Song* pSong ) const;
+	// StepP1: true if any chart of the song in sSongDir has a top score of grade Tier04 or better
+	// whose date passes the month/year check (used to unlock the hidden noteskins).
+	bool HasGoodGradeInSongDir( RString sSongDir, int iMinMonth, int iMinYear ) const;
 
 	// Course high scores
 	// struct was a typedef'd array of HighScores, but VC6 freaks out
@@ -437,6 +440,7 @@ public:
 	// Lua
 	void PushSelf( lua_State *L );
 
+	int		m_iLevel;
 	int		m_iAvatarID; // StepP1 Revival - bsilver
 
 private:

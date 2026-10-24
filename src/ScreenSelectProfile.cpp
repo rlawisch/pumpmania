@@ -2,235 +2,135 @@
 #include "ScreenSelectProfile.h"
 #include "ScreenManager.h"
 #include "ProfileManager.h"
+#include "Profile.h"
 #include "GameState.h"
 #include "MemoryCardManager.h"
 #include "InputEventPlus.h"
+#include "ScreenAttract.h"
+#include "ThemeManager.h"
+#include "GameSoundManager.h"
+#include "MessageManager.h"
 
 REGISTER_SCREEN_CLASS( ScreenSelectProfile );
 
+// Recreated from STEP_P1.exe (ScreenSelectProfile::Init at 0x427474).
 void ScreenSelectProfile::Init()
 {
 	FOREACH_PlayerNumber( p )
 	{
 		// no selection initially
-		m_iSelectedProfiles[p]=-1;
-
-		m_bPlayerIsSelecting[p] = GAMESTATE->IsHumanPlayer(p); // StepP1 Revival - bSilver
+		m_iSelectedProfiles[p] = -1;
 	}
-	m_TrackingRepeatingInput = GameButton_Invalid;
+	m_bTimedOut = false;
 	ScreenWithMenuElements::Init();
+	m_bFinished = false;
+	m_fLockInputSecs = 0;
+	ScreenAttract::SetAttractVolume( true );
 }
 
+void ScreenSelectProfile::BroadcastLocalProfileChange( PlayerNumber pn, int iProfileIndex )
+{
+	const Profile *pProfile = PROFILEMAN->GetLocalProfileFromIndex( iProfileIndex );
+	Message msg( "LocalProfileChange" );
+	msg.SetParam( "name", pProfile->GetDisplayNameOrHighScoreName() );
+	msg.SetParam( "pn", pn );
+	msg.SetParam( "level", pProfile->m_iLevel );
+	MESSAGEMAN->Broadcast( msg );
+}
+
+// Recreated from STEP_P1.exe (ScreenSelectProfile::Input at 0x427854).
+// The pad buttons are checked as well as the menu buttons; no wrap-around and
+// no repeat: only first presses count.
 bool ScreenSelectProfile::Input( const InputEventPlus &input )
 {
-  /* StepP1 Revival - bSilver ---------------------------------------------------------------------
-	if( IsTransitioning() )
-		return false;
-  */
-
-	if (input.MenuI == GameButton::GAME_BUTTON_START)
-		return MenuStart(input);
-
-	if (input.MenuI == GameButton::GAME_BUTTON_LEFT)
-		return MenuLeft(input);
-
-	if (input.MenuI == GameButton::GAME_BUTTON_RIGHT)
-		return MenuRight(input);
-  // ----------------------------------------------------------------------------------------------
-
-	return ScreenWithMenuElements::Input( input );
-}
-
-bool ScreenSelectProfile::MenuLeft( const InputEventPlus &input )
-{
 	PlayerNumber pn = input.pn;
-	if( input.type == IET_RELEASE )
+	if( m_bFinished )
 		return false;
 	if( input.type != IET_FIRST_PRESS )
+		return false;
+
+	switch( input.MenuI )
 	{
-		/*
-		if( !ALLOW_REPEATING_INPUT )
-			return false;
-		*/
-		if( m_TrackingRepeatingInput != input.MenuI )
-			return false;
-	}
-	m_TrackingRepeatingInput = input.MenuI;
-
-  // StepP1 Revival - bSilver ---------------------------------------------------------------------
-	int currentIndex = m_iSelectedProfiles[pn];
-	int numProfiles = PROFILEMAN->GetNumLocalProfiles();
-
-	currentIndex--;
-	if (currentIndex < 0)
-		currentIndex = numProfiles;
-
-	SetProfileIndex(pn, currentIndex);
-  // ----------------------------------------------------------------------------------------------
-
-	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuLeftP1+pn) );
-
-  // StepP1 Revival - bSilver ---------------------------------------------------------------------
-	RString sPlayer = "PlayerNumber_";
-	sPlayer += ( pn == PLAYER_1 ) ? "P1" : "P2";
-
-	if( m_iSelectedProfiles[pn] > 0 && m_iSelectedProfiles[pn] <= numProfiles )
+	case GAME_BUTTON_MENULEFT:
+	case PUMP_BUTTON_DOWNLEFT:
 	{
-
-		RString ProfileID = PROFILEMAN->GetLocalProfileIDFromIndex(m_iSelectedProfiles[pn] - 1);
-		const Profile* pProfile = PROFILEMAN->GetLocalProfile(ProfileID);
-		if( pProfile )
+		if( !GAMESTATE->IsHumanPlayer(pn) )
+			return false;
+		int iIndex = m_iSelectedProfiles[pn];
+		if( iIndex < 1 )
+			return true;
+		if( iIndex == 1 && SetProfileIndex(pn, -1) )
 		{
-			Message msg("LocalProfileChange");
-			msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
-			msg.SetParam("name", pProfile->GetDisplayNameOrHighScoreName());
-			MESSAGEMAN->Broadcast(msg);
+			Message msg( "HideProfileChanges" );
+			msg.SetParam( "pn", pn );
+			MESSAGEMAN->Broadcast( msg );
+			return true;
 		}
-	}
-	else
-	{
-		Message msg("HideProfileChanges");
-		msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
-		MESSAGEMAN->Broadcast(msg);
-	}
-  // ----------------------------------------------------------------------------------------------
-
-	return true;
-}
-
-bool ScreenSelectProfile::MenuRight( const InputEventPlus &input )
-{
-	PlayerNumber pn = input.pn;
-	if( input.type == IET_RELEASE )
-		return false;
-	if( input.type != IET_FIRST_PRESS )
-	{
-		/*
-		if( !ALLOW_REPEATING_INPUT )
-			return false;
-		*/
-		if( m_TrackingRepeatingInput != input.MenuI )
-			return false;
-	}
-	m_TrackingRepeatingInput = input.MenuI;
-
-  // StepP1 Revival - bSilver ---------------------------------------------------------------------
-	int currentIndex = m_iSelectedProfiles[pn];
-	int numProfiles = PROFILEMAN->GetNumLocalProfiles();
-
-	currentIndex++;
-	if (currentIndex > numProfiles)
-		currentIndex = 0;
-
-	SetProfileIndex(pn, currentIndex);
-  // ----------------------------------------------------------------------------------------------
-
-	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuRightP1+pn) );
-
-  // StepP1 Revival - bSilver ---------------------------------------------------------------------
-	RString sPlayer = "PlayerNumber_";
-	sPlayer += ( pn == PLAYER_1 ) ? "P1" : "P2";
-
-	if( m_iSelectedProfiles[pn] > 0 && m_iSelectedProfiles[pn] <= numProfiles )
-	{
-
-		RString ProfileID = PROFILEMAN->GetLocalProfileIDFromIndex(m_iSelectedProfiles[pn] - 1);
-		const Profile* pProfile = PROFILEMAN->GetLocalProfile(ProfileID);
-		if( pProfile )
-		{
-			Message msg("LocalProfileChange");
-			msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
-			msg.SetParam("name", pProfile->GetDisplayNameOrHighScoreName());
-			MESSAGEMAN->Broadcast(msg);
-		}
-	}
-	else
-	{
-		Message msg("HideProfileChanges");
-		msg.SetParam("pn", "PlayerNumber_" + RString(pn == PLAYER_1 ? "P1" : "P2"));
-		MESSAGEMAN->Broadcast(msg);
-	}
-  // ----------------------------------------------------------------------------------------------
-
-	return true;
-}
-
-
-/* StepP1 Revival - bSilver -----------------------------------------------------------------------
-bool ScreenSelectProfile::MenuUp( const InputEventPlus &input )
-{
-	PlayerNumber pn = input.pn;
-	if( m_fLockInputSecs > 0 )
-		return false;
-	if( input.type == IET_RELEASE )
-		return false;
-	if( input.type != IET_FIRST_PRESS )
-	{
-		// if( !ALLOW_REPEATING_INPUT )
-		// 	return false;
-		if( m_TrackingRepeatingInput != input.MenuI )
-			return false;
-	}
-	m_TrackingRepeatingInput = input.MenuI;
-	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuUpP1+pn) );
-	return true;
-}
-
-bool ScreenSelectProfile::MenuDown( const InputEventPlus &input )
-{
-	PlayerNumber pn = input.pn;
-	if( m_fLockInputSecs > 0 )
-		return false;
-	if( input.type == IET_RELEASE )
-		return false;
-	if( input.type != IET_FIRST_PRESS )
-	{
-		// if( !ALLOW_REPEATING_INPUT )
-		// 	return false;
-		if( m_TrackingRepeatingInput != input.MenuI )
-			return false;
-	}
-	m_TrackingRepeatingInput = input.MenuI;
-	MESSAGEMAN->Broadcast( (MessageID)(Message_MenuDownP1+pn) );
-	return true;
-}
-*/
-
-bool ScreenSelectProfile::MenuStart(const InputEventPlus& input)
-{
-	PlayerNumber pn = input.pn;
-
-	if (input.type != IET_FIRST_PRESS)
-	{
-		if (m_TrackingRepeatingInput != input.MenuI)
-			return false;
-	}
-
-	m_TrackingRepeatingInput = input.MenuI;
-
-	if (!m_bPlayerIsSelecting[pn])
-	{
-		GAMESTATE->JoinPlayer(pn);
-		SCREENMAN->PlayStartSound();
-
-		SetProfileIndex(pn, 0); // Start with GUEST
-
-		m_bPlayerIsSelecting[pn] = true;
-
-		Message msg("PlayerStartedSelectProfile");
-		msg.SetParam("Player", pn);
-		MESSAGEMAN->Broadcast(msg);
-
+		if( !SetProfileIndex(pn, m_iSelectedProfiles[pn] - 1) )
+			return true;
+		BroadcastLocalProfileChange( pn, m_iSelectedProfiles[pn] - 1 );
 		return true;
 	}
-	else
+	case GAME_BUTTON_MENURIGHT:
+	case PUMP_BUTTON_DOWNRIGHT:
 	{
-		bool bFinished = Finish();
+		if( !GAMESTATE->IsHumanPlayer(pn) )
+			return false;
+		if( m_iSelectedProfiles[pn] == -1 )
+			m_iSelectedProfiles[pn] = 0;
+		if( !SetProfileIndex(pn, m_iSelectedProfiles[pn] + 1) )
+			return true;
+		BroadcastLocalProfileChange( pn, m_iSelectedProfiles[pn] - 1 );
+		return true;
+	}
+	case GAME_BUTTON_START:
+	case PUMP_BUTTON_CENTER:
+	{
+		if( !GAMESTATE->IsHumanPlayer(pn) )
+		{
+			GAMESTATE->JoinPlayer( pn );
+			if( m_bTimedOut || PROFILEMAN->GetNumLocalProfiles() == 0 )
+				return Finish();
+			SCREENMAN->PlayStartSound();
+			Message msg( "PlayerStartedSelectProfile" );
+			msg.SetParam( "Player", pn );
+			MESSAGEMAN->Broadcast( msg );
+			return true;
+		}
 
-		return bFinished;
+		// both players picked the same local profile
+		if( GAMESTATE->GetNumPlayersEnabled() == 2 &&
+			m_iSelectedProfiles[PLAYER_1] == m_iSelectedProfiles[PLAYER_2] &&
+			m_iSelectedProfiles[PLAYER_1] != -1 )
+		{
+			SOUND->PlayOnce( THEME->GetPathS("", "Sounds/BAD.mp3") );
+			return true;
+		}
+
+		if( !Finish() )
+			return true;
+
+		if( GAMESTATE->GetNumPlayersEnabled() != 2 )
+		{
+			GAMESTATE->m_bHasProfile[pn] = true;
+			GAMESTATE->m_iProfileIndex[pn] = m_iSelectedProfiles[pn];
+			MESSAGEMAN->Broadcast( "FinishSelectProfile" );
+			m_fLockInputSecs = 10.0f;
+			return true;
+		}
+
+		FOREACH_PlayerNumber( p )
+		{
+			GAMESTATE->m_bHasProfile[p] = true;
+			GAMESTATE->m_iProfileIndex[p] = m_iSelectedProfiles[p];
+		}
+		MESSAGEMAN->Broadcast( "FinishSelectProfile" );
+		return true;
+	}
+	default:
+		return false;
 	}
 }
-// -------------------------------------------------------------------------------------------------
 
 bool ScreenSelectProfile::SetProfileIndex( PlayerNumber pn, int iProfileIndex )
 {
@@ -259,18 +159,19 @@ bool ScreenSelectProfile::SetProfileIndex( PlayerNumber pn, int iProfileIndex )
 		GAMESTATE->UnjoinPlayer( pn );
 		MEMCARDMAN->UnlockCard( pn );
 		MEMCARDMAN->UnmountCard( pn );
-		m_iSelectedProfiles[pn]=-1;
-
-		MESSAGEMAN->Broadcast("PlayerUnjoined"); // StepP1 Revival - bSilver
+		m_iSelectedProfiles[pn] = -1;
 		return true;
 	}
 
-	m_iSelectedProfiles[pn]=iProfileIndex;
-
+	m_iSelectedProfiles[pn] = iProfileIndex;
 	return true;
 }
 
-bool ScreenSelectProfile::Finish(){
+// Recreated from STEP_P1.exe (ScreenSelectProfile::Finish at 0x4275a2).
+bool ScreenSelectProfile::Finish()
+{
+	m_bFinished = true;
+
 	if( GAMESTATE->GetNumPlayersEnabled() == 0 )
 		return false;
 
@@ -278,15 +179,8 @@ bool ScreenSelectProfile::Finish(){
 	if( GAMESTATE->GetNumPlayersEnabled() == 2 && m_iSelectedProfiles[0] == m_iSelectedProfiles[1] && m_iSelectedProfiles[0] > 0 )
 		return false;
 
-	int iUsedLocalProfiles = 0;
-	int iUnselectedProfiles = 0;
-
 	FOREACH_PlayerNumber( p )
 	{
-		// not all players has made their choices
-		if( GAMESTATE->IsHumanPlayer( p ) && ( m_iSelectedProfiles[p] == -1 ) )
-			iUnselectedProfiles++;
-
 		// card not ready
 		if( m_iSelectedProfiles[p] == 0 && MEMCARDMAN->GetCardState( p ) != MemoryCardState_Ready )
 			return false;
@@ -294,18 +188,7 @@ bool ScreenSelectProfile::Finish(){
 		// profile index too big
 		if( m_iSelectedProfiles[p] > PROFILEMAN->GetNumLocalProfiles() )
 			return false;
-
-		// inc used profile count
-		if( m_iSelectedProfiles[p] > 0 )
-			iUsedLocalProfiles++;
 	}
-
-	// this allows to continue if there is less local profiles than number of human players
-	if( iUnselectedProfiles && iUsedLocalProfiles < PROFILEMAN->GetNumLocalProfiles() )
-		return false;
-
-	// StepP1 Revival - bSilver - Hide overlay before switching screen
-	MESSAGEMAN->Broadcast("HideProfileChanges");
 
 	// all ok - load profiles and go to next screen
 	FOREACH_PlayerNumber( p )
@@ -332,24 +215,47 @@ bool ScreenSelectProfile::Finish(){
 			if( bSuccess )
 			{
 				GAMESTATE->LoadCurrentSettingsFromProfile(p);
+				MEMCARDMAN->MountCard( p );
+				PROFILEMAN->SaveProfile( p );
+				MEMCARDMAN->UnmountCard( p );
 				MEMCARDMAN->LockCard( p );
 			}
 		}
 	}
+
+	if( m_iSelectedProfiles[PLAYER_1] != -1 || m_iSelectedProfiles[PLAYER_2] != -1 )
+		GAMESTATE->SetBasicMode( false );
+
+	// Hidden noteskins: a good grade on these songs unlocks hns_1 / hns_2.
+	FOREACH_PlayerNumber( p )
+	{
+		if( !PROFILEMAN->IsPersistentProfile(p) )
+			continue;
+		const Profile *pProfile = PROFILEMAN->GetProfile( p );
+		if( pProfile == nullptr )
+			continue;
+		if( pProfile->HasGoodGradeInSongDir("Songs/11-EXCEED~ZERO/(1) C12 - What's Goin On/", 0, 2016) )
+			GAMESTATE->m_bNoteSkin1Unlocked = true;
+		else if( pProfile->HasGoodGradeInSongDir("Songs/14-FIESTA/1028 - Phantom -Intermezzo-/", 5, 2016) )
+			GAMESTATE->m_bNoteSkin2Unlocked = true;
+	}
+
+	SOUND->PlayOnce( THEME->GetPathS("", "Sounds/START_2.MP3") );
 	StartTransitioningScreen( SM_GoToNextScreen );
 	return true;
 }
 
+// Recreated from STEP_P1.exe (ScreenSelectProfile::HandleScreenMessage at 0x427515).
 void ScreenSelectProfile::HandleScreenMessage( const ScreenMessage SM )
 {
 	if( SM == SM_MenuTimer )
 	{
-		bool bFinished = Finish();
-		if( !bFinished )
-		{
-			// TODO: we need to decide how to handle unfinished business.
-			SCREENMAN->PlayInvalidSound(); // StepP1 Revival - bSilver
-		}
+		m_bTimedOut = true;
+		MESSAGEMAN->Broadcast( "TimeOut" );
+	}
+	else if( SM == SM_LoseFocus )
+	{
+		ScreenAttract::SetAttractVolume( false );
 	}
 
 	ScreenWithMenuElements::HandleScreenMessage( SM );

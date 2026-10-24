@@ -25,6 +25,7 @@ public:
 	void AddStats( const PlayerStageStats& other );		// accumulate
 
 	Grade GetGrade() const;
+	int GetGradeInt() const;	// STEP_P1 Pump grade: 0 SSS .. 7 F, 20 failed
 	static float MakePercentScore( int iActual, int iPossible );
 	static RString FormatPercentScore( float fPercentScore );
 	float GetPercentDancePoints() const;

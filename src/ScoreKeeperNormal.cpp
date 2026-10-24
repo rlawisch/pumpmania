@@ -231,6 +231,9 @@ void ScoreKeeperNormal::AddTapScore(TapNoteScore tns)
 
 void ScoreKeeperNormal::AddHoldScore(HoldNoteScore hns)
 {
+	// NX2 scores long notes only through their lines (head, ticks, tail).
+	if (m_UseInternalScoring)
+		return;
 	if (hns == HNS_Held)
 		AddScoreInternal(TNS_W1);
 	// else if ( hns == HNS_LetGo ) // xMAx
@@ -241,7 +244,52 @@ void ScoreKeeperNormal::AddHoldScore(HoldNoteScore hns)
 
 void ScoreKeeperNormal::AddTapRowScore(TapNoteScore score, const NoteData& nd, int iRow)
 {
-	AddScoreInternal(score);
+	int iNotes = 0;
+	bool bLongOnly = true;
+	for (int t = 0; t < nd.GetNumTracks(); ++t)
+	{
+		const TapNote& tn = nd.GetTapNote(t, iRow);
+		if (tn.type == TapNoteType_Empty || tn.type == TapNoteType_Mine || tn.judge == TapNoteJudge_Fake)
+			continue;
+		++iNotes;
+		if (tn.type == TapNoteType_Tap)
+			bLongOnly = false;
+	}
+	AddNX2Score(score, iNotes, bLongOnly && iNotes > 0);
+}
+
+// PIU NX2 CPlayer::GetScore, once per line: PERFECT 1000, GREAT 500, GOOD 100,
+// BAD -200, MISS -500 (-300 for a line of long notes only). PERFECT and GREAT
+// get +1000 from combo 51 on, then x1.5 for 3 notes or x2 for 4 or more.
+void ScoreKeeperNormal::AddNX2Score(TapNoteScore tns, int iNumNotes, bool bLongOnly)
+{
+	if (!m_UseInternalScoring)
+		return;
+	int iScore;
+	bool bGood = false;
+	switch (tns)
+	{
+	case TNS_W1:
+	case TNS_W2:
+	case TNS_CheckpointHit:		iScore = 1000; bGood = true; break;
+	case TNS_W3:				iScore = 500; bGood = true; break;
+	case TNS_W4:				iScore = 100; break;
+	case TNS_W5:				iScore = -200; break;
+	case TNS_Miss:
+	case TNS_CheckpointMiss:	iScore = bLongOnly ? -300 : -500; break;
+	default:					return;
+	}
+	if (bGood)
+	{
+		if (m_pPlayerStageStats->m_iCurCombo >= 51)
+			iScore += 1000;
+		if (iNumNotes >= 4)
+			iScore *= 2;
+		else if (iNumNotes >= 3)
+			iScore = int(iScore * 1.5f);
+	}
+	int iNew = int(m_pPlayerStageStats->m_iScore) + iScore;
+	m_pPlayerStageStats->m_iScore = iNew < 0 ? 0 : iNew;
 }
 
 /* StepP1 Revival - bSilver
@@ -622,6 +670,25 @@ void ScoreKeeperNormal::GetRowCounts(const NoteData& nd, int iRow,
 //	MESSAGEMAN->Broadcast(msg);
 //}
 
+// PIU NX2 CPlayer::JudgeStep_PostProcess: one judgment per line. PERFECT and
+// GREAT add one to the combo, GOOD keeps it, BAD and MISS reset it; MISS adds
+// one to the miss combo and anything else resets it.
+static void ApplyNX2Combo(PlayerStageStats* pStats, PlayerNumber pn, TapNoteScore tns, int iRow)
+{
+	TimingData& td = *GAMESTATE->m_pCurSteps[pn]->GetTimingData();
+	const bool bHit = tns == TNS_CheckpointHit || tns >= TNS_W3;
+	const bool bMiss = tns == TNS_Miss || tns == TNS_CheckpointMiss;
+	if (bHit)
+		pStats->m_iCurCombo += (iRow == -1 ? 1 : td.GetComboSegmentAtRow(iRow)->GetCombo());
+	else if (tns != TNS_W4)
+		pStats->m_iCurCombo = 0;
+	if (bMiss)
+		pStats->m_iCurMissCombo += (iRow == -1 ? 1 : td.GetComboSegmentAtRow(iRow)->GetMissCombo());
+	else
+		pStats->m_iCurMissCombo = 0;
+	pStats->m_iMaxCombo = max(pStats->m_iMaxCombo, pStats->m_iCurCombo);
+}
+
 // StepP1 Revival - bSilver -----------------------------------------------------------------------
 void ScoreKeeperNormal::HandleTapRowScore(const NoteData& nd, int iRow, TapNoteScore tnsRow)
 {
@@ -653,34 +720,11 @@ void ScoreKeeperNormal::HandleTapRowScore(const NoteData& nd, int iRow, TapNoteS
 
 	m_iNumNotesHitThisRow = iNumTapsInRow;
 
-	// Get the row's "worst TapNoteScore" to decide what to do
-	TapNoteScore scoreOfLastTap = NoteDataWithScoring::LastTapNoteWithResult(nd, iRow).result.tns;
+	// The row's judgment comes from Player (NX2 judges a line by its average distance)
+	TapNoteScore scoreOfLastTap = tnsRow;
 	HandleTapNoteScoreInternal(scoreOfLastTap, TNS_W1, iRow);
 
-	// HERE: PIU-like behavior: per-row combo
-	if (GAMESTATE->GetCurrentGame()->m_bCountNotesSeparately)
-	{
-		HandleComboInternal(iNumHitContinueCombo, iNumHitMaintainCombo, iNumBreakCombo, iRow);
-	}
-	else
-	{
-		// If ALL are better than Good (and no breaks), increments combo
-		if (iNumBreakCombo == 0 && iNumHitContinueCombo > 0)
-		{
-			m_pPlayerStageStats->m_iCurCombo++;
-			m_pPlayerStageStats->m_iCurMissCombo = 0;
-		}
-		else if (iNumBreakCombo == 0)
-		{
-			// If all are Good (W4), keeps combo as is
-		}
-		else
-		{
-			// If there's a Bad (W5) or Miss, breaks combo
-			m_pPlayerStageStats->m_iCurCombo = 0;
-			m_pPlayerStageStats->m_iCurMissCombo++;
-		}
-	}
+	ApplyNX2Combo(m_pPlayerStageStats, m_pPlayerState->m_PlayerNumber, scoreOfLastTap, iRow);
 
 	if (m_pPlayerState->m_PlayerNumber != PLAYER_INVALID)
 		MESSAGEMAN->Broadcast(enum_add2(Message_CurrentComboChangedP1, m_pPlayerState->m_PlayerNumber));
@@ -726,7 +770,8 @@ void ScoreKeeperNormal::HandleTapRowScore(const NoteData& nd, int iRow, TapNoteS
 
 	const bool bHit = tns == TNS_CheckpointHit;
 	HandleTapNoteScoreInternal(tns, TNS_CheckpointHit, iRow);
-	HandleComboInternal(bHit ? iNumNotes : 0, 0, bHit ? 0 : iNumNotes, iRow);
+	ApplyNX2Combo(m_pPlayerStageStats, m_pPlayerState->m_PlayerNumber, bHit ? TNS_CheckpointHit : TNS_CheckpointMiss, iRow);
+	AddNX2Score(bHit ? TNS_CheckpointHit : TNS_CheckpointMiss, iNumNotes, true);
 
 	if (m_pPlayerState->m_PlayerNumber != PLAYER_INVALID)
 		MESSAGEMAN->Broadcast(enum_add2(Message_CurrentComboChangedP1, m_pPlayerState->m_PlayerNumber));

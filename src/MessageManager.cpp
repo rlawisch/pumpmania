@@ -36,6 +36,7 @@ static const char *MessageIDNames[] = {
 	"EditCourseEntryIndexChanged",
 	"EditLocalProfileIDChanged",
 	"BattleModeChanged",
+	"StepTypesToShowChanged",
 	"GoalCompleteP1",
 	"GoalCompleteP2",
 	"NoteCrossed",

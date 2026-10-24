@@ -32,6 +32,7 @@ enum MessageID
 	Message_EditCourseEntryIndexChanged,
 	Message_EditLocalProfileIDChanged,
 	Message_BattleModeChanged,
+	Message_StepTypesToShowChanged,
 	Message_GoalCompleteP1,
 	Message_GoalCompleteP2,
 	Message_NoteCrossed,

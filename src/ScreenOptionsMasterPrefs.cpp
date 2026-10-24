@@ -256,17 +256,23 @@ static void cache_display_specs()
 	}
 }
 
-static void DisplayResolutionChoices( vector<RString> &out )
+// Every resolution the displays support, like the old DISPLAY->GetDisplayResolutions().
+static vector<std::pair<int,int>> GetDisplayResolutions()
 {
 	cache_display_specs();
-	for (DisplaySpec const &iter : display_specs)
+	std::set<std::pair<int,int>> resolutions;
+	for (DisplaySpec const &spec : display_specs)
 	{
-		if (iter.currentMode() != nullptr)
-		{
-			RString s = ssprintf("%dx%d", iter.currentMode()->width, iter.currentMode()->height);
-			out.push_back(s);
-		}
+		for (DisplayMode const &mode : spec.supportedModes())
+			resolutions.insert(std::make_pair((int)mode.width, (int)mode.height));
 	}
+	return vector<std::pair<int,int>>(resolutions.begin(), resolutions.end());
+}
+
+static void DisplayResolutionChoices( vector<RString> &out )
+{
+	for (auto const &res : GetDisplayResolutions())
+		out.push_back(ssprintf("%dx%d", res.first, res.second));
 }
 
 static void RequestedTheme( int &sel, bool ToSel, const ConfOption *pConfOption )
@@ -589,13 +595,8 @@ static void DisplayResolutionM( int &sel, bool ToSel, const ConfOption *pConfOpt
 
 	if( res_choices.empty() )
 	{
-		for ( DisplaySpec const &iter : display_specs)
-		{
-			if ( iter.currentMode() != nullptr )
-			{
-				res_choices.push_back( res_t( iter.currentMode()->width, iter.currentMode()->height ) );
-			}
-		}
+		for (auto const &res : GetDisplayResolutions())
+			res_choices.push_back( res_t( res.first, res.second ) );
 	}
 
 	res_t sel_res( PREFSMAN->m_iDisplayWidth, PREFSMAN->m_iDisplayHeight );

@@ -110,6 +110,7 @@ ScreenSelect.cpp ScreenSelect.h ScreenSelectCharacter.cpp ScreenSelectCharacter.
 ScreenSelectLanguage.cpp  ScreenSelectLanguage.h \
 ScreenSelectMaster.cpp ScreenSelectMaster.h \
 ScreenSelectMusic.cpp ScreenSelectMusic.h \
+ScreenSelectPlayModeBranch.cpp ScreenSelectPlayModeBranch.h \
 ScreenSelectProfile.cpp ScreenSelectProfile.h \
 ScreenSyncOverlay.cpp ScreenSyncOverlay.h \
 ScreenSystemLayer.cpp ScreenSystemLayer.h ScreenSetTime.cpp ScreenSetTime.h \

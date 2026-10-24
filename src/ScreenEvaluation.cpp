@@ -771,6 +771,21 @@ void ScreenEvaluation::HandleScreenMessage( const ScreenMessage SM )
 	{
 		SOUND->PlayOnceFromDir( ANNOUNCER->GetPathTo("evaluation cheer") );
 	}
+	// STEP_P1 (0x407f58): the timer ends the screen, and it always goes on to
+	// ScreenNextStage (then ScreenBranch's waiting picture and ScreenSelectMusic).
+	else if( SM == SM_MenuTimer )
+	{
+		StartTransitioningScreen( SM_GoToNextScreen );
+		return;
+	}
+	else if( SM == SM_GoToNextScreen )
+	{
+		// Keep the mods used this stage (saved into the profile when gameplay
+		// started) on disk.
+		if( PREFSMAN->m_bSaveProfilesOnEvaluation && !GAMESTATE->m_bDemonstrationOrJukebox )
+			GAMESTATE->SavePlayerProfiles();
+		m_sNextScreen = "ScreenNextStage";
+	}
 
 	ScreenWithMenuElements::HandleScreenMessage( SM );
 }
@@ -804,9 +819,25 @@ class LunaScreenEvaluation: public Luna<ScreenEvaluation>
 {
 public:
 	static int GetStageStats( T* p, lua_State *L ) { LuaHelpers::Push( L, p->GetStageStats() ); return 1; }
+	// STEP_P1 (0x408054 / 0x408080): CommitScores reports a new record when the
+	// player's personal / machine high score index is 0.
+	static int PlayerHasNewRecord( T* p, lua_State *L )
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>( L, 1 );
+		lua_pushboolean( L, p->GetStageStats()->m_player[pn].m_iPersonalHighScoreIndex == 0 );
+		return 1;
+	}
+	static int PlayerHasNewMachineRecord( T* p, lua_State *L )
+	{
+		PlayerNumber pn = Enum::Check<PlayerNumber>( L, 1 );
+		lua_pushboolean( L, p->GetStageStats()->m_player[pn].m_iMachineHighScoreIndex == 0 );
+		return 1;
+	}
 	LunaScreenEvaluation()
 	{
 		ADD_METHOD( GetStageStats );
+		ADD_METHOD( PlayerHasNewRecord );
+		ADD_METHOD( PlayerHasNewMachineRecord );
 	}
 };
 

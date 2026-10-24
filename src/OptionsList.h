@@ -1,118 +1,114 @@
-#ifndef SCREEN_OPTIONS_LIST_H
-#define SCREEN_OPTIONS_LIST_H
+/* OptionsList - The per-player options menu of ScreenSelectMusic, recreated from STEP_P1.exe. */
 
-#include "ScreenWithMenuElements.h"
+#ifndef OPTIONS_LIST_H
+#define OPTIONS_LIST_H
+
+#include "ActorFrame.h"
+#include "Sprite.h"
 #include "RageSound.h"
-#include "Steps.h"
-#include "Trail.h"
-#include "OptionRowHandler.h"
-#include "BitmapText.h"
-#include "OptionsCursor.h"
-#include "CodeSet.h"
-#include "ThemeMetric.h"
+#include "PlayerNumber.h"
 
-class OptionsList;
-class OptionListRow: public ActorFrame
+class InputEventPlus;
+class ModIconsList;
+
+/** @brief One option shown in the list: its icon and, for noteskins, a preview. */
+class ModIconSimple : public ActorFrame
 {
 public:
-	void Load( OptionsList *pOptions, const RString &sType );
-	void SetFromHandler( const OptionRowHandler *pHandler );
-	void SetTextFromHandler( const OptionRowHandler *pHandler );
-	void SetUnderlines( const vector<bool> &aSelections, const OptionRowHandler *pHandler );
+	ModIconSimple();
 
-	void PositionCursor( Actor *pCursor, int iSelection );
-
-	void Start();
-
-private:
-	OptionsList *m_pOptions;
-
-	vector<BitmapText> m_Text;
-	// underline for each ("self or child has selection")
-	vector<AutoActor> m_Underlines;
-
-	bool	m_bItemsInTwoRows;
-
-	ThemeMetric<float>	ITEMS_SPACING_Y;
+	Sprite	m_sprIcon;		// OptionList/icons 11x11
+	Sprite	m_sprPreview;
+	bool	m_bHasPreview;
+	int		m_iItem;
 };
-/** @brief A popup options list. */
-class OptionsList: public ActorFrame
+
+class OptionsList : public ActorFrame
 {
 public:
-	friend class OptionListRow;
-
 	OptionsList();
-	~OptionsList();
 
-	void Load( RString sType, PlayerNumber pn );
-	void Reset();
-
+	void SetPlayer( PlayerNumber pn );
 	void Link( OptionsList *pLink ) { m_pLinked = pLink; }
+	void SetEnabled( bool b ) { m_bEnabled = b; }
+	void Reset();
+	void SetModList( ModIconsList *p ) { m_pModList = p; }
 
-	/** @brief Show the top-level menu. */
 	void Open();
-
-	/** @brief Close all menus (for menu timer). */
 	void Close();
-
 	bool Input( const InputEventPlus &input );
-	bool IsOpened() const { return m_asMenuStack.size() > 0; }
+	bool IsOpened() const { return m_bOpened; }
 
-	bool Start();	// return true if the last menu was popped in response to this press
+	virtual void HandleMessage( const Message &msg );
+	virtual void DrawPrimitives();
 
 private:
-	ThemeMetric<RString> TOP_MENU;
+	struct Menu
+	{
+		int iIcon;		// frame in OptionList/MenuIcons 1x9
+		int iCategory;	// StepP1Mods::Category
+		int iText;		// frame in OptionList/Texts 8x16
+	};
+	const Menu &CurrentMenu() const { return m_vMenus[m_iMenu]; }
+	int MenuIndex( int iOffset ) const;
+	int ItemIndex( int iOffset ) const;
 
-	void SelectItem( const RString &sRowName, int iMenuItem );
-	void MoveItem( const RString &sRowName, int iMove );
-	void SwitchMenu( int iDir );
-	void PositionCursor();
-	void SelectionsChanged( const RString &sRowName );
-	void UpdateMenuFromSelections();
-	RString GetCurrentRow() const;
-	OptionRowHandler *GetCurrentHandler();
-	int GetOneSelection( RString sRow, bool bAllowFail=false ) const;
-	void SwitchToCurrentRow();
-	void TweenOnCurrentRow( bool bForward );
-	void SetDefaultCurrentRow();
-	void Push( RString sDest );
-	void Pop();
-	void ImportRow( RString sRow );
-	void ExportRow( RString sRow );
-	static int FindScreenInHandler( const OptionRowHandler *pHandler, RString sScreen );
+	void ScrollMenus( int iDir );
+	void Refresh( const RString &sCommand );
+	void Animate( const RString &sCommand );
+	void ShowSlotItem( ModIconSimple &slot, int iItem );
+	void UpdateSlotDiffuse( ModIconSimple &slot );
+	void SlideSlot( ModIconSimple &slot, float fFromX, float fFromZoomX, float fToX, float fToZoomX, float fAlign );
+	void SweepWhiteSmall( Sprite &spr, float fStartX );
+	void Blink( Sprite &spr );
 
-	InputQueueCodeSet	m_Codes;
-
+	PlayerNumber	m_pn;
+	int				m_iMenu;
+	int				m_iItem;
+	bool			m_bLoaded;
+	bool			m_bOpened;
+	bool			m_bInMenus;	// choosing a menu, not an item
+	bool			m_bArrowsBigPulse;
+	bool			m_bArrowsSmPulse;
+	bool			m_bEnabled;
+	bool			m_bWhitePulse;
+	bool			m_bTextPulse;
+	int				m_iTextState;
 	OptionsList		*m_pLinked;
+	ModIconsList	*m_pModList;
+	vector<Menu>	m_vMenus;
 
-	bool			m_bStartIsDown;
-	bool			m_bAcceptStartRelease;
+	Sprite			m_sprBg;
+	Sprite			m_sprBlack1;
+	Sprite			m_sprBlack2;
+	Sprite			m_sprArrowsBig;
+	Sprite			m_sprArrowsSm;
+	Sprite			m_sprBg2;
+	Sprite			m_sprNextArrow;
+	Sprite			m_sprPrevArrow;
+	Sprite			m_sprBackArrow1;
+	Sprite			m_sprBackArrow2;
+	Sprite			m_sprWhiteSmall1;
+	Sprite			m_sprWhiteSmall2;
+	Sprite			m_sprWhiteBig;
+	ActorFrame		m_frameMenus;
+	Sprite			m_sprMenuIcon[4];	// left, center, right, leaving
+	Sprite			m_sprTexts;
+	ActorFrame		m_frameItems;
+	ModIconSimple	m_Slots[4];		// left, center, right, leaving
 
-	vector<RString> m_asLoadedRows;
-	map<RString, OptionRowHandler *> m_Rows;
-	map<RString, vector<bool> > m_bSelections;
-	set<RString> m_setDirectRows;
-	set<RString> m_setTopMenus; // list of top-level menus, pointing to submenus
-
-	PlayerNumber m_pn;
-	AutoActor m_Cursor;
-	OptionListRow m_Row[2];
-	int m_iCurrentRow;
-
-	vector<RString> m_asMenuStack;
-	int m_iMenuStackSelection;
-protected:
-	GameButton m_GameButtonPreviousItem;
-	GameButton m_GameButtonNextItem;
+	RageSound		m_soundMove;
+	RageSound		m_soundInOut;
+	RageSound		m_soundChange;
+	RageSound		m_soundSet;
+	RageSound		m_soundBad;
+	RageSound		m_soundBattle[5];
 };
-
 
 #endif
 
-/**
- * @file
- * @author 2006 Glenn Maynard (c)
- * @section LICENSE
+/*
+ * (c) 2006 Glenn Maynard
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -135,4 +131,3 @@ protected:
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-

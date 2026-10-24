@@ -124,17 +124,36 @@ LuaDeclareType( PlayMode );
  */
 enum SortOrder
 {
-	// ------- Pump it Up Sorts - StepP1 Revival - bsilver --------
-	SORT_ALLTUNES, // SORT_NEWTUNES,
-	SORT_ORIGINAL,
-	SORT_KPOP,
-	SORT_WORLDMUSIC,
-	SORT_JMUSIC,
+	// Same order as STEP_P1.exe
+	SORT_PREFERRED,
+	SORT_GROUP,
+	SORT_TITLE,
+	SORT_BPM,
+	SORT_POPULARITY,
+	SORT_TOP_GRADES,
+	SORT_ARTIST,
+	SORT_GENRE,
+	SORT_BEGINNER_METER,
+	SORT_EASY_METER,
+	SORT_MEDIUM_METER,
+	SORT_HARD_METER,
+	SORT_CHALLENGE_METER,
+	SORT_DOUBLE_EASY_METER,
+	SORT_DOUBLE_MEDIUM_METER,
+	SORT_DOUBLE_HARD_METER,
+	SORT_DOUBLE_CHALLENGE_METER,
+	// Pump it Up channels
 	SORT_FULLSONG,
 	SORT_REMIX,
 	SORT_SHORTCUT,
+	SORT_ORIGINAL,
+	SORT_KPOP,
+	SORT_WORLDMUSIC,
 	SORT_UCS,
+	SORT_QUEST,
+	SORT_COOP,
 	SORT_RANDOM,
+	SORT_JMUSIC,
 	SORT_LEVEL_1,
 	SORT_LEVEL_2,
 	SORT_LEVEL_3,
@@ -159,35 +178,13 @@ enum SortOrder
 	SORT_LEVEL_22,
 	SORT_LEVEL_23,
 	SORT_LEVEL_24_OVER,
-	SORT_QUEST,
-	SORT_COOP,
-	// ----------------------------------------------------------------------------------------------
-	// song sorts
-	SORT_PREFERRED, /**< Sort by the user's preferred settings. */
-	SORT_GROUP, /**< Sort by the groups the Songs are in. */
-	SORT_TITLE, /**< Sort by the Song's title. */
-	SORT_BPM, /**< Sort by the Song's BPM. */
-	SORT_POPULARITY, /**< Sort by how popular the Song is. */
-	SORT_TOP_GRADES, /**< Sort by the highest grades earned on a Song. */
-	SORT_ARTIST, /**< Sort by the name of the artist of the Song. */
-	SORT_GENRE, /**< Sort by the Song's genre. */
-	SORT_BEGINNER_METER, /**< Sort by the difficulty of the single beginner meter. */
-	SORT_EASY_METER, /**< Sort by the difficulty of the single easy meter. */
-	SORT_MEDIUM_METER, /**< Sort by the difficulty of the single medium meter. */
-	SORT_HARD_METER, /**< Sort by the difficulty of the single hard meter. */
-	SORT_CHALLENGE_METER, /**< Sort by the difficulty of the single challenge meter. */
-	SORT_DOUBLE_EASY_METER, /**< Sort by the difficulty of the double easy meter. */
-	SORT_DOUBLE_MEDIUM_METER, /**< Sort by the difficulty of the double medium meter. */
-	SORT_DOUBLE_HARD_METER, /**< Sort by the difficulty of the double hard meter. */
-	SORT_DOUBLE_CHALLENGE_METER, /**< Sort by the difficulty of the double challenge meter. */
-	//
-	SORT_MODE_MENU, /**< Have access to the menu for choosing the sort. */
-	// course sorts
-	SORT_ALL_COURSES, /**< Sort with all courses available. */
-	SORT_NONSTOP_COURSES, /**< View only the nonstop courses. */
-	SORT_ONI_COURSES, /**< View only the oni/survival courses. */
-	SORT_ENDLESS_COURSES, /**< View only the endless courses. */
-	SORT_LENGTH, /**< Sort the songs/courses by how long they would last. */
+	SORT_ALLTUNES,
+	SORT_MODE_MENU,
+	SORT_ALL_COURSES,
+	SORT_NONSTOP_COURSES,
+	SORT_ONI_COURSES,
+	SORT_ENDLESS_COURSES,
+	SORT_LENGTH,
 	SORT_ROULETTE,
 	SORT_RECENT,
 	NUM_SortOrder,
@@ -219,7 +216,7 @@ LuaDeclareType( SortOrder );
  *
  * This function is mainly used for saving sort order to the profile. -aj
  */
-inline bool IsSongSort( SortOrder so ) { return (so >= SORT_PREFERRED && so <= SORT_DOUBLE_CHALLENGE_METER) || so == SORT_LENGTH; }
+inline bool IsSongSort( SortOrder so ) { return (so >= SORT_PREFERRED && so <= SORT_ALLTUNES) || so == SORT_LENGTH; }
 
 /** @brief The list of tap note scores available during play. */
 enum TapNoteScore {

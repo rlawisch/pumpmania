@@ -10,20 +10,7 @@ class ScreenSelectProfile : public ScreenWithMenuElements
 public:
 	virtual void Init();
 	virtual bool Input( const InputEventPlus &input );
-	virtual bool MenuLeft( const InputEventPlus &input );
-	virtual bool MenuRight( const InputEventPlus &input );
-  // StepP1 Revival - bSilver ---------------------------------------------------------------------
-	// virtual bool MenuUp( const InputEventPlus &input );
-	// virtual bool MenuDown( const InputEventPlus &input );
-	virtual bool MenuStart(const InputEventPlus &input);
-  // ----------------------------------------------------------------------------------------------
 	virtual void HandleScreenMessage( const ScreenMessage SM );
-
-	GameButton m_TrackingRepeatingInput;
-
-  // StepP1 Revival - bSilver
-	int m_iSelectedProfiles[NUM_PLAYERS];
-	bool m_bPlayerIsSelecting[NUM_PLAYERS];
 
 	// Lua
 	void PushSelf( lua_State *L );
@@ -32,7 +19,12 @@ public:
 	bool Finish();
 
 protected:
-	// int m_iSelectedProfiles[NUM_PLAYERS]; // StepP1 Revival - bSilver - Moved to public
+	static void BroadcastLocalProfileChange( PlayerNumber pn, int iProfileIndex );
+
+	// STEP_P1: -1 = no profile (guest), 0 = memory card, 1..N = local profile N.
+	int m_iSelectedProfiles[NUM_PLAYERS];
+	bool m_bTimedOut;	// the menu timer ran out
+	bool m_bFinished;	// Finish() was called; ignore further input
 };
 
 #endif

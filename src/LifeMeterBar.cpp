@@ -20,6 +20,8 @@ static RString LIFE_PERCENT_CHANGE_NAME( size_t i )   { return "LifePercentChang
 
 LifeMeterBar::LifeMeterBar()
 {
+	m_iNX2Life = 500; m_iNX2Limit = 1000;
+	m_iNX2FactorMin = 0; m_iNX2FactorMax = 800; m_iNX2FactorMiss = -700; m_iNX2Factor = 100;
 	DANGER_THRESHOLD.Load	("LifeMeterBar","DangerThreshold");
 	INITIAL_VALUE.Load	("LifeMeterBar","InitialValue");
 	HOT_VALUE.Load		("LifeMeterBar","HotValue");
@@ -138,6 +140,26 @@ void LifeMeterBar::Load( const PlayerState *pPlayerState, PlayerStageStats *pPla
 		PREFSMAN->m_bMercifulBeginner;
 
 	// StepP1 Revival - bSilver ---------------------------------------------------------------------
+	// PIU NX2 CGauge::Reset / CPlayer::ClearForNewStage: start at 500 of 1000,
+	// limit 1000 + level^2 * 3. The factor table follows the judge level
+	// (NX2 Easy/Normal/Hard game level).
+	{
+		static const int FactorTable[3][4] = {
+			{ 200, 1000, -700, 500 },	// Easy
+			{   0,  800, -700, 100 },	// Normal
+			{ 100,  900, -700, 300 },	// Hard
+		};
+		int iJudge = pPlayerState->m_PlayerOptions.GetStage().m_iJudgment;
+		int iLevel = iJudge <= 0 ? 0 : (iJudge == 1 ? 1 : 2);
+		m_iNX2FactorMin = FactorTable[iLevel][0];
+		m_iNX2FactorMax = FactorTable[iLevel][1];
+		m_iNX2FactorMiss = FactorTable[iLevel][2];
+		m_iNX2Factor = FactorTable[iLevel][3];
+		const Steps *pSteps = GAMESTATE->m_pCurSteps[pn];
+		const int iMeter = pSteps ? pSteps->GetMeter() : 0;
+		m_iNX2Limit = 1000 + iMeter * iMeter * 3;
+		m_iNX2Life = 500;
+	}
 	m_fLifePercentage = 0.5f;
 	m_fTipPosition = 0.5f;
 	m_fBarBlueProgress = m_fTipPosition - 0.150f; // starts behind tip
@@ -149,8 +171,52 @@ void LifeMeterBar::Load( const PlayerState *pPlayerState, PlayerStageStats *pPla
 	AfterLifeChanged();
 }
 
+void LifeMeterBar::SyncNX2Life()
+{
+	CLAMP( m_iNX2Life, 0, m_iNX2Limit );
+	CLAMP( m_iNX2Factor, m_iNX2FactorMin, m_iNX2FactorMax );
+	m_fLifePercentage = min( m_iNX2Life, 1000 ) / 1000.0f;
+	AfterLifeChanged();
+}
+
+// PIU NX2 CGauge::SetJudgeGauge. Hold ticks are lines too: held = PERFECT, released = MISS.
 void LifeMeterBar::ChangeLife( TapNoteScore score )
 {
+	if( m_pPlayerState->m_PlayerOptions.GetSong().m_DrainType == DrainType_Normal && score != TNS_HitMine )
+	{
+		if( m_pPlayerStageStats->m_bFailed )
+			return;
+		switch( score )
+		{
+		case TNS_W1:
+		case TNS_W2:
+		case TNS_CheckpointHit:
+			m_iNX2Life += 12 * m_iNX2Factor / 1000;
+			m_iNX2Factor += 20;
+			break;
+		case TNS_W3:
+			m_iNX2Life += 10 * m_iNX2Factor / 1000;
+			m_iNX2Factor += 16;
+			break;
+		case TNS_W4:
+			break;
+		case TNS_W5:
+			m_iNX2Life += -50;
+			m_iNX2Factor += m_iNX2FactorMiss / 2;
+			break;
+		case TNS_Miss:
+		case TNS_None:
+		case TNS_CheckpointMiss:
+			m_iNX2Life += -500 * min( m_iNX2Life, 1000 ) / 2000 - 20;
+			m_iNX2Factor += m_iNX2FactorMiss;
+			break;
+		default:
+			break;
+		}
+		SyncNX2Life();
+		return;
+	}
+
 	float fDeltaLife=0.f;
 	switch( score )
 	{
@@ -233,6 +299,8 @@ void LifeMeterBar::ChangeLife( HoldNoteScore score, TapNoteScore tscore )
 		FAIL_M(ssprintf("Invalid DrainType: %i", dtype));
 	}
 
+	if( dtype == DrainType_Normal )
+		return;	// NX2: holds only change the gauge through their tick lines
 	ChangeLife( fDeltaLife );
 }
 
@@ -290,6 +358,7 @@ void LifeMeterBar::ChangeLife( float fDeltaLife )
 
 	m_fLifePercentage += fDeltaLife;
 	CLAMP( m_fLifePercentage, 0, LIFE_MULTIPLIER );
+	m_iNX2Life = int( m_fLifePercentage * 1000 );
 	AfterLifeChanged();
 }
 
@@ -297,6 +366,7 @@ void LifeMeterBar::SetLife(float value)
 {
 	m_fLifePercentage= value;
 	CLAMP( m_fLifePercentage, 0, LIFE_MULTIPLIER );
+	m_iNX2Life = int( m_fLifePercentage * 1000 );
 	AfterLifeChanged();
 }
 
@@ -364,7 +434,8 @@ void LifeMeterBar::Update( float fDeltaTime )
 	m_fTipPosition = m_fLifePercentage;
 	CLAMP(m_fTipPosition, 0.0f, 1.0f);
 
-	// GLOW COLOR only visible if life is 100%
+	// PIU NX2 CGauge::Draw. Full (life >= 1000): glow over the bar; under a
+	// third: the red warning. Both, and the tip, flash every other frame.
 	bool bGlowColor = (m_fLifePercentage >= 1.0f);
 	if( bGlowColor != m_bGlowColorVisible )
 	{
@@ -372,80 +443,59 @@ void LifeMeterBar::Update( float fDeltaTime )
 		m_sprGlowColor->SetVisible(bGlowColor);
 	}
 
-	// GLOW RED only visible if life is <= 30%
-	bool bGlowRed = (m_fLifePercentage <= 0.3f);
-	if( bGlowRed != m_bGlowRedVisible )
+	bool bLow = (m_fLifePercentage < 1.0f / 3.0f);
+	if( bLow != m_bGlowRedVisible )
 	{
-		m_bGlowRedVisible = bGlowRed;
-		m_sprGlowRed->SetVisible(bGlowRed);
+		m_bGlowRedVisible = bLow;
+		m_sprGlowRed->SetVisible(bLow);
+	}
+	if( bLow != m_bUsingTipRed )
+	{
+		m_bUsingTipRed = bLow;
+		m_sprFallbackRed->SetVisible(bLow);
+		m_sprTipBlue->SetVisible(!bLow);
+		m_sprTipRed->SetVisible(bLow);
 	}
 
-	// Switch between Tip Blue and Red
-	bool bUseRedTip = (m_fLifePercentage <= 0.3f);
-	if( bUseRedTip != m_bUsingTipRed )
+	// NX2 flips every frame at a fixed 60fps; keep that rate at any framerate.
+	m_fFlashTimer += fDeltaTime;
+	if( m_fFlashTimer >= 1.0f / 60.0f )
 	{
-		m_bUsingTipRed = bUseRedTip;
-		m_sprFallbackRed->SetVisible(bUseRedTip);
-		m_sprTipBlue->SetVisible(!bUseRedTip);
-		m_sprTipRed->SetVisible(bUseRedTip);
+		m_fFlashTimer = fmodf( m_fFlashTimer, 1.0f / 60.0f );
+		m_bFlashFrame = !m_bFlashFrame;
 	}
-
-	// Tip Blue/Red blink effect
-	static float fTipBlinkTimer = 0.0f;
-	static bool bFlashToggle = false;
-
-	fTipBlinkTimer += fDeltaTime;
-
-	if (fTipBlinkTimer >= 0.017f)
-	{
-		bFlashToggle = !bFlashToggle;
-		fTipBlinkTimer = 0.0f;
-	}
-
-	float fAlpha = bFlashToggle ? 1.0f : 0.0f;
-
-	if( m_bUsingTipRed )
-	{
-		m_sprTipRed->SetDiffuseAlpha(fAlpha);
-	}
-	else
-	{
-		m_sprTipBlue->SetDiffuseAlpha(fAlpha);
-	}
-
+	(m_bUsingTipRed ? m_sprTipRed : m_sprTipBlue)->SetDiffuseAlpha( m_bFlashFrame ? 1.0f : 0.0f );
 	if( m_bGlowRedVisible )
-	{
-		m_sprGlowRed->SetDiffuseAlpha(fAlpha);
-	}
-
+		m_sprGlowRed->SetDiffuseAlpha( m_bFlashFrame ? 0.75f : 0.25f );
 	if( m_bGlowColorVisible )
-	{
-		m_sprGlowColor->SetDiffuseAlpha(fAlpha);
-	}
+		m_sprGlowColor->SetDiffuseAlpha( m_bFlashFrame ? 1.0f : 0.0f );
 
-	// Update position of visual elements
+	// The tip sits on the real life value.
 	const float fTipX = SCALE(m_fTipPosition, 0.0f, 1.0f, -185.0f, +185.0f);
-
 	m_sprTipBlue->SetX(fTipX);
 	m_sprTipRed->SetX(fTipX);
 
-	// BarGrey = 15% behind tip
-	float fGreyPercent = m_fTipPosition - 0.15f;
-	CLAMP(fGreyPercent, 0.0, 1.0f);
+	// A full gauge is drawn whole: no pulsing strip at its end.
+	float fGreyPercent = m_fLifePercentage >= 1.0f ? 1.0f : m_fTipPosition - 0.10f;
+	CLAMP(fGreyPercent, 0.0f, 1.0f);
 	m_sprBarGrey->SetCropRight(1.0f - fGreyPercent);
 
-	// BarBlue pulsating at BPM between [start] and [tip]
-	float fTip = m_fTipPosition;
-	float fStart = fTip - 0.150f;
-	CLAMP(fStart, 0.0f, 1.0f);
-
-	// Oscilate between 0 and 1 at BPM tempo
-	float fPhase = fmodf(fBeat, 1.0f); // 0.0 -> 1.0 in each beat
-	float fPulse = (fPhase < 0.5f ) ? (fPhase * 2.0f) : (2.0f - fPhase * 2.0f);
-	// fPulse: 0 -> 1 -> 0
-
-	// Bar interpolation
-	m_fBarBlueProgress = fStart + fPulse * (fTip - fStart);
+	// The bar: on each beat it shows the real value, then falls back up to
+	// 10% in six steps during the first half of the beat (gauge_table) and
+	// stays there for the second half. A full gauge doesn't pulse.
+	static const float GaugeTable[6] = { 1.0f, 0.6f, 0.3f, 0.1f, 0.0f, 0.0f };
+	if( m_fLifePercentage >= 1.0f )
+	{
+		m_fBarBlueProgress = 1.0f;
+	}
+	else
+	{
+		float fPhase = fBeat - floorf(fBeat);
+		float fBlink = (fBeat >= 0 && fPhase <= 0.5f) ? (1.0f - 2.0f * fPhase) : 0.0f;
+		int iStep = int( (1.0f - fBlink) * 59.0f ) / 10;
+		CLAMP( iStep, 0, 5 );
+		m_fBarBlueProgress = m_fTipPosition - (1.0f - GaugeTable[iStep]) / 10.0f;
+	}
 	CLAMP(m_fBarBlueProgress, 0.0f, 1.0f);
 	m_sprBarBlue->SetCropRight(1.0f - m_fBarBlueProgress);
 	// ----------------------------------------------------------------------------------------------

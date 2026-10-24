@@ -18,6 +18,7 @@ AutoScreenMessage( SM_PlayToasty );
 class ScoreKeeperNormal: public ScoreKeeper
 {
 	void AddScoreInternal( TapNoteScore score );
+	void AddNX2Score( TapNoteScore tns, int iNumNotes, bool bLongOnly );
 	int CalcNextToastyAt(int level);
 
 	int	m_iScoreRemainder;

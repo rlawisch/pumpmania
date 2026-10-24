@@ -91,7 +91,7 @@ public:
 		m_bAutoNoteskin(false), m_bRouletteNoteskin(false),
 		m_bFreePerformance(false), m_bJudgeByNote(false),
 		m_iJudgment(NORMAL_JUDGMENT), m_bMinis(false),
-    m_iAutoVelocity(300)
+    m_iAutoVelocity(0)
 	{
 		m_sNoteSkin = "";
 		ZERO( m_fAccels );	ONE( m_SpeedfAccels );
@@ -449,6 +449,7 @@ public:
 	bool		m_bRandomSkin; // Change skins in the gameplay.
   int     m_iAutoVelocity;
   bool    m_bMinis;
+	int		m_iNoteSkinIndex = -1; // STEP_P1: item picked in the OptionList noteskin menu
 };
 
 #define ADD_MULTICOL_METHOD( method_name) \
