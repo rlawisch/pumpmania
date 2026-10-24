@@ -5,7 +5,7 @@ local t = Def.ActorFrame {
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 -- esto ayuda al movimento de la wheel cuando la cantidad de grupos disponibles es menor que 7
-local bUseLocalIndex = true;
+local bUseLocalIndex = false;
 -- usado para el indice mostrado en la selección de grupos
 local iRealNumGroups = 0;
 
@@ -13,7 +13,7 @@ local iRealNumGroups = 0;
 local function GetAllGroups()
 	local temp = SONGMAN:GetSongGroupNamesAvailables();
 	iRealNumGroups = #temp;
-
+	
 	if( #temp < 7 ) then
 		bUseLocalIndex = true;
 	end;
@@ -68,15 +68,15 @@ end;
 --/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 -- Posiciones iniciales
 local InitPos = {
-	(cmd(x,-800;rotationy,-65;zoom,.45;diffusealpha,0)),
-	(cmd(x,-600;rotationy,-65;zoom,.45;diffusealpha,.2)),
-	(cmd(x,-370;rotationy,-65;zoom,.45;diffusealpha,.4)),
-	(cmd(x,-215;rotationy,-55;zoom,.58;diffusealpha,.6)),
-	(cmd(x,0;z,0;zoom,.75;rotationy,0;diffusealpha,1)),--center
-	(cmd(x,215;rotationy,55;zoom,.58;diffusealpha,.6)),
-	(cmd(x,370;rotationy,65;zoom,.45;diffusealpha,.4)),
-	(cmd(x,600;rotationy,65;zoom,.45;diffusealpha,.2)),
-	(cmd(x,800;rotationy,65;zoom,.45;diffusealpha,0)),
+	(cmd(x,-420;rotationy,-90;zoom,.8;diffusealpha,0)),
+	(cmd(x,-328;rotationy,-90;zoom,.8;diffusealpha,.2)),
+	(cmd(x,-252;rotationy,-92;zoom,.8;diffusealpha,.4)),
+	(cmd(x,-186;rotationy,-92;zoom,.8;diffusealpha,.6)),
+	(cmd(x,0;z,0;zoom,1;rotationy,0;diffusealpha,1)),--center
+	(cmd(x,186;rotationy,92;zoom,.8;diffusealpha,.6)),
+	(cmd(x,252;rotationy,92;zoom,.8;diffusealpha,.4)),
+	(cmd(x,328;rotationy,90;zoom,.8;diffusealpha,.2)),
+	(cmd(x,420;rotationy,90;zoom,.8;diffusealpha,0)),
 };
 
 -- Posiciones de comienzo
@@ -107,13 +107,10 @@ local Banners = {};
 local a = Def.ActorFrame {
 	InitCommand=cmd(x,cx;y,cy-17);
 	GoBackSelectingGroupMessageCommand=function(self)
-		
 		--(cmd(stoptweening;x,-20;sleep,.1;linear,.2;x,cx))(self);
 		local index = SCREENMAN:GetTopScreen():GetCurrentGroupIndex();
-
 		if (CurrentGroupNumber ~= index) then
 			CurrentGroupNumber = index;
-			Trace("[GroupWheel] CurrentGroupNumber: " .. CurrentGroupNumber .. " | Group: " .. AllGroups[CurrentGroupNumber]);
 			Banners = GetBanners( CurrentGroupNumber );
 			self:playcommand("RefreshPositions");
 		end;
@@ -121,23 +118,16 @@ local a = Def.ActorFrame {
 	end;
 	--StartSelectingSongMessageCommand=cmd(stoptweening;x,cx;linear,.3;x,-150);
 	ChangeGroupMessageCommand=function(self,params)
-				Trace("Recebido: Index="..(params.GroupIndex or "nil").." Dir="..(params.Dir or "nil"))
 		if not bUseLocalIndex then
 			CurrentGroupNumber = SCREENMAN:GetTopScreen():GetCurrentGroupIndex();
-			if( CurrentGroupNumber <= 0 ) then
-				CurrentGroupNumber = NumGroups;
-			elseif ( CurrentGroupNumber > NumGroups ) then
-				CurrentGroupNumber = 1;
-			end;
-						Trace("[GroupWheel] CurrentGroupNumber: " .. CurrentGroupNumber .. " | Group: " .. AllGroups[CurrentGroupNumber]);
 		else
 			CurrentGroupNumber = CurrentGroupNumber + params.Dir;
+			
 			if( CurrentGroupNumber <= 0 ) then
 				CurrentGroupNumber = NumGroups;
 			elseif ( CurrentGroupNumber > NumGroups ) then
 				CurrentGroupNumber = 1;
 			end;
-						Trace("[GroupWheel] CurrentGroupNumber: " .. CurrentGroupNumber .. " | Group: " .. AllGroups[CurrentGroupNumber]);
 		end;
 		Banners = GetBanners( CurrentGroupNumber );
 		--self:playcommand("Move");
@@ -146,11 +136,11 @@ local a = Def.ActorFrame {
 }
 
 a[#a+1] = LoadActor( THEME:GetPathG("","ScreenSelectMusic/groupwheel_br") )..{
-	InitCommand=cmd(blend,'BlendMode_Add';z,-160;y,-10;zoom,0.6;diffusealpha,0);
-	StartSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,1;linear,.2;diffusealpha,0);
-	GoBackSelectingGroupMessageCommand=cmd(stoptweening;diffusealpha,0;zoom,0.6;sleep,.2;linear,.2;diffusealpha,1;queuecommand,'Loop');
-	LoopCommand=cmd(stoptweening;diffusealpha,1;linear,.7;diffusealpha,.6;linear,.7;diffusealpha,1;queuecommand,'Loop');
-	MoveMessageCommand=cmd(finishtweening;diffusealpha,1;linear,.2;diffusealpha,0;queuecommand,'Loop')
+	InitCommand=cmd(blend,'BlendMode_Add';z,-160;y,-4;basezoom,.66;zoom,1.25;diffusealpha,0);
+	StartSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,1;linear,.2;diffusealpha,0;zoom,1.5);
+	GoBackSelectingGroupMessageCommand=cmd(stoptweening;diffusealpha,0;zoom,1.25;sleep,.2;linear,.2;diffusealpha,1;queuecommand,'Loop');
+	LoopCommand=cmd(stoptweening;diffusealpha,1;rotationx,0;linear,.4;diffusealpha,.6;linear,.4;diffusealpha,1;queuecommand,'Loop');
+	MoveMessageCommand=cmd(finishtweening;diffusealpha,1;rotationx,0;linear,.2;rotationx,180;queuecommand,'Loop')
 };
 
 for i=1,#AllGroups do
@@ -288,8 +278,8 @@ t[#t+1] = a;
 local lang = GetLanguageText();
 
 -- Descripciones
-t[#t+1] = LoadFont("_myriad pro yellow")..{
-	InitCommand=cmd(x,SCREEN_CENTER_X;y,SCREEN_BOTTOM-118;zoom,.94;settext,'';vertalign,'VertAlign_Top');
+t[#t+1] = LoadFont("_myriad pro blue Bold")..{
+	InitCommand=cmd(x,SCREEN_CENTER_X;y,SCREEN_BOTTOM-100;zoom,.54;settext,'';vertalign,'VertAlign_Top');
 	MoveMessageCommand=function(self,params)
 		self:settext('');
 		local gname = AllGroups[CurrentGroupNumber];
@@ -304,31 +294,129 @@ t[#t+1] = LoadFont("_myriad pro yellow")..{
 		else
 			self:settext( desc );
 		end;
-		(cmd(stoptweening;zoom,.94;shadowlength,0;diffusealpha,0;sleep,.1;linear,.2;diffusealpha,1))(self);--;
+		(cmd(stoptweening;zoom,.54;zoomy,.6;shadowlength,0;diffusealpha,0;sleep,.25;linear,.2;diffusealpha,1))(self);--;
 	end;
-	GoBackSelectingGroupMessageCommand=cmd(stoptweening;sleep,.1;queuecommand,'Move');
+	GoBackSelectingGroupMessageCommand=cmd(stoptweening;sleep,.2;queuecommand,'Move');
 	StartSelectingSongMessageCommand=cmd(stoptweening;settext,'');
 	OffCommand=cmd(stoptweening;settext,'');
-};
+}
 
 -- Arrow izquierdo
 t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSelectMusic/_arrow_to_left.png") )..{
-	InitCommand=cmd(y,cy-14;x,cx-254;zoom,0.5;diffusealpha,0;z,200);
-	GoBackSelectingGroupMessageCommand=cmd(finishtweening;zoom,0;linear,.15;zoom,0.5;x,cx-254;diffusealpha,1;linear,.1;diffusealpha,1;queuecommand,'Loop');
-	StartSelectingSongMessageCommand=cmd(finishtweening;diffusealpha,1;x,cx-254;linear,.25;x,cx-261;sleep,0.1;linear,0.1;x,cx;diffusealpha,0);
-	NextGroupMessageCommand=cmd(finishtweening;linear,.02;x,cx-254;sleep,.18;queuecommand,'Loop');
-	PrevGroupMessageCommand=cmd(finishtweening;linear,.02;zoom,.50;x,cx-254;linear,.15;zoom,.60;x,cx-261;linear,.08;zoom,.50;x,cx-254;queuecommand,'Loop');
-	LoopCommand=cmd(finishtweening;diffusealpha,0.8;linear,.85;diffusealpha,1;linear,.85;diffusealpha,0.8;queuecommand,'Loop');
+	InitCommand=cmd(blend,'BlendMode_Add';y,cy-14;x,cx-133;basezoom,.47;diffusealpha,0;z,200);
+	GoBackSelectingGroupMessageCommand=cmd(stoptweening;x,cx-133;diffusealpha,0;sleep,.3;linear,.1;diffusealpha,1;sleep,.1;queuecommand,'Loop');
+	StartSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,0);
+	NextGroupMessageCommand=cmd(stoptweening;linear,.02;x,cx-133;sleep,.18;queuecommand,'Loop');
+	PrevGroupMessageCommand=cmd(stoptweening;linear,.02;x,cx-133;linear,.15;x,cx-142;linear,.08;x,cx-133;queuecommand,'Loop');
+	LoopCommand=cmd(stoptweening;x,cx-133;linear,.45;x,cx-140;linear,.45;x,cx-133;queuecommand,'Loop');
 };
 
 -- Arrow derecho
 t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSelectMusic/_arrow_to_left.png") )..{
-	InitCommand=cmd(y,cy-14;x,cx+254;zoom,0.5;rotationz,180;diffusealpha,0;z,200);
-	GoBackSelectingGroupMessageCommand=cmd(finishtweening;zoom,0;linear,.15;zoom,0.5;x,cx+254;diffusealpha,1;linear,.1;diffusealpha,1;queuecommand,'Loop');
-	StartSelectingSongMessageCommand=cmd(finishtweening;diffusealpha,1;x,cx+254;linear,.25;x,cx+261;sleep,0.1;linear,0.1;x,cx;diffusealpha,0);
-	NextGroupMessageCommand=cmd(finishtweening;linear,.02;zoom,.50;x,cx+254;linear,.15;zoom,.60;x,cx+261;linear,.08;zoom,.50;x,cx+250;queuecommand,'Loop');
-	PrevGroupMessageCommand=cmd(finishtweening;linear,.02;x,cx+254;sleep,.18;queuecommand,'Loop');
-	LoopCommand=cmd(finishtweening;diffusealpha,0.8;linear,.85;diffusealpha,1;linear,.85;diffusealpha,0.8;queuecommand,'Loop');
+	InitCommand=cmd(blend,'BlendMode_Add';y,cy-14;x,cx+133;basezoom,.47;rotationz,180;diffusealpha,0;z,200);
+	GoBackSelectingGroupMessageCommand=cmd(stoptweening;x,cx+133;diffusealpha,0;sleep,.3;linear,.1;diffusealpha,1;sleep,.1;queuecommand,'Loop');
+	StartSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,0);
+	NextGroupMessageCommand=cmd(stoptweening;linear,.02;x,cx+133;linear,.15;x,cx+142;linear,.08;x,cx+133;queuecommand,'Loop');
+	PrevGroupMessageCommand=cmd(stoptweening;linear,.02;x,cx+133;sleep,.18;queuecommand,'Loop');
+	LoopCommand=cmd(stoptweening;x,cx+133;linear,.45;x,cx+140;linear,.45;x,cx+133;queuecommand,'Loop');
 };
+
+-- Indice
+t[#t+1] = Def.ActorFrame {
+	InitCommand=cmd(x,cx;y,cy+102;diffusealpha,0);
+	MoveMessageCommand=function(self)
+		local index = SCREENMAN:GetTopScreen():GetCurrentGroupIndex();
+		local numitems = iRealNumGroups;
+		
+		local total_d1 = self:GetChild("TOTAL_D1");
+		local total_d2 = self:GetChild("TOTAL_D2");
+		local total_d3 = self:GetChild("TOTAL_D3");
+		local curindex_d1 = self:GetChild("CURINDEX_D1");
+		local curindex_d2 = self:GetChild("CURINDEX_D2");
+		local curindex_d3 = self:GetChild("CURINDEX_D3");
+		
+		if numitems < 999 then
+			local total_centenas = math.floor((numitems)/100)*100;
+			local total_decenas = math.floor((numitems - total_centenas)/10)*10;
+			local total_unidad = math.floor(numitems - total_centenas - total_decenas);
+			
+			total_d3:setstate( math.floor(total_centenas/100) );
+			total_d2:setstate( math.floor(total_decenas/10) );
+			total_d1:setstate( math.floor(total_unidad) );
+		else
+			total_d3:setstate( 9 );
+			total_d2:setstate( 9 );
+			total_d1:setstate( 9 );
+		end;
+		
+		if index < 999 then
+			local curindex_centenas = math.floor((index)/100)*100;
+			local curindex_decenas = math.floor((index - curindex_centenas)/10)*10;
+			local curindex_unidad = math.floor(index - curindex_centenas - curindex_decenas);
+			
+			curindex_d3:setstate( math.floor(curindex_centenas/100) );
+			curindex_d2:setstate( math.floor(curindex_decenas/10) );
+			curindex_d1:setstate( math.floor(curindex_unidad) );
+		else
+			curindex_d3:setstate( 9 );
+			curindex_d2:setstate( 9 );
+			curindex_d1:setstate( 9 );
+		end;
+	end;
+	StartSelectingSongMessageCommand=cmd(finishtweening;diffusealpha,1;y,cy+102;linear,.25;y,cy+160;diffusealpha,0);
+	GoBackSelectingGroupMessageCommand=cmd(playcommand,'Move';finishtweening;diffusealpha,0;y,cy+160;linear,.25;y,cy+102;diffusealpha,1);
+	children = {
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/_counter_channels_bg") )..{
+			InitCommand=cmd(y,2;basezoom,0.67);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/SongIndexNumber 10x1") )..{
+			Name="TOTAL_D3";
+			InitCommand=cmd(pause;x,10;basezoom,.70);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/SongIndexNumber 10x1") )..{
+			Name="TOTAL_D2";
+			InitCommand=cmd(pause;x,18;basezoom,.70);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/SongIndexNumber 10x1") )..{
+			Name="TOTAL_D1";
+			InitCommand=cmd(pause;x,26;basezoom,.70);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/SongIndexNumber 10x1") )..{
+			Name="CURINDEX_D3";
+			InitCommand=cmd(pause;x,-26;basezoom,.70);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/SongIndexNumber 10x1") )..{
+			Name="CURINDEX_D2";
+			InitCommand=cmd(pause;x,-18;basezoom,.70);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/SongIndexNumber 10x1") )..{
+			Name="CURINDEX_D1";
+			InitCommand=cmd(pause;x,-10;basezoom,.70);
+		};
+	};
+}
+
+-- Cursor
+t[#t+1] = Def.ActorFrame {
+	InitCommand=cmd(x,cx;y,cy+126;diffusealpha,0);
+	MoveMessageCommand=function(self)
+		local index = SCREENMAN:GetTopScreen():GetCurrentGroupIndex();
+		local numitems = iRealNumGroups;
+	
+		local ball = self:GetChild("BALL");
+		ball:x( -155 + 310*((index-1)/numitems) );
+	end;
+	StartSelectingSongMessageCommand=cmd(finishtweening;diffusealpha,0);
+	GoBackSelectingGroupMessageCommand=cmd(playcommand,'Move';finishtweening;diffusealpha,0;sleep,.4;diffusealpha,1);
+	children = {
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/_cursor_line") )..{
+			InitCommand=cmd(basezoom,0.67);
+		};
+		LoadActor( THEME:GetPathG("","ScreenSelectMusic/_cursor_ball") )..{
+			Name="BALL";
+			InitCommand=cmd(x,-155;basezoom,0.67);
+		};
+	};
+}
 
 return t;

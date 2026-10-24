@@ -75,26 +75,9 @@ t[#t+1] = Def.ActorFrame {
 };
 
 t[#t+1] = LoadActor( THEME:GetPathG("","ScreenSelectMusic/moon 1x4.png") )..{
-	InitCommand=cmd(stoptweening;pause;setstate,3;zoom,.66;vertalign,'VertAlign_Top';x,SCREEN_CENTER_X;y,0);
+	InitCommand=cmd(stoptweening;pause;setstate,1;zoom,.66;vertalign,'VertAlign_Top';x,SCREEN_CENTER_X;y,0);
 	GoBackSelectingGroupMessageCommand=cmd(stoptweening;diffusealpha,1;sleep,.1;linear,.2;diffusealpha,0);
-	StartSelectingSongMessageCommand=function(self)
-		(cmd(stoptweening;diffusealpha,0;sleep,.1;linear,.2;diffusealpha,1))(self);
-		local cur_group = SCREENMAN:GetTopScreen():GetCurrentGroup();
-		if not ( cur_group == "SO_QUEST" or cur_group == "04-SKILLUP ZONE" ) then
-			self:setstate(1);
-		else
-			self:setstate(3);
-		end;
-	end;
-	ScreenChangedMessageCommand=function(self)
-		(cmd(stoptweening;diffusealpha,0;sleep,.1;linear,.2;diffusealpha,1))(self);
-		local cur_group = SCREENMAN:GetTopScreen():GetCurrentGroup();
-		if not ( cur_group == "SO_QUEST" or cur_group == "04-SKILLUP ZONE" ) then
-			self:setstate(1);
-		else
-			self:setstate(3);
-		end;
-	end;
+	StartSelectingSongMessageCommand=cmd(stoptweening;diffusealpha,0;sleep,.1;linear,.2;diffusealpha,1);
 };
 
 return t;

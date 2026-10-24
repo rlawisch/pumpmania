@@ -4,12 +4,12 @@ t[#t+1] = LoadFont("Common Bold")..{
 	InitCommand=function(self)
 		self:x(SCREEN_CENTER_X);
 		self:y(SCREEN_TOP + 40);
-		self:settext("Stepmania 5.1\nStepP1 Legacy by xMAx; Pumpmania (StepP1Revival) by Silver and Thequila\nPhyrebird Theme by Team Phyrebird and Drako")
+		self:settext("StepMania 5 (beta4)\nBuild StepP1 V1.0.2 by xMAx\nSong pack base by NicklessGuy");
 		self:skewx(-.12);
-		self:zoom(.35);
+		self:zoom(.5);
 	end;
 	OffCommand=function(self)
-		SCREENMAN:GetTopScreen():lockinput(.5);	-- para que cualquier entrada no interrumpa la transiciï¿½n de ventanas
+		SCREENMAN:GetTopScreen():lockinput(.5);	-- para que cualquier entrada no interrumpa la transición de ventanas
 		(cmd(visible,false))(self);
 	end;
 }

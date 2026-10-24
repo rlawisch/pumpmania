@@ -1,20 +1,27 @@
 local PersonalP1, MachineP1, PersonalP2, MachineP2
 
+local GradeLetters = { 
+	["Grade_Tier01"] = "SSS", 
+	["Grade_Tier02"] = "X", 
+	["Grade_Tier03"] = "G", 
+	["Grade_Tier04"] = "A", 
+	["Grade_Tier05"] = "B", 
+	["Grade_Tier06"] = "C", 
+	["Grade_Tier07"] = "D", 
+	["Grade_Tier08"] = "F" 
+}
+
 local function GetPersonalGrade(pn, i)
 	if GAMESTATE:IsSideJoined(pn) and GAMESTATE:HasProfile(pn) then
 		local HighScores = PROFILEMAN:GetProfile(pn):GetHighScoreList(GAMESTATE:GetCurrentSong(), GAMESTATE:GetCurrentSteps(pn)):GetHighScores()
 		if #HighScores ~= 0 and HighScores[i] ~= nil then
-			local BestScore = math.floor(HighScores[1]:GetScore()/100);
-			local StagePass = "B_";
-			if BestScore > 2000000 then 
-				return nil 
+			local GradeTier = HighScores[i]:GetGrade()
+			local Grade = (GradeTier == "Grade_Failed" and "F" or GradeLetters[GradeTier])
+			if Grade == "G" and HighScores[i]:GetTapNoteScore('TapNoteScore_W5') > 0 then
+				return "S"
+			else
+				return Grade
 			end
-			if BestScore > 1000000 then
-				BestScore = BestScore - 1000000;
-				StagePass = "R_";
-			end;
-			local Grade = CalcPGrade(BestScore);
-			return StagePass..Grade
 		else
 			return nil
 		end
@@ -27,17 +34,13 @@ local function GetMachineGrade(pn, i)
 	if GAMESTATE:IsSideJoined(pn) then
 		local HighScores = PROFILEMAN:GetMachineProfile():GetHighScoreList(GAMESTATE:GetCurrentSong(), GAMESTATE:GetCurrentSteps(pn)):GetHighScores()
 		if #HighScores ~= 0 and HighScores[i] ~= nil then
-			local BestScore = math.floor(HighScores[1]:GetScore()/100);
-			local StagePass = "B_";
-			if BestScore > 2000000 then 
-				return nil 
+			local GradeTier = HighScores[i]:GetGrade()
+			local Grade = (GradeTier == "Grade_Failed" and "F" or GradeLetters[GradeTier])
+			if Grade == "G" and HighScores[i]:GetTapNoteScore('TapNoteScore_W5') > 0 then
+				return "S"
+			else
+				return Grade
 			end
-			if BestScore > 1000000 then
-				BestScore = BestScore - 1000000;
-				StagePass = "R_";
-			end;
-			local Grade = CalcPGrade(BestScore);
-			return StagePass..Grade
 		else
 			return nil
 		end
@@ -53,8 +56,8 @@ local t = Def.ActorFrame {
 	Def.Sprite {
 		Name="PersonalP1",
 		InitCommand=function(self)
-			self:xy(SCREEN_CENTER_X - 240, SCREEN_CENTER_Y + 148)
-			self:zoom(0.37)
+			self:xy(SCREEN_CENTER_X - 175, SCREEN_CENTER_Y + 118)
+			self:zoom(0.65)
 		end,
 		OnCommand=function(self)
 			self:sleep(0.5)
@@ -71,14 +74,14 @@ local t = Def.ActorFrame {
 			PersonalP1 = GetPersonalGrade(PLAYER_1, 1) 
 			self:playcommand("Refresh")
 		end,
-		RefreshCommand=function(self) self:Load(PersonalP1 ~= nil and THEME:GetPathG("", "RecordGrades/" .. PersonalP1 .. " (doubleres).png") or nil) end
+		RefreshCommand=function(self) self:Load(PersonalP1 ~= nil and THEME:GetPathG("", "RecordGrades/R_" .. PersonalP1 .. " (doubleres).png") or nil) end
 	},
 	
 	Def.Sprite {
 		Name="MachineP1",
 		InitCommand=function(self)
-			self:xy(SCREEN_CENTER_X - 240, SCREEN_CENTER_Y + 182)
-			self:zoom(0.37)
+			self:xy(SCREEN_CENTER_X - 175, SCREEN_CENTER_Y + 148)
+			self:zoom(0.65)
 		end,
 		OnCommand=function(self)
 			self:sleep(0.5)
@@ -98,15 +101,15 @@ local t = Def.ActorFrame {
 			self:playcommand("Refresh")
 		end,
 		RefreshCommand=function(self)
-			self:Load(MachineP1 ~= nil and THEME:GetPathG("", "RecordGrades/" .. MachineP1 .. " (doubleres).png") or nil)
+			self:Load(MachineP1 ~= nil and THEME:GetPathG("", "RecordGrades/R_" .. MachineP1 .. " (doubleres).png") or nil)
 		end
 	},
 	
 	Def.Sprite {
 		Name="PersonalP2",
 		InitCommand=function(self)
-			self:xy(SCREEN_CENTER_X + 320, SCREEN_CENTER_Y + 148)
-			self:zoom(0.37)
+			self:xy(SCREEN_CENTER_X + 239, SCREEN_CENTER_Y + 118)
+			self:zoom(0.65)
 		end,
 		OnCommand=function(self)
 			self:sleep(0.5)
@@ -123,14 +126,14 @@ local t = Def.ActorFrame {
 			PersonalP2 = GetPersonalGrade(PLAYER_2, 1) 
 			self:playcommand("Refresh")
 		end,
-		RefreshCommand=function(self) self:Load(PersonalP2 ~= nil and THEME:GetPathG("", "RecordGrades/" .. PersonalP2 .. " (doubleres).png") or nil) end
+		RefreshCommand=function(self) self:Load(PersonalP2 ~= nil and THEME:GetPathG("", "RecordGrades/R_" .. PersonalP2 .. " (doubleres).png") or nil) end
 	},
 	
 	Def.Sprite {
 		Name="MachineP2",
 		InitCommand=function(self)
-			self:xy(SCREEN_CENTER_X + 320, SCREEN_CENTER_Y + 182)
-			self:zoom(0.37)
+			self:xy(SCREEN_CENTER_X + 239, SCREEN_CENTER_Y + 148)
+			self:zoom(0.65)
 		end,
 		OnCommand=function(self)
 			self:sleep(0.5)
@@ -150,7 +153,7 @@ local t = Def.ActorFrame {
 			self:playcommand("Refresh")
 		end,
 		RefreshCommand=function(self)
-			self:Load(MachineP2 ~= nil and THEME:GetPathG("", "RecordGrades/" .. MachineP2 .. " (doubleres).png") or nil)
+			self:Load(MachineP2 ~= nil and THEME:GetPathG("", "RecordGrades/R_" .. MachineP2 .. " (doubleres).png") or nil)
 		end
 	}
 }
